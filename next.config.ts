@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
+  async redirects() {
+    // No hay página índice de servicios: se manda a la sección de la home.
+    return [{ source: "/servicios", destination: "/#servicios", permanent: false }];
+  },
   turbopack: {
     rules: {
       "*.css": {
