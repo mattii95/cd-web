@@ -8,6 +8,15 @@ export default defineConfig({
       {
         plugins: [tsconfigPaths(), react()],
         test: {
+          name: "client",
+          environment: "jsdom",
+          include: ["__tests__/client/**/*.test.{ts,tsx}"],
+          setupFiles: ["./vitest.setup.ts"],
+        },
+      },
+      {
+        plugins: [tsconfigPaths(), react()],
+        test: {
           name: "server",
           environment: "node",
           include: ["__tests__/server/**/*.test.ts"],
