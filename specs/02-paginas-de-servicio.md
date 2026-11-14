@@ -73,7 +73,7 @@ export type Service = {
   headline: string; // h1: "Tu negocio, con una web que trabaja por vos"
   intro: string; // bajada del hero; también es la meta description
   tags: string[]; // ["Landing pages", "Sitios institucionales", "Tiendas online"]
-  features: { icon: ServiceIcon; title: string; text: string }[]; // 6 ítems de "Qué incluye"
+  features: { title: string; text: string }[]; // 6 ítems de "Qué incluye"; todos llevan el ícono Check
   idealFor: string[]; // 4 casos de "¿Es para vos?"
 };
 ```
@@ -113,7 +113,7 @@ Convenciones:
 ## Plan de implementación
 
 1. **Tokens claros.** Agregar a `@theme inline` de `app/globals.css` los colores de las secciones claras del artboard (`#FFFFFF`, `#F4F7FD`, `#EAF1FF`, `#0B1222`, `#5B6478`, `#E3E8F2`). Prueba: `npm run dev` levanta y la home se ve igual que antes.
-2. **Íconos.** Agregar a `components/icons.tsx` los SVG de los 4 artboards (ícono de cada servicio y de los 24 ítems de "Qué incluye", sin repetir) y exportar un mapa `ServiceIcon → componente`. Todos llevan `aria-hidden="true"`.
+2. **Íconos.** Agregar a `components/icons.tsx` el ícono `Cloud` (los otros 3 de servicio ya existían) y exportar el mapa `serviceIcons` y el tipo `ServiceIcon`. Los 24 ítems de "Qué incluye" y de "Ideal para" usan todos `Check`. Todos llevan `aria-hidden="true"`.
 3. **Datos.** Extender `Service` en `lib/services.ts` con `icon`, `headline`, `intro`, `tags`, `features` e `idealFor`, cargar los copys de los 4 artboards, y agregar `processSteps` y `getService`. Prueba: la home y el footer siguen compilando y se ven igual.
 4. **Ruta y hero.** Crear `app/servicios/[slug]/page.tsx` con `generateStaticParams`, `notFound()` para slugs desconocidos y `generateMetadata`. Crear `components/service/hero.tsx` con breadcrumb, `h1`, bajada, botones y la card. Prueba: `/servicios/desarrollo-web` muestra el hero y `/servicios/no-existe` da 404.
 5. **Qué incluye.** Crear `components/service/features.tsx` con `id="incluye"` y las 6 cards. Prueba: "Qué incluye" del hero hace scroll a la sección.
