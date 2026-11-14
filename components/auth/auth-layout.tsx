@@ -10,7 +10,7 @@ export function AuthLayout({
   children?: ReactNode;
 }) {
   return (
-    <div className="grid min-h-screen flex-1 grid-cols-[repeat(auto-fit,minmax(min(100%,480px),1fr))] bg-paper text-ink">
+    <div className="grid min-h-screen flex-1 grid-cols-[repeat(auto-fit,minmax(min(100%,480px),1fr))] bg-paper text-ink [color-scheme:light]">
       {panel}
       <main className="relative flex items-center justify-center overflow-hidden px-6 py-[clamp(32px,5vw,72px)]">
         <div
