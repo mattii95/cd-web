@@ -1,0 +1,46 @@
+name: cd-infra
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: postgres18
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123654on
+      POSTGRES_DB: DB_CD26
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d 123654on"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - ./docker/data:/var/lib/postgresql
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@cdigital.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - postgres
+    volumes:
+      - ./docker/pgadmin:/var/lib/pgadmin
+
+  # Bandeja de correo de desarrollo: recibe todo por SMTP y lo muestra en http://localhost:8025
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    restart: always
+    ports:
+      - "${MAIL_UI_PORT:-8025}:8025"
+      - "${MAIL_PORT:-1025}:1025"
+
+networks:
+  default:
+    name: cd-net
