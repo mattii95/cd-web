@@ -21,7 +21,7 @@ Ante cualquier duda visual, gana el artboard, salvo en el header (ver Decisiones
 **Incluye:**
 
 - Ruta dinámica `app/servicios/[slug]/page.tsx` con `generateStaticParams` para los 4 slugs de `lib/services.ts`.
-- Un slug que no existe devuelve 404 con `notFound()`.
+- Un slug que no existe muestra la página 404 con `notFound()`. Con `cacheComponents`, la primera petición puede responder 200 con `<meta name="robots" content="noindex">`; las siguientes responden 404.
 - Secciones de la página, en el orden del artboard:
   - **Hero** (fondo oscuro con grilla, orbes y anillo): breadcrumb "Servicios / {título}", `h1`, bajada, botones "Quiero este servicio" y "Qué incluye", y la card con número (`01`–`04`), ícono grande, título y tags.
   - **Qué incluye** (`#incluye`): título "Todo lo que necesitás, en un mismo equipo" y 6 cards con ícono, título y texto.
@@ -115,7 +115,7 @@ Convenciones:
 1. **Tokens claros.** Agregar a `@theme inline` de `app/globals.css` los colores de las secciones claras del artboard (`#FFFFFF`, `#F4F7FD`, `#EAF1FF`, `#0B1222`, `#5B6478`, `#E3E8F2`). Prueba: `npm run dev` levanta y la home se ve igual que antes.
 2. **Íconos.** Agregar a `components/icons.tsx` el ícono `Cloud` (los otros 3 de servicio ya existían) y exportar el mapa `serviceIcons` y el tipo `ServiceIcon`. Los 24 ítems de "Qué incluye" y de "Ideal para" usan todos `Check`. Todos llevan `aria-hidden="true"`.
 3. **Datos.** Extender `Service` en `lib/services.ts` con `icon`, `headline`, `intro`, `tags`, `features` e `idealFor`, cargar los copys de los 4 artboards, y agregar `processSteps` y `getService`. Prueba: la home y el footer siguen compilando y se ven igual.
-4. **Ruta y hero.** Crear `app/servicios/[slug]/page.tsx` con `generateStaticParams`, `notFound()` para slugs desconocidos y `generateMetadata`. Crear `components/service/hero.tsx` con breadcrumb, `h1`, bajada, botones y la card. Prueba: `/servicios/desarrollo-web` muestra el hero y `/servicios/no-existe` da 404.
+4. **Ruta y hero.** Crear `app/servicios/[slug]/page.tsx` con `generateStaticParams`, `notFound()` para slugs desconocidos y `generateMetadata`. Crear `components/service/hero.tsx` con breadcrumb, `h1`, bajada, botones y la card. Prueba: `/servicios/desarrollo-web` muestra el hero y `/servicios/no-existe` muestra la página 404.
 5. **Qué incluye.** Crear `components/service/features.tsx` con `id="incluye"` y las 6 cards. Prueba: "Qué incluye" del hero hace scroll a la sección.
 6. **Cómo trabajamos.** Crear `components/service/process.tsx` con los 4 pasos de `processSteps` y las barras `fx-fill`.
 7. **Ideal para.** Crear `components/service/ideal-for.tsx` con el título, la bajada y los 4 casos.
@@ -129,7 +129,7 @@ Convenciones:
 - [ ] `npm run lint` termina sin errores.
 - [ ] El build prerenderiza `/servicios/desarrollo-web`, `/servicios/sistemas-a-medida`, `/servicios/desarrollo-saas` y `/servicios/inteligencia-artificial`.
 - [ ] Las 4 páginas cargan sin errores en la consola del navegador.
-- [ ] `/servicios/no-existe` responde 404.
+- [ ] `/servicios/no-existe` muestra la página 404 con `noindex`.
 - [ ] `/servicios` redirige a `/#servicios`.
 - [ ] Cada página muestra, en orden: hero, Qué incluye, Cómo trabajamos, ¿Es para vos?, CTA y Otros servicios.
 - [ ] A 1440px de ancho, cada página coincide visualmente con su artboard (layout, copys, colores, íconos y fuentes), salvo el header.
