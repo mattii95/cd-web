@@ -1,6 +1,6 @@
 # SPEC 01 — Base del sitio y landing page
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** —
 > **Fecha:** 2026-11-13
 > **Objetivo:** Reemplazar el template de create-next-app por la base visual de Courroux Digital (tokens, fuentes, header y footer compartidos) y la home completa según el artboard `Main` del diseño de Claude Design.
@@ -116,24 +116,24 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` termina sin errores ni warnings de tipos.
-- [ ] `npm run lint` termina sin errores.
-- [ ] `/` carga sin errores en la consola del navegador.
-- [ ] La home muestra, en orden, las secciones `#inicio`, `#nosotros`, `#servicios`, `#blog` y `#contacto`, y cada link del header lleva a su ancla.
+- [x] `npm run build` termina sin errores ni warnings de tipos.
+- [x] `npm run lint` termina sin errores.
+- [x] `/` carga sin errores en la consola del navegador.
+- [x] La home muestra, en orden, las secciones `#inicio`, `#nosotros`, `#servicios`, `#blog` y `#contacto`, y cada link del header lleva a su ancla.
 - [ ] A 1440px de ancho, la home coincide visualmente con el artboard `Main` (layout, copys, colores y fuentes).
-- [ ] A 375px de ancho no hay scroll horizontal, y el header muestra la hamburguesa en lugar de los links.
-- [ ] La hamburguesa abre el panel, `aria-expanded` cambia a `true`, y tocar un link o apretar Escape lo cierra.
-- [ ] El texto del hero rota entre las 4 palabras escribiendo y borrando.
-- [ ] Con `prefers-reduced-motion: reduce` emulado, no hay animaciones y el hero muestra "desarrollo web" fijo.
-- [ ] No aparece ningún texto "+0", "desde 0", "[año]", "[Ciudad]", "[X] horas" ni "[Tu marca]".
-- [ ] El footer solo muestra Instagram y WhatsApp como redes.
-- [ ] Enviar el formulario completo abre `wa.me/543573436193` con nombre, email, servicio y mensaje en el texto.
-- [ ] Enviar el formulario con un campo requerido vacío no abre WhatsApp y el navegador marca el campo.
-- [ ] Las cards de servicio apuntan a `/servicios/desarrollo-web`, `/servicios/sistemas-a-medida`, `/servicios/desarrollo-saas` y `/servicios/inteligencia-artificial`.
-- [ ] Las cards de blog apuntan a `/blog/[slug]`, y "Ver todos los artículos" apunta a `/blog`.
-- [ ] La pestaña del navegador muestra el ícono de CD y un título con "Courroux Digital".
-- [ ] El `<html>` tiene `lang="es-AR"`.
-- [ ] `public/` ya no contiene `file.svg`, `globe.svg`, `next.svg`, `vercel.svg` ni `window.svg`.
+- [x] A 375px de ancho no hay scroll horizontal, y el header muestra la hamburguesa en lugar de los links.
+- [x] La hamburguesa abre el panel, `aria-expanded` cambia a `true`, y tocar un link o apretar Escape lo cierra.
+- [x] El texto del hero rota entre las 4 palabras escribiendo y borrando.
+- [x] Con `prefers-reduced-motion: reduce` emulado, no hay animaciones y el hero muestra "desarrollo web" fijo.
+- [x] No aparece ningún texto "+0", "desde 0", "[año]", "[Ciudad]", "[X] horas" ni "[Tu marca]".
+- [x] El footer solo muestra Instagram y WhatsApp como redes.
+- [x] Enviar el formulario completo abre `wa.me/543573436193` con nombre, email, servicio y mensaje en el texto.
+- [x] Enviar el formulario con un campo requerido vacío no abre WhatsApp y el navegador marca el campo.
+- [x] Las cards de servicio apuntan a `/servicios/desarrollo-web`, `/servicios/sistemas-a-medida`, `/servicios/desarrollo-saas` y `/servicios/inteligencia-artificial`.
+- [x] Las cards de blog apuntan a `/blog/[slug]`, y "Ver todos los artículos" apunta a `/blog`.
+- [x] La pestaña del navegador muestra el ícono de CD y un título con "Courroux Digital".
+- [x] El `<html>` tiene `lang="es-AR"`.
+- [x] `public/` ya no contiene `file.svg`, `globe.svg`, `next.svg`, `vercel.svg` ni `window.svg`.
 
 ## Decisiones
 

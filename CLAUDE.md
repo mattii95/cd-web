@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # Skills
 
-Para la interfaz de usuario siempre usar /frontend-design
+Usa siempre /frontend-design para diseñar la interfaz de usuario.
 
 ## Stack
 
