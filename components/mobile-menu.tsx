@@ -64,14 +64,14 @@ export function MobileMenu({ links, cta }: { links: NavLink[]; cta: NavLink }) {
             {link.label}
           </Link>
         ))}
-        {/* Solo visual: no hay login todavía (spec 03). */}
-        <button
-          type="button"
-          className="fx-ghost mt-2 flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/[0.22] bg-transparent px-[22px] py-3 text-sm font-semibold text-white"
+        <Link
+          href="/cuenta/login"
+          onClick={close}
+          className="fx-ghost mt-2 flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/[0.22] bg-transparent px-[22px] py-3 text-sm font-semibold text-white no-underline"
         >
           <User />
           Ingresar
-        </button>
+        </Link>
         <Link
           href={cta.href}
           onClick={close}
