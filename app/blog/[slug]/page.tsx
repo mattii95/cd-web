@@ -4,6 +4,7 @@ import { ArticleCta } from "@/components/blog/article-cta";
 import { AuthorBox } from "@/components/blog/author-box";
 import { RelatedPosts } from "@/components/blog/related-posts";
 import { ArticleBody } from "@/components/blog/article-body";
+import { ReviewsSection } from "@/components/blog/reviews-section";
 import { ShareButton } from "@/components/blog/share-button";
 import { ArticleToc } from "@/components/blog/article-toc";
 import { ArticleHero } from "@/components/blog/article-hero";
@@ -53,6 +54,7 @@ export default async function ArticlePage({
             <div className="flex max-w-[760px] flex-col gap-6">
               <ArticleBody body={post.body} />
               <AuthorBox />
+              {post.reviews && <ReviewsSection reviews={post.reviews} />}
               <ArticleCta post={post} />
             </div>
           </div>
