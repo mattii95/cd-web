@@ -1,6 +1,6 @@
 # SPEC 05 — Configuración de testing
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 03, SPEC 04
 > **Fecha:** 2026-11-14
 > **Objetivo:** Configurar Vitest (proyectos `client` en jsdom y `server` en node), Playwright para E2E y un workflow de GitHub Actions, con tests de la lógica que ya existe.
@@ -111,29 +111,29 @@ Convenciones de los tests:
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` termina sin errores.
-- [ ] `npx tsc --noEmit` termina sin errores, incluidos los archivos de test y de configuración.
-- [ ] `npm run build` termina sin errores y sigue prerenderizando `/cuenta/login`, `/cuenta/registro` y `/cuenta/recuperar`.
-- [ ] `npm run test:run` corre los proyectos `client` y `server`, y todos los tests pasan.
-- [ ] Un test de `__tests__/server/` que usa `document` falla con `document is not defined`. Confirma que corre en node.
-- [ ] Los tests de `__tests__/client/` usan `toBeInTheDocument` sin importar nada extra.
-- [ ] Los imports con `@/` funcionan en los dos proyectos.
-- [ ] `npm test` arranca en modo watch.
-- [ ] `npm run test:coverage` genera `coverage/index.html` y muestra un resumen en la terminal.
-- [ ] `resolveBackHref("/blog/senales-sistema-a-medida")` devuelve esa misma ruta.
-- [ ] `resolveBackHref` devuelve `"/blog"` para `null`, `"https://otro.com"`, `"//otro.com"`, `"/blog/no-existe"` y `"/blog/../cuenta"`.
-- [ ] `components/auth/back-link.tsx` ya no tiene la regex. Usa `resolveBackHref`.
-- [ ] Hay tests de `getPost`, `getRatingSummary`, `formatAverage`, `getRelatedPosts`, `formatPostDate` y `getService`, y pasan.
-- [ ] `getScore("abcdefgh")` es 1 y `getScore("Abcdef1!")` es 4 en los tests. `PasswordStrength` vacío muestra "Escribí una contraseña".
-- [ ] El test de `PasswordInput` verifica que el `type` pasa de `password` a `text` y el `aria-label` de "Mostrar contraseña" a "Ocultar contraseña".
-- [ ] El test de `LoginForm` verifica que el aviso con `role="status"` aparece solo después de enviar.
-- [ ] `npm run test:e2e` levanta `next build` + `next start` en el puerto 3100 y corre los proyectos `desktop` y `mobile`.
-- [ ] Los E2E de navegación, cuenta y responsive pasan.
-- [ ] Un E2E falla si se agrega un `console.error` a una de las páginas que visita.
-- [ ] `/playwright-report`, `/test-results` y `/blob-report` están en `.gitignore`, y `git status` queda limpio después de correr todos los scripts.
+- [x] `npm run lint` termina sin errores.
+- [x] `npx tsc --noEmit` termina sin errores, incluidos los archivos de test y de configuración.
+- [x] `npm run build` termina sin errores y sigue prerenderizando `/cuenta/login`, `/cuenta/registro` y `/cuenta/recuperar`.
+- [x] `npm run test:run` corre los proyectos `client` y `server`, y todos los tests pasan.
+- [x] Un test de `__tests__/server/` que usa `document` falla con `document is not defined`. Confirma que corre en node.
+- [x] Los tests de `__tests__/client/` usan `toBeInTheDocument` sin importar nada extra.
+- [x] Los imports con `@/` funcionan en los dos proyectos.
+- [x] `npm test` arranca en modo watch.
+- [x] `npm run test:coverage` genera `coverage/index.html` y muestra un resumen en la terminal.
+- [x] `resolveBackHref("/blog/senales-sistema-a-medida")` devuelve esa misma ruta.
+- [x] `resolveBackHref` devuelve `"/blog"` para `null`, `"https://otro.com"`, `"//otro.com"`, `"/blog/no-existe"` y `"/blog/../cuenta"`.
+- [x] `components/auth/back-link.tsx` ya no tiene la regex. Usa `resolveBackHref`.
+- [x] Hay tests de `getPost`, `getRatingSummary`, `formatAverage`, `getRelatedPosts`, `formatPostDate` y `getService`, y pasan.
+- [x] `getScore("abcdefgh")` es 1 y `getScore("Abcdef1!")` es 4 en los tests. `PasswordStrength` vacío muestra "Escribí una contraseña".
+- [x] El test de `PasswordInput` verifica que el `type` pasa de `password` a `text` y el `aria-label` de "Mostrar contraseña" a "Ocultar contraseña".
+- [x] El test de `LoginForm` verifica que el aviso con `role="status"` aparece solo después de enviar.
+- [x] `npm run test:e2e` levanta `next build` + `next start` en el puerto 3100 y corre los proyectos `desktop` y `mobile`.
+- [x] Los E2E de navegación, cuenta y responsive pasan.
+- [x] Un E2E falla si se agrega un `console.error` a una de las páginas que visita.
+- [x] `/playwright-report`, `/test-results` y `/blob-report` están en `.gitignore`, y `git status` queda limpio después de correr todos los scripts.
 - [ ] `.github/workflows/ci.yml` corre en un PR a `main`, y los jobs `checks` y `e2e` pasan.
 - [ ] Si el job `e2e` falla, el run tiene un artifact con `playwright-report/`.
-- [ ] `README.md` explica los cuatro scripts.
+- [x] `README.md` explica los cuatro scripts.
 
 ## Decisiones
 
