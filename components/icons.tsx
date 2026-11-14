@@ -41,6 +41,9 @@ export const User = (p: IconProps) => (
 export const ArrowRight = (p: IconProps) => (
   <Icon strokeWidth={2} {...p}><path d="M5 12h14M13 6l6 6-6 6" /></Icon>
 );
+export const ArrowLeft = (p: IconProps) => (
+  <Icon size={16} strokeWidth={2} {...p}><path d="M19 12H5M11 18l-6-6 6-6" /></Icon>
+);
 export const ArrowUpRight = (p: IconProps) => (
   <Icon strokeWidth={2} {...p}><path d="M7 17L17 7M8 7h9v9" /></Icon>
 );
