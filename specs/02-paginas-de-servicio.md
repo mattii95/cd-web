@@ -1,6 +1,6 @@
 # SPEC 02 — Páginas de servicio
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01
 > **Fecha:** 2026-11-14
 > **Objetivo:** Crear las 4 páginas `/servicios/[slug]` con una plantilla compartida, según los artboards `Servicio-*` del diseño de Claude Design.
@@ -125,28 +125,28 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` termina sin errores ni warnings de tipos.
-- [ ] `npm run lint` termina sin errores.
-- [ ] El build prerenderiza `/servicios/desarrollo-web`, `/servicios/sistemas-a-medida`, `/servicios/desarrollo-saas` y `/servicios/inteligencia-artificial`.
-- [ ] Las 4 páginas cargan sin errores en la consola del navegador.
-- [ ] `/servicios/no-existe` muestra la página 404 con `noindex`.
-- [ ] `/servicios` redirige a `/#servicios`.
-- [ ] Cada página muestra, en orden: hero, Qué incluye, Cómo trabajamos, ¿Es para vos?, CTA y Otros servicios.
-- [ ] A 1440px de ancho, cada página coincide visualmente con su artboard (layout, copys, colores, íconos y fuentes), salvo el header.
-- [ ] El hero es oscuro y las secciones de abajo tienen fondo claro, como en el artboard.
-- [ ] A 375px de ancho no hay scroll horizontal en ninguna de las 4 páginas.
-- [ ] El header y el footer son los mismos de la home.
-- [ ] El número de la card del hero es `01` en web, `02` en sistemas, `03` en SaaS y `04` en IA.
-- [ ] "Otros servicios" muestra los 3 servicios restantes y cada card lleva a su página.
-- [ ] "Qué incluye" del hero hace scroll a `#incluye`.
-- [ ] "Quiero este servicio" y "Pedí tu presupuesto" llevan a `/?servicio={slug}#contacto`.
-- [ ] Al llegar desde ese link, el select del formulario muestra el servicio de origen.
-- [ ] `/?servicio=no-existe#contacto` deja el select en su valor por defecto, sin errores.
-- [ ] El breadcrumb "Servicios" lleva a `/#servicios`.
-- [ ] La pestaña muestra "{título} · Courroux Digital" en cada página.
-- [ ] Cada página tiene `<meta name="description">` con la bajada del hero y `<link rel="canonical">` con su URL.
-- [ ] Con `prefers-reduced-motion: reduce` emulado, las páginas de servicio no tienen animaciones.
-- [ ] No aparece ningún texto "[Tu marca]", "[tu@email.com]", "[Ciudad]" ni "[9 a 18 h]".
+- [x] `npm run build` termina sin errores ni warnings de tipos.
+- [x] `npm run lint` termina sin errores.
+- [x] El build prerenderiza `/servicios/desarrollo-web`, `/servicios/sistemas-a-medida`, `/servicios/desarrollo-saas` y `/servicios/inteligencia-artificial`.
+- [x] Las 4 páginas cargan sin errores en la consola del navegador.
+- [x] `/servicios/no-existe` muestra la página 404 con `noindex`.
+- [x] `/servicios` redirige a `/#servicios`.
+- [x] Cada página muestra, en orden: hero, Qué incluye, Cómo trabajamos, ¿Es para vos?, CTA y Otros servicios.
+- [ ] (pendiente: revisión visual manual contra el artboard) A 1440px de ancho, cada página coincide visualmente con su artboard (layout, copys, colores, íconos y fuentes), salvo el header.
+- [x] El hero es oscuro y las secciones de abajo tienen fondo claro, como en el artboard.
+- [x] A 375px de ancho no hay scroll horizontal en ninguna de las 4 páginas.
+- [x] El header y el footer son los mismos de la home.
+- [x] El número de la card del hero es `01` en web, `02` en sistemas, `03` en SaaS y `04` en IA.
+- [x] "Otros servicios" muestra los 3 servicios restantes y cada card lleva a su página.
+- [x] "Qué incluye" del hero hace scroll a `#incluye`.
+- [x] "Quiero este servicio" y "Pedí tu presupuesto" llevan a `/?servicio={slug}#contacto`.
+- [x] Al llegar desde ese link, el select del formulario muestra el servicio de origen.
+- [x] `/?servicio=no-existe#contacto` deja el select en su valor por defecto, sin errores.
+- [x] El breadcrumb "Servicios" lleva a `/#servicios`.
+- [x] La pestaña muestra "{título} · Courroux Digital" en cada página.
+- [x] Cada página tiene `<meta name="description">` con la bajada del hero y `<link rel="canonical">` con su URL.
+- [x] Con `prefers-reduced-motion: reduce` emulado, las páginas de servicio no tienen animaciones.
+- [x] No aparece ningún texto "[Tu marca]", "[tu@email.com]", "[Ciudad]" ni "[9 a 18 h]".
 
 ## Decisiones
 
