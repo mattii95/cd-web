@@ -9,6 +9,9 @@ import { ArticleToc } from "@/components/blog/article-toc";
 import { ArticleHero } from "@/components/blog/article-hero";
 import { blogPosts, formatPostDate, getPost } from "@/lib/blog-posts";
 
+// Con Suspense, notFound() respondería 200 en vez de 404. Los 8 slugs se prerenderizan.
+export const instant = false;
+
 export function generateStaticParams() {
   return blogPosts.map(({ slug }) => ({ slug }));
 }

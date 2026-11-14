@@ -142,32 +142,32 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` termina sin errores ni warnings de tipos.
-- [ ] `npm run lint` termina sin errores.
-- [ ] El build prerenderiza `/blog` y los 8 `/blog/{slug}`.
-- [ ] `/blog` y los 8 artículos cargan sin errores en la consola del navegador.
-- [ ] `/blog/no-existe` muestra la página 404 con `noindex`.
+- [x] `npm run build` termina sin errores ni warnings de tipos.
+- [x] `npm run lint` termina sin errores.
+- [x] El build prerenderiza `/blog` y los 8 `/blog/{slug}`.
+- [x] `/blog` y los 8 artículos cargan sin errores en la consola del navegador.
+- [x] `/blog/no-existe` muestra la página 404 con `noindex`.
 - [ ] A 1440px de ancho, `/blog` coincide visualmente con el artboard `Blog` sin el bloque de newsletter, salvo el header.
 - [ ] A 1440px de ancho, `/blog/senales-sistema-a-medida` coincide visualmente con el artboard `Articulo` sin el bloque de newsletter, salvo el header.
-- [ ] A 375px de ancho no hay scroll horizontal en `/blog` ni en ningún artículo.
-- [ ] El destacado de `/blog` es "5 señales de que tu empresa necesita un sistema a medida", y la grilla muestra los otros 7.
-- [ ] Al elegir "SaaS" se ven solo los 2 artículos de SaaS y no se ve el destacado. Al elegir "Sistemas" se ve el destacado y 1 card.
-- [ ] El filtro activo tiene `aria-pressed="true"` y los demás `false`.
-- [ ] Escribir en el buscador no cambia la lista.
-- [ ] Cada card lleva a `/blog/{slug}`.
-- [ ] El artículo muestra "Matías Courroux", "Fundador de Courroux Digital", la fecha en formato "10 nov 2026" y los minutos de lectura.
-- [ ] Los `h2` del cuerpo se numeran `01`, `02`… y cada entrada del índice hace scroll a su `h2`.
-- [ ] El artículo de sistemas muestra los recuadros "Consejo" y "En resumen".
-- [ ] En un navegador sin `navigator.share`, "Compartir" copia la URL del artículo y muestra "Link copiado".
-- [ ] El botón del CTA lleva a `/servicios/{slug}` del servicio de la categoría (ej.: sistemas → `/servicios/sistemas-a-medida`).
-- [ ] "Seguí leyendo" muestra 3 artículos, sin el actual, con los de la misma categoría primero.
-- [ ] El breadcrumb "Blog" lleva a `/blog`.
-- [ ] El link "Blog" del header (desktop y mobile) lleva a `/blog`.
-- [ ] La sección blog de la home sigue mostrando los mismos 3 artículos de antes, en el mismo orden.
-- [ ] La pestaña muestra "Blog · Courroux Digital" en el índice y "{título} · Courroux Digital" en cada artículo.
-- [ ] Cada página tiene `<meta name="description">` y `<link rel="canonical">` con su URL. Los artículos tienen `og:type` = `article`.
+- [x] A 375px de ancho no hay scroll horizontal en `/blog` ni en ningún artículo.
+- [x] El destacado de `/blog` es "5 señales de que tu empresa necesita un sistema a medida", y la grilla muestra los otros 7.
+- [x] Al elegir "SaaS" se ven solo los 2 artículos de SaaS y no se ve el destacado. Al elegir "Sistemas" se ve el destacado y 1 card.
+- [x] El filtro activo tiene `aria-pressed="true"` y los demás `false`.
+- [x] Escribir en el buscador no cambia la lista.
+- [x] Cada card lleva a `/blog/{slug}`.
+- [x] El artículo muestra "Matías Courroux", "Fundador de Courroux Digital", la fecha en formato "10 nov 2026" y los minutos de lectura.
+- [x] Los `h2` del cuerpo se numeran `01`, `02`… y cada entrada del índice hace scroll a su `h2`.
+- [x] El artículo de sistemas muestra los recuadros "Consejo" y "En resumen".
+- [x] En un navegador sin `navigator.share`, "Compartir" copia la URL del artículo y muestra "Link copiado".
+- [x] El botón del CTA lleva a `/servicios/{slug}` del servicio de la categoría (ej.: sistemas → `/servicios/sistemas-a-medida`).
+- [x] "Seguí leyendo" muestra 3 artículos, sin el actual, con los de la misma categoría primero.
+- [x] El breadcrumb "Blog" lleva a `/blog`.
+- [x] El link "Blog" del header (desktop y mobile) lleva a `/blog`.
+- [x] La sección blog de la home sigue mostrando los mismos 3 artículos de antes, en el mismo orden.
+- [x] La pestaña muestra "Blog · Courroux Digital" en el índice y "{título} · Courroux Digital" en cada artículo.
+- [x] Cada página tiene `<meta name="description">` y `<link rel="canonical">` con su URL. Los artículos tienen `og:type` = `article`.
 - [ ] Con `prefers-reduced-motion: reduce` emulado, `/blog` y los artículos no tienen animaciones.
-- [ ] No aparece ningún texto "[Tu marca]", "[Nombre del autor]", "[Cargo]", "[Fecha]", "[Breve bio", "[frecuencia]" ni "suscribirse".
+- [x] No aparece ningún texto "[Tu marca]", "[Nombre del autor]", "[Cargo]", "[Fecha]", "[Breve bio", "[frecuencia]" ni "suscribirse".
 
 ## Decisiones
 
