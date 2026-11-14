@@ -27,6 +27,10 @@
   --color-border-strong: #2a3a5e;
   --color-border-muted: #22304f;
 
+  /* Secciones claras */
+  --color-paper: #f4f7fd;
+  --color-paper-border: #e3e8f2;
+
   /* Texto */
   --color-text-strong: #e3e8f2;
   --color-text: #d5dceb;
