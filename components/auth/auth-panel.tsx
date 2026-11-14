@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Check } from "@/components/icons";
+import { BackLink } from "@/components/auth/back-link";
+import { Check } from "@/components/icons";
 import { site } from "@/lib/site";
 
 export type AuthPanelContent = {
@@ -40,13 +41,7 @@ export function AuthPanel({ prompt, title, intro, checks }: AuthPanelContent) {
           />
           <span className="font-display text-[19px] font-bold">{site.name}</span>
         </Link>
-        <Link
-          href="/blog"
-          className="fx-ghost inline-flex min-h-11 items-center gap-2 rounded-full border border-white/[0.16] px-4 py-2.5 text-sm font-medium text-text no-underline"
-        >
-          <ArrowLeft />
-          Volver al blog
-        </Link>
+        <BackLink />
       </div>
 
       <div className="relative flex max-w-[520px] flex-col gap-[22px]">
