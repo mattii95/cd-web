@@ -51,14 +51,13 @@ export function SiteHeader() {
         </ul>
 
         <div className="hidden items-center gap-2.5 md:flex">
-          {/* Solo visual: no hay login todavía (spec 03). */}
-          <button
-            type="button"
-            className="fx-ghost inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-white/[0.22] bg-transparent px-[18px] py-3 text-sm font-semibold text-white"
+          <Link
+            href="/cuenta/login"
+            className="fx-ghost inline-flex min-h-11 items-center gap-2 rounded-full border border-white/[0.22] bg-transparent px-[18px] py-3 text-sm font-semibold text-white no-underline"
           >
             <User />
             Ingresar
-          </button>
+          </Link>
           <Link
             href={cta.href}
             className="fx-btn inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-[22px] py-[13px] text-sm font-semibold text-white no-underline"

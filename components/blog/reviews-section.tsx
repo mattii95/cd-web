@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import {
   blogAuthor,
@@ -23,8 +24,8 @@ function Stars({ n, className }: { n: number; className: string }) {
   );
 }
 
-// Solo el estado sin sesión (spec 03): "Ingresar", "Crear cuenta" y "Responder" son visuales.
-export function ReviewsSection({ reviews }: { reviews: BlogReviews }) {
+// Solo el estado sin sesión (spec 03): "Responder" es visual; "Ingresar" y "Crear cuenta" van a /cuenta (spec 04).
+export function ReviewsSection({ reviews, slug }: { reviews: BlogReviews; slug: string }) {
   const [sort, setSort] = useState<Sort>("recientes");
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const { average, total } = getRatingSummary(reviews);
@@ -112,18 +113,18 @@ export function ReviewsSection({ reviews }: { reviews: BlogReviews }) {
           </span>
         </div>
         <div className="relative flex flex-wrap gap-2.5">
-          <button
-            type="button"
-            className="fx-btn min-h-12 cursor-pointer rounded-full border-0 bg-accent px-[22px] py-[13px] text-[15px] font-semibold text-white"
+          <Link
+            href={`/cuenta/login?volver=/blog/${slug}`}
+            className="fx-btn inline-flex min-h-12 items-center rounded-full bg-accent px-[22px] py-[13px] text-[15px] font-semibold text-white no-underline"
           >
             Ingresar
-          </button>
-          <button
-            type="button"
-            className="fx-ghost min-h-12 cursor-pointer rounded-full border border-white/25 bg-transparent px-[22px] py-[13px] text-[15px] font-semibold text-white"
+          </Link>
+          <Link
+            href={`/cuenta/registro?volver=/blog/${slug}`}
+            className="fx-ghost inline-flex min-h-12 items-center rounded-full border border-white/25 bg-transparent px-[22px] py-[13px] text-[15px] font-semibold text-white no-underline"
           >
             Crear cuenta
-          </button>
+          </Link>
         </div>
       </div>
 

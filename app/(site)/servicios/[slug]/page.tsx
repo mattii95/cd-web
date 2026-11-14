@@ -8,6 +8,10 @@ import { ServiceProcess } from "@/components/service/process";
 import { ServiceHero } from "@/components/service/hero";
 import { getService, services } from "@/lib/services";
 
+// notFound() con un slug inexistente rompe la validación de navegación instantánea en dev.
+// Los slugs válidos se prerenderizan igual.
+export const instant = false;
+
 export function generateStaticParams() {
   return services.map(({ slug }) => ({ slug }));
 }

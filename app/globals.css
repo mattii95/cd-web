@@ -202,6 +202,13 @@ body {
 @keyframes ft-line { 0% { background-position: -60% 0; } 100% { background-position: 160% 0; } }
 .ft-line { background: linear-gradient(90deg, transparent, #4d8bff, transparent) no-repeat; background-size: 40% 100%; animation: ft-line 6s linear infinite; }
 
+/* Páginas de cuenta (au-*) */
+@keyframes au-pop { 0%, 8% { transform: scale(0); opacity: 0; } 16%, 86% { transform: scale(1); opacity: 1; } 94%, 100% { transform: scale(.6); opacity: 0; } }
+.au-star { display: inline-block; animation: au-pop 6s cubic-bezier(.3, 1.6, .5, 1) infinite; }
+@keyframes au-type { 0%, 30% { width: 0; } 60%, 88% { width: 100%; } 96%, 100% { width: 0; } }
+.au-type { animation: au-type 6s steps(28) infinite; }
+.au-check { accent-color: #1a66f5; width: 18px; height: 18px; }
+
 /* Accesibilidad: sin movimiento */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

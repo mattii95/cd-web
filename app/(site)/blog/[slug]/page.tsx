@@ -54,7 +54,7 @@ export default async function ArticlePage({
             <div className="flex max-w-[760px] flex-col gap-6">
               <ArticleBody body={post.body} />
               <AuthorBox />
-              {post.reviews && <ReviewsSection reviews={post.reviews} />}
+              {post.reviews && <ReviewsSection reviews={post.reviews} slug={post.slug} />}
               <ArticleCta post={post} />
             </div>
           </div>

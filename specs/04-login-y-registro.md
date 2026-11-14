@@ -1,6 +1,6 @@
 # SPEC 04 — Login y registro
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01, SPEC 03
 > **Fecha:** 2026-11-14
 > **Objetivo:** Maquetar `/cuenta/login`, `/cuenta/registro` y `/cuenta/recuperar` según los artboards `Login` y `Registro` del diseño de Claude Design, sin backend de cuentas.
@@ -99,33 +99,33 @@ Regla de `?volver=`:
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` termina sin errores ni warnings de tipos.
-- [ ] `npm run lint` termina sin errores.
-- [ ] El build prerenderiza `/cuenta/login`, `/cuenta/registro` y `/cuenta/recuperar`.
-- [ ] Las tres páginas cargan sin errores en la consola del navegador.
-- [ ] La home, `/blog`, un artículo y un servicio siguen mostrando el header y el footer, con las mismas URLs.
-- [ ] Las tres páginas de cuenta no muestran el header ni el footer del sitio.
+- [x] `npm run build` termina sin errores ni warnings de tipos.
+- [x] `npm run lint` termina sin errores.
+- [x] El build prerenderiza `/cuenta/login`, `/cuenta/registro` y `/cuenta/recuperar`.
+- [x] Las tres páginas cargan sin errores en la consola del navegador.
+- [x] La home, `/blog`, un artículo y un servicio siguen mostrando el header y el footer, con las mismas URLs.
+- [x] Las tres páginas de cuenta no muestran el header ni el footer del sitio.
 - [ ] A 1440px de ancho, `/cuenta/login` coincide visualmente con el artboard `Login`.
 - [ ] A 1440px de ancho, `/cuenta/registro` coincide visualmente con el artboard `Registro`, sin el checkbox de newsletter.
-- [ ] A 375px de ancho no hay scroll horizontal en ninguna de las tres páginas, y el panel oscuro queda arriba del formulario.
-- [ ] El logo del panel lleva a `/`.
-- [ ] "Ingresar" del header (desktop y mobile) lleva a `/cuenta/login`.
-- [ ] En `/blog/senales-sistema-a-medida`, "Ingresar" lleva a `/cuenta/login?volver=/blog/senales-sistema-a-medida` y "Crear cuenta" a `/cuenta/registro?volver=/blog/senales-sistema-a-medida`.
-- [ ] Con `?volver=/blog/senales-sistema-a-medida`, "Volver al blog" lleva a ese artículo.
-- [ ] Sin `?volver=`, o con `?volver=https://otro.com`, `?volver=//otro.com` o `?volver=/blog/no-existe`, "Volver al blog" lleva a `/blog`.
-- [ ] `/cuenta` redirige a `/cuenta/login`.
-- [ ] Login enlaza a registro y a recuperar. Registro y recuperar enlazan a login.
-- [ ] El botón del ojo alterna el `type` del campo entre `password` y `text`, y su `aria-label` entre "Mostrar contraseña" y "Ocultar contraseña".
-- [ ] En registro, el campo vacío muestra "Escribí una contraseña" sin segmentos. "abcdefgh" marca 1 segmento y "Débil". "Abcdef1!" marca 4 segmentos y "Fuerte".
-- [ ] Enviar un formulario con campos vacíos o un email inválido muestra la validación nativa del navegador y no muestra el aviso.
-- [ ] En registro, enviar sin aceptar los términos muestra la validación nativa del navegador.
-- [ ] Enviar un formulario válido muestra "Las cuentas todavía no están disponibles. Muy pronto vas a poder ingresar." con `role="status"`, y la URL no cambia.
-- [ ] "Continuar con Google" y "Recordarme" no navegan ni muestran el aviso.
-- [ ] "Términos y condiciones" y "Política de privacidad" no son `<a href>` y no navegan.
-- [ ] La pestaña muestra "Iniciar sesión · Courroux Digital", "Crear cuenta · Courroux Digital" y "Recuperar contraseña · Courroux Digital".
-- [ ] Las tres páginas tienen `<meta name="robots">` con `noindex` y `<link rel="canonical">` con su URL.
+- [x] A 375px de ancho no hay scroll horizontal en ninguna de las tres páginas, y el panel oscuro queda arriba del formulario.
+- [x] El logo del panel lleva a `/`.
+- [x] "Ingresar" del header (desktop y mobile) lleva a `/cuenta/login`.
+- [x] En `/blog/senales-sistema-a-medida`, "Ingresar" lleva a `/cuenta/login?volver=/blog/senales-sistema-a-medida` y "Crear cuenta" a `/cuenta/registro?volver=/blog/senales-sistema-a-medida`.
+- [x] Con `?volver=/blog/senales-sistema-a-medida`, "Volver al blog" lleva a ese artículo.
+- [x] Sin `?volver=`, o con `?volver=https://otro.com`, `?volver=//otro.com` o `?volver=/blog/no-existe`, "Volver al blog" lleva a `/blog`.
+- [x] `/cuenta` redirige a `/cuenta/login`.
+- [x] Login enlaza a registro y a recuperar. Registro y recuperar enlazan a login.
+- [x] El botón del ojo alterna el `type` del campo entre `password` y `text`, y su `aria-label` entre "Mostrar contraseña" y "Ocultar contraseña".
+- [x] En registro, el campo vacío muestra "Escribí una contraseña" sin segmentos. "abcdefgh" marca 1 segmento y "Débil". "Abcdef1!" marca 4 segmentos y "Fuerte".
+- [x] Enviar un formulario con campos vacíos o un email inválido muestra la validación nativa del navegador y no muestra el aviso.
+- [x] En registro, enviar sin aceptar los términos muestra la validación nativa del navegador.
+- [x] Enviar un formulario válido muestra "Las cuentas todavía no están disponibles. Muy pronto vas a poder ingresar." con `role="status"`, y la URL no cambia.
+- [x] "Continuar con Google" y "Recordarme" no navegan ni muestran el aviso.
+- [x] "Términos y condiciones" y "Política de privacidad" no son `<a href>` y no navegan.
+- [x] La pestaña muestra "Iniciar sesión · Courroux Digital", "Crear cuenta · Courroux Digital" y "Recuperar contraseña · Courroux Digital".
+- [x] Las tres páginas tienen `<meta name="robots">` con `noindex` y `<link rel="canonical">` con su URL.
 - [ ] Con `prefers-reduced-motion: reduce` emulado, las tres páginas no tienen animaciones.
-- [ ] No aparece ningún texto "[Tu marca]" ni "Quiero recibir los nuevos artículos por email".
+- [x] No aparece ningún texto "[Tu marca]" ni "Quiero recibir los nuevos artículos por email".
 
 ## Decisiones
 
