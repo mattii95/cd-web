@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent } from "react";
+import { useEffect, useRef, type FormEvent } from "react";
 import { ArrowRight } from "@/components/icons";
 import { services } from "@/lib/services";
 import { site } from "@/lib/site";
@@ -15,6 +15,16 @@ const field =
   "fx-input w-full min-h-12 rounded-xl border border-white/[0.16] bg-background px-3.5 py-[13px] text-[15px] font-normal text-white";
 
 export function ContactForm() {
+  const serviceRef = useRef<HTMLSelectElement>(null);
+
+  // Preselecciona el servicio de `?servicio={slug}` (links de las páginas de servicio).
+  // Se lee acá y no con useSearchParams para no obligar a envolver el form en <Suspense>.
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get("servicio");
+    const title = services.find((s) => s.slug === slug)?.title;
+    if (title && serviceRef.current) serviceRef.current.value = title;
+  }, []);
+
   // Sin backend: arma el mensaje y abre WhatsApp en una pestaña nueva.
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -78,7 +88,7 @@ export function ContactForm() {
 
       <label className={label}>
         ¿Qué servicio te interesa?
-        <select className={field} name="service" defaultValue={serviceOptions[0]}>
+        <select ref={serviceRef} className={field} name="service" defaultValue={serviceOptions[0]}>
           {serviceOptions.map((option) => (
             <option key={option} value={option}>
               {option}
