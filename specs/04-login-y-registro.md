@@ -1,6 +1,6 @@
 # SPEC 04 — Login y registro
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01, SPEC 03
 > **Fecha:** 2026-11-14
 > **Objetivo:** Maquetar `/cuenta/login`, `/cuenta/registro` y `/cuenta/recuperar` según los artboards `Login` y `Registro` del diseño de Claude Design, sin backend de cuentas.
