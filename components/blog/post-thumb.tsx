@@ -11,16 +11,22 @@ const thumbIcons = {
 
 export function PostThumb({
   category,
-  large = false,
+  variant = "card",
 }: {
   category: BlogCategoryTag;
-  large?: boolean;
+  variant?: "card" | "featured" | "banner";
 }) {
   const Icon = thumbIcons[category];
+  const large = variant !== "card";
+  const height = {
+    card: "aspect-video",
+    featured: "min-h-[340px]",
+    banner: "h-[clamp(220px,32vw,420px)]",
+  }[variant];
   return (
     <div
       aria-hidden="true"
-      className={`relative flex ${large ? "min-h-[340px]" : "aspect-video"} items-center justify-center overflow-hidden bg-background bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:28px_28px]`}
+      className={`relative flex ${height} items-center justify-center overflow-hidden bg-background bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:28px_28px]`}
     >
       <span className="fx-orb fx-orb1 top-[-10%] left-[22%] aspect-square w-[55%] bg-accent/45 blur-[50px]" />
       <span className="fx-ring absolute aspect-square w-[44%] rounded-full border border-dashed border-accent-light/45" />

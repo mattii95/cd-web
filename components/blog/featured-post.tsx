@@ -15,7 +15,7 @@ export function FeaturedPost({
       href={`/blog/${post.slug}`}
       className="fx-card group grid grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))] overflow-hidden rounded-3xl border border-paper-border bg-white text-surface no-underline"
     >
-      <PostThumb category={post.category} large />
+      <PostThumb category={post.category} variant="featured" />
       <div className="flex flex-col justify-center gap-4 p-[clamp(28px,4vw,48px)]">
         <div className="flex flex-wrap items-center gap-2.5 text-[13px] text-text-faint">
           <span className="rounded-full bg-[#050b1c] px-3 py-[5px] text-xs font-semibold text-white">
