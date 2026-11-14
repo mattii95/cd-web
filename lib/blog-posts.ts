@@ -351,6 +351,9 @@ export function getRatingSummary({ distribution }: BlogReviews) {
   return { average: total ? sum / total : 0, total };
 }
 
+// "4,6": coma decimal fija, sin depender del locale del entorno.
+export const formatAverage = (n: number) => n.toFixed(1).replace(".", ",");
+
 export const getRecentPosts = (n: number) => blogPosts.slice(0, n);
 
 // Misma categoría primero, después los más recientes.

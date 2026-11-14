@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { blogAuthor, getCategory, type BlogPost } from "@/lib/blog-posts";
+import {
+  blogAuthor,
+  formatAverage,
+  getCategory,
+  getRatingSummary,
+  type BlogPost,
+} from "@/lib/blog-posts";
 import { PostThumb } from "./post-thumb";
 
 const gridBg =
@@ -13,6 +19,7 @@ export function ArticleHero({
   date: string; // ya formateada en el servidor
 }) {
   const category = getCategory(post.category);
+  const rating = post.reviews && getRatingSummary(post.reviews);
   return (
     <section className="relative overflow-hidden bg-background text-white">
       <div
@@ -63,6 +70,24 @@ export function ArticleHero({
           <span className="rounded-full border border-accent-light/45 px-2.5 py-[5px] font-mono text-xs text-accent-softer">
             {post.readingMinutes} min de lectura
           </span>
+          {post.reviews && rating && (
+            <a
+              href="#valoraciones"
+              className="inline-flex items-center gap-1.5 py-2.5 text-sm text-white no-underline"
+            >
+              <span
+                aria-hidden="true"
+                className="text-accent-light [text-shadow:0_0_10px_rgba(77,139,255,0.8)]"
+              >
+                ★
+              </span>
+              <strong>{formatAverage(rating.average)}</strong>
+              <span className="text-text-muted">
+                ({rating.total} valoraciones · {post.reviews.comments.length}{" "}
+                comentarios)
+              </span>
+            </a>
+          )}
         </div>
         <div className="fx-rise d4 mt-6 overflow-hidden rounded-t-3xl border border-b-0 border-white/12">
           <PostThumb category={post.category} variant="banner" />
