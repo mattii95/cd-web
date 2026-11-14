@@ -43,6 +43,24 @@ export type BlogBlock =
   | { type: "tip"; text: string } // recuadro "Consejo"
   | { type: "summary"; text: string }; // recuadro "En resumen"
 
+export type BlogRating = 1 | 2 | 3 | 4 | 5;
+
+export type BlogComment = {
+  id: string;
+  name: string;
+  initials: string;
+  rating: BlogRating;
+  time: string; // texto mock: "Hace 2 días"
+  likes: number; // "Útil · 12"
+  text: string;
+  reply?: { text: string; time: string }; // respuesta del autor
+};
+
+export type BlogReviews = {
+  distribution: Record<BlogRating, number>; // valoraciones por estrella
+  comments: BlogComment[]; // del más reciente al más antiguo
+};
+
 export type BlogPost = {
   slug: string;
   category: BlogCategoryTag;
@@ -52,6 +70,7 @@ export type BlogPost = {
   excerpt: string;
   body: BlogBlock[];
   cta: string;
+  reviews?: BlogReviews; // mock: solo senales-sistema-a-medida
 };
 
 export type BlogAuthor = {
@@ -157,6 +176,56 @@ export const blogPosts: BlogPost[] = [
       },
     ],
     cta: "¿Tu empresa muestra estas señales? Contanos cómo trabajan hoy y te decimos por dónde empezar.",
+    // Valoraciones y comentarios mock: se reemplazan con el spec de comentarios.
+    reviews: {
+      distribution: { 5: 18, 4: 4, 3: 1, 2: 1, 1: 0 },
+      comments: [
+        {
+          id: "c1",
+          name: "Lucía Fernández",
+          initials: "LF",
+          rating: 5,
+          time: "Hace 2 días",
+          likes: 12,
+          text: "Me sentí identificada con la señal 2. Tenemos tres versiones del mismo Excel de stock y nadie sabe cuál es la buena. Muy claro el artículo.",
+          reply: {
+            text: "¡Gracias, Lucía! Es de lo más común. Un buen primer paso es centralizar ese stock en un solo lugar, aunque sea con una herramienta simple.",
+            time: "Hace 1 día",
+          },
+        },
+        {
+          id: "c2",
+          name: "Martín Gómez",
+          initials: "MG",
+          rating: 4,
+          time: "Hace 4 días",
+          likes: 5,
+          text: "Buen resumen. Me hubiera gustado ver un ejemplo de cuánto tiempo puede llevar desarrollar un sistema así.",
+        },
+        {
+          id: "c3",
+          name: "Carla Ruiz",
+          initials: "CR",
+          rating: 5,
+          time: "Hace 1 semana",
+          likes: 8,
+          text: "El consejo de anotar las tareas repetidas durante una semana es oro. Lo voy a aplicar con mi equipo.",
+        },
+        {
+          id: "c4",
+          name: "Diego Sosa",
+          initials: "DS",
+          rating: 3,
+          time: "Hace 2 semanas",
+          likes: 2,
+          text: "Interesante, aunque en empresas chicas creo que todavía conviene arrancar con herramientas genéricas.",
+          reply: {
+            text: "Totalmente de acuerdo, Diego. Para empezar suelen alcanzar; la idea es detectar a tiempo cuándo empiezan a quedar chicas.",
+            time: "Hace 2 semanas",
+          },
+        },
+      ],
+    },
   },
   {
     slug: "chatbots-ia-atencion-al-cliente",
@@ -274,6 +343,13 @@ export const getPost = (slug: string) => blogPosts.find((p) => p.slug === slug);
 
 export const getCategory = (tag: BlogCategoryTag) =>
   blogCategories.find((c) => c.tag === tag)!;
+
+export function getRatingSummary({ distribution }: BlogReviews) {
+  const stars = [1, 2, 3, 4, 5] as const;
+  const total = stars.reduce((n, r) => n + distribution[r], 0);
+  const sum = stars.reduce((n, r) => n + r * distribution[r], 0);
+  return { average: total ? sum / total : 0, total };
+}
 
 export const getRecentPosts = (n: number) => blogPosts.slice(0, n);
 
