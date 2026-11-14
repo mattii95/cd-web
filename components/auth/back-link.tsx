@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { ArrowLeft } from "@/components/icons";
-import { getPost } from "@/lib/blog-posts";
+import { resolveBackHref } from "@/lib/back-href";
 
 function BackLinkView({ href }: { href: string }) {
   return (
@@ -18,11 +18,8 @@ function BackLinkView({ href }: { href: string }) {
   );
 }
 
-// Solo acepta /blog/{slug} de un artículo que existe: evita un open redirect.
 function ResolvedBackLink() {
-  const volver = useSearchParams().get("volver");
-  const match = volver?.match(/^\/blog\/([a-z0-9-]+)$/);
-  const href = match && getPost(match[1]) ? volver! : "/blog";
+  const href = resolveBackHref(useSearchParams().get("volver"));
   return <BackLinkView href={href} />;
 }
 
