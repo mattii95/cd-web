@@ -1,6 +1,6 @@
 # SPEC 03 — Blog y artículos
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Revisión:** 2026-11-14. El diseño sumó 'Ingresar' en el header y valoraciones y comentarios en el artículo. Los pasos 10 a 13 y sus criterios son nuevos y están sin implementar.
 > **Depende de:** SPEC 01, SPEC 02
 > **Fecha:** 2026-11-14
@@ -130,7 +130,10 @@ export function getCategory(tag: BlogCategoryTag): BlogCategory;
 export function getRecentPosts(n: number): BlogPost[];
 export function getRelatedPosts(post: BlogPost, n: number): BlogPost[];
 export function formatPostDate(iso: string): string; // "10 nov 2026"
-export function getRatingSummary(r: BlogReviews): { average: number; total: number }; // 4,6 y 24 para el mock
+export function getRatingSummary(r: BlogReviews): {
+  average: number;
+  total: number;
+}; // 4,6 y 24 para el mock
 ```
 
 Artículos mock (en orden de fecha):
@@ -201,14 +204,14 @@ Convenciones:
 - [x] La pestaña muestra "Blog · Courroux Digital" en el índice y "{título} · Courroux Digital" en cada artículo.
 - [x] Cada página tiene `<meta name="description">` y `<link rel="canonical">` con su URL. Los artículos tienen `og:type` = `article`.
 - [ ] Con `prefers-reduced-motion: reduce` emulado, `/blog` y los artículos no tienen animaciones.
-- [ ] El hero del artículo de sistemas muestra "★ 4,6 (24 valoraciones · 4 comentarios)". Los otros 7 artículos no muestran la línea, la entrada del índice ni la sección.
-- [ ] El índice del artículo de sistemas incluye "Valoraciones y comentarios" y hace scroll a `#valoraciones`.
-- [ ] La sección muestra el promedio "4,6", "24 valoraciones" y 5 barras con 18, 4, 1, 1 y 0.
-- [ ] La sección muestra "Iniciá sesión para comentar y puntuar" con "Ingresar" y "Crear cuenta", y no hay formulario de comentario.
-- [ ] "Más recientes" lista Lucía, Martín, Carla y Diego. "Mejor puntuados" lista Lucía, Carla, Martín y Diego. "Más votados" lista Lucía, Carla, Martín y Diego.
-- [ ] Marcar "Útil" en un comentario suma 1 y lo deja con `aria-pressed="true"`. Volver a marcarlo resta 1.
-- [ ] Los comentarios de Lucía y Diego muestran la respuesta del autor con el badge "Autor".
-- [ ] El header muestra "Ingresar" en desktop y mobile, y al hacer click no navega.
+- [x] El hero del artículo de sistemas muestra "★ 4,6 (24 valoraciones · 4 comentarios)". Los otros 7 artículos no muestran la línea, la entrada del índice ni la sección.
+- [x] El índice del artículo de sistemas incluye "Valoraciones y comentarios" y hace scroll a `#valoraciones`.
+- [x] La sección muestra el promedio "4,6", "24 valoraciones" y 5 barras con 18, 4, 1, 1 y 0.
+- [x] La sección muestra "Iniciá sesión para comentar y puntuar" con "Ingresar" y "Crear cuenta", y no hay formulario de comentario.
+- [x] "Más recientes" lista Lucía, Martín, Carla y Diego. "Mejor puntuados" lista Lucía, Carla, Martín y Diego. "Más votados" lista Lucía, Carla, Martín y Diego.
+- [x] Marcar "Útil" en un comentario suma 1 y lo deja con `aria-pressed="true"`. Volver a marcarlo resta 1.
+- [x] Los comentarios de Lucía y Diego muestran la respuesta del autor con el badge "Autor".
+- [x] El header muestra "Ingresar" en desktop y mobile, y al hacer click no navega.
 - [x] No aparece ningún texto "[Tu marca]", "[Nombre del autor]", "[Cargo]", "[Fecha]", "[Breve bio", "[frecuencia]", "[Tu nombre]" ni "suscribirse".
 
 ## Decisiones
@@ -249,7 +252,7 @@ Convenciones:
 | `Intl.DateTimeFormat` puede formatear distinto en el servidor y en el cliente (ej.: "nov." vs "nov"). | Formatear solo en Server Components. `post-list.tsx` recibe la fecha ya formateada como prop.  |
 | `navigator.clipboard` solo funciona en contexto seguro (HTTPS o `localhost`).                         | En producción es HTTPS. Si falla, el botón muestra "No se pudo copiar" y no rompe la página.   |
 | El índice sticky puede tapar contenido o quedar muy largo en pantallas bajas.                         | Sticky solo desde `lg`. Debajo de `lg` el índice va arriba del cuerpo, sin sticky.             |
-| Un "Ingresar" y un "Crear cuenta" que no llevan a ningún lado pueden confundir.                      | Es una maqueta. Si el blog se publica antes del spec de cuentas, ocultar los tres botones.     |
+| Un "Ingresar" y un "Crear cuenta" que no llevan a ningún lado pueden confundir.                       | Es una maqueta. Si el blog se publica antes del spec de cuentas, ocultar los tres botones.     |
 | Los comentarios y las valoraciones mock pueden pasar por opiniones reales de clientes.                | Se marcan como mock en `lib/blog-posts.ts`. El spec de comentarios los reemplaza.              |
 | `generateStaticParams` con `cacheComponents: true` falla en el build si devuelve un array vacío.      | Sale de `blogPosts`, que siempre tiene 8 elementos.                                            |
 
