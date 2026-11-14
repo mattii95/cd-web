@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
-import { ArrowUpRight } from "@/components/icons";
+import { ArrowUpRight, User } from "@/components/icons";
 
 type NavLink = { href: string; label: string };
 
@@ -64,10 +64,18 @@ export function MobileMenu({ links, cta }: { links: NavLink[]; cta: NavLink }) {
             {link.label}
           </Link>
         ))}
+        {/* Solo visual: no hay login todavía (spec 03). */}
+        <button
+          type="button"
+          className="fx-ghost mt-2 flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-white/[0.22] bg-transparent px-[22px] py-3 text-sm font-semibold text-white"
+        >
+          <User />
+          Ingresar
+        </button>
         <Link
           href={cta.href}
           onClick={close}
-          className="fx-btn mt-2 flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent px-[22px] py-[13px] text-sm font-semibold text-white no-underline"
+          className="fx-btn flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent px-[22px] py-[13px] text-sm font-semibold text-white no-underline"
         >
           {cta.label}
           <ArrowUpRight />

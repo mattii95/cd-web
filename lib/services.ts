@@ -1,5 +1,7 @@
 import type { ServiceIcon } from "@/components/icons";
 
+export type ServiceSlug = Service["slug"];
+
 export type Service = {
   slug:
     | "desarrollo-web"
