@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ServiceFeatures } from "@/components/service/features";
+import { ServiceIdealFor } from "@/components/service/ideal-for";
 import { ServiceProcess } from "@/components/service/process";
 import { ServiceHero } from "@/components/service/hero";
 import { getService, services } from "@/lib/services";
@@ -33,6 +34,7 @@ export default async function ServicePage({
       <ServiceHero service={service} />
       <ServiceFeatures service={service} />
       <ServiceProcess />
+      <ServiceIdealFor service={service} />
     </main>
   );
 }
