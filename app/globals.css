@@ -1,26 +1,207 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050b1c;
+  --foreground: #ffffff;
 }
 
 @theme inline {
+  /* Base */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  /* Acento */
+  --color-accent: #1a66f5;
+  --color-accent-hover: #0f4fc7;
+  --color-accent-light: #4d8bff;
+  --color-accent-soft: #7fa9ff;
+  --color-accent-softer: #9dbbff;
+  --color-accent-pale: #bfd3ff;
+  --color-accent-tint: #eaf1ff;
+
+  /* Superficies */
+  --color-surface: #0b1222;
+  --color-surface-2: #0d1730;
+  --color-surface-3: #0a1226;
+  --color-surface-4: #13203f;
+  --color-border-strong: #2a3a5e;
+  --color-border-muted: #22304f;
+
+  /* Secciones claras */
+  --color-paper: #f4f7fd;
+  --color-paper-border: #e3e8f2;
+
+  /* Texto */
+  --color-text-strong: #e3e8f2;
+  --color-text: #d5dceb;
+  --color-text-muted: #a8b3c9;
+  --color-text-subtle: #7f8ba6;
+  --color-text-faint: #5b6478;
+
+  /* Fuentes */
+  --font-display: var(--font-space-grotesk);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
+}
+
+/* Foco de teclado visible en toda la interfaz (fondos oscuros y claros) */
+:focus-visible {
+  outline: 2px solid var(--color-accent-light);
+  outline-offset: 3px;
+}
+.bg-paper :focus-visible {
+  outline-color: var(--color-accent);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* ==========================================================================
+   Animaciones y efectos (portados del <helmet> del artboard Main)
+   ========================================================================== */
+
+@property --a {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes gridpan { to { background-position: 56px 56px, 56px 56px; } }
+@keyframes drift1 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-80px, 50px) scale(1.2); } }
+@keyframes drift2 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(70px, -40px) scale(.85); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spinr { to { transform: rotate(-360deg); } }
+@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+@keyframes rise { from { opacity: 0; transform: translateY(28px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes slidein { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+@keyframes shine { 0% { transform: translateX(-150%) skewX(-20deg); } 55%, 100% { transform: translateX(350%) skewX(-20deg); } }
+@keyframes beam { to { --a: 360deg; } }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(77, 139, 255, .7); } 50% { box-shadow: 0 0 0 9px rgba(77, 139, 255, 0); } }
+@keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
+@keyframes scan { 0% { transform: translateY(-120%); } 100% { transform: translateY(520%); } }
+@keyframes glowtext { 0%, 100% { text-shadow: 0 0 18px rgba(77, 139, 255, .35); } 50% { text-shadow: 0 0 34px rgba(77, 139, 255, .8); } }
+@keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+.fx-grid { animation: gridpan 5s linear infinite; }
+.fx-orb { position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none; }
+.fx-orb1 { animation: drift1 14s ease-in-out infinite; }
+.fx-orb2 { animation: drift2 18s ease-in-out infinite; }
+.fx-ring { animation: spin 50s linear infinite; }
+.fx-ringr { animation: spinr 36s linear infinite; }
+.fx-float { animation: floaty 6s ease-in-out infinite; }
+.fx-float2 { animation: floaty 7s ease-in-out -2.5s infinite; }
+.fx-rise { animation: rise 1s cubic-bezier(.2, .7, .2, 1) both; }
+.d1 { animation-delay: .1s; }
+.d2 { animation-delay: .25s; }
+.d3 { animation-delay: .4s; }
+.d4 { animation-delay: .55s; }
+.d5 { animation-delay: .7s; }
+.fx-glowtext { animation: glowtext 4s ease-in-out infinite; }
+.fx-caret { animation: blink 1s steps(1) infinite; }
+
+/* Botones */
+.fx-btn { position: relative; overflow: hidden; transition: transform .25s, box-shadow .25s; }
+.fx-btn::after { content: ""; position: absolute; top: 0; left: 0; width: 35%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .5), transparent); animation: shine 3.8s ease-in-out infinite; pointer-events: none; }
+.fx-btn:hover { transform: translateY(-2px); box-shadow: 0 0 0 4px rgba(26, 102, 245, .2), 0 14px 34px rgba(26, 102, 245, .6); }
+.fx-ghost { transition: background .25s, border-color .25s, box-shadow .25s; }
+.fx-ghost:hover { background: rgba(255, 255, 255, .06); border-color: rgba(157, 187, 255, .7) !important; box-shadow: 0 0 24px rgba(77, 139, 255, .35); }
+
+/* Cards */
+.fx-card { position: relative; transition: transform .4s cubic-bezier(.2, .7, .2, 1), box-shadow .4s, border-color .4s; }
+.fx-card::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(115deg, transparent 35%, rgba(77, 139, 255, .16) 50%, transparent 65%); background-size: 260% 100%; background-position: 120% 0; opacity: 0; transition: opacity .3s, background-position 1s ease; pointer-events: none; }
+.fx-card:hover { transform: translateY(-8px); border-color: #8fb2ff !important; box-shadow: 0 26px 60px rgba(26, 102, 245, .2), 0 0 0 1px rgba(26, 102, 245, .3), 0 0 40px rgba(77, 139, 255, .18); }
+.fx-card:hover::before { opacity: 1; background-position: -20% 0; }
+.fx-icon { transition: transform .4s cubic-bezier(.3, 1.5, .5, 1), box-shadow .4s; }
+.fx-card:hover .fx-icon { transform: scale(1.12) rotate(-6deg); box-shadow: 0 0 28px rgba(77, 139, 255, .6); }
+.fx-arrow { transition: transform .3s; }
+.fx-card:hover .fx-arrow { transform: translateX(6px); }
+.fx-row { transition: transform .3s, border-color .3s, box-shadow .3s; }
+.fx-row:hover { transform: translateX(8px); border-color: #8fb2ff !important; box-shadow: 0 12px 30px rgba(26, 102, 245, .15); }
+
+/* Borde con haz giratorio */
+.fx-beam::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; background: conic-gradient(from var(--a), transparent 0deg, transparent 250deg, #1a66f5 310deg, #bfd3ff 345deg, transparent 360deg); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: beam 4s linear infinite; pointer-events: none; }
+
+.fx-dot { animation: pulse 2s ease-in-out infinite; }
+.fx-scan { position: absolute; left: 0; right: 0; top: 0; height: 22%; background: linear-gradient(180deg, transparent, rgba(77, 139, 255, .18), transparent); animation: scan 4.5s linear infinite; pointer-events: none; }
+.fx-fill { transform-origin: left; animation: fill 1.2s cubic-bezier(.2, .7, .2, 1) both; }
+.fx-pop { animation: pop .6s cubic-bezier(.3, 1.6, .5, 1) both; }
+
+/* Inputs */
+.fx-input { transition: border-color .25s, box-shadow .25s; }
+.fx-input:focus { outline: none; border-color: #4d8bff !important; box-shadow: 0 0 0 4px rgba(26, 102, 245, .25), 0 0 24px rgba(77, 139, 255, .25); }
+.fx-input::placeholder { color: #7f8ba6; }
+
+/* Reveal al hacer scroll (solo si el navegador soporta scroll-driven animations) */
+@supports (animation-timeline: view()) {
+  .fx-reveal { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% entry 70%; }
+  .fx-reveal.r2 { animation-range: entry 10% entry 80%; }
+  .fx-reveal.r3 { animation-range: entry 20% entry 90%; }
+  .fx-reveal.r4 { animation-range: entry 30% entry 100%; }
+  .fx-revealx { animation: slidein linear both; animation-timeline: view(); animation-range: entry 0% entry 80%; }
+  .fx-revealx.r2 { animation-range: entry 10% entry 90%; }
+  .fx-revealx.r3 { animation-range: entry 20% entry 100%; }
+  .fx-revealx.r4 { animation-range: entry 30% cover 40%; }
+  .fx-fill { animation: fill linear both; animation-timeline: view(); animation-range: entry 30% cover 45%; }
+  .fx-fill.r2 { animation-range: entry 50% cover 50%; }
+  .fx-fill.r3 { animation-range: entry 70% cover 55%; }
+  .fx-fill.r4 { animation-range: entry 90% cover 60%; }
+  .fx-pop { animation: pop linear both; animation-timeline: view(); animation-range: entry 40% entry 100%; }
+  .fx-line { animation: slidein linear both; animation-timeline: view(); }
+}
+
+/* Mini-mockups de servicios (sv-*) */
+@keyframes sv-resp { 0%, 22% { width: 360px; } 32%, 55% { width: 240px; } 65%, 88% { width: 140px; } 98%, 100% { width: 360px; } }
+.sv-resp { animation: sv-resp 9s cubic-bezier(.7, 0, .3, 1) infinite; }
+@keyframes sv-l1 { 0%, 25% { opacity: 1; } 29%, 95% { opacity: 0; } 99%, 100% { opacity: 1; } }
+@keyframes sv-l2 { 0%, 28% { opacity: 0; } 32%, 58% { opacity: 1; } 62%, 100% { opacity: 0; } }
+@keyframes sv-l3 { 0%, 61% { opacity: 0; } 65%, 91% { opacity: 1; } 95%, 100% { opacity: 0; } }
+.sv-l1 { animation: sv-l1 9s infinite; }
+.sv-l2 { animation: sv-l2 9s infinite; }
+.sv-l3 { animation: sv-l3 9s infinite; }
+@keyframes sv-shim { 0% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
+.sv-tile { background: linear-gradient(90deg, #13203f 30%, #24386e 50%, #13203f 70%); background-size: 200% 100%; animation: sv-shim 2.2s linear infinite; }
+@keyframes sv-bar { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
+.sv-bar { transform-origin: bottom; animation: sv-bar 2.4s ease-in-out infinite; }
+@keyframes sv-nav { 0%, 20% { transform: translateY(0); } 25%, 45% { transform: translateY(32px); } 50%, 70% { transform: translateY(64px); } 75%, 95% { transform: translateY(96px); } 100% { transform: translateY(0); } }
+.sv-nav { animation: sv-nav 8s cubic-bezier(.7, 0, .3, 1) infinite; }
+.sv-spin { animation: spin 1.6s linear infinite; }
+@keyframes sv-dash { to { stroke-dashoffset: -20; } }
+.sv-flow { animation: sv-dash .9s linear infinite; }
+.sv-ring { transform-box: fill-box; transform-origin: center; animation: spin 14s linear infinite; }
+@keyframes sv-node { 0%, 100% { stroke: rgba(255, 255, 255, .18); filter: none; } 45%, 60% { stroke: #4d8bff; filter: drop-shadow(0 0 8px rgba(77, 139, 255, .9)); } }
+.sv-node { animation: sv-node 3s ease-in-out infinite; }
+@keyframes sv-travel { 0% { offset-distance: 0%; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
+.sv-packet { position: absolute; left: 0; top: 0; width: 8px; height: 8px; border-radius: 50%; background: #bfd3ff; box-shadow: 0 0 10px 3px rgba(77, 139, 255, .9); offset-rotate: 0deg; animation: sv-travel 3s linear infinite; }
+
+/* Chat del asistente IA (ia-*) */
+@keyframes ia-u { 0%, 4% { opacity: 0; transform: translateY(10px); } 10%, 88% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; } }
+@keyframes ia-t { 0%, 14% { opacity: 0; } 18%, 36% { opacity: 1; } 40%, 100% { opacity: 0; } }
+@keyframes ia-r { 0%, 38% { opacity: 0; transform: translateY(10px); } 45%, 88% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; } }
+@keyframes ia-c { 0%, 58% { opacity: 0; transform: scale(.85); } 64%, 88% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; } }
+@keyframes ia-dot { 0%, 60%, 100% { transform: translateY(0); opacity: .4; } 30% { transform: translateY(-4px); opacity: 1; } }
+.ia-u { animation: ia-u 8s ease-out infinite; }
+.ia-t { animation: ia-t 8s infinite; }
+.ia-r { animation: ia-r 8s ease-out infinite; }
+.ia-c { animation: ia-c 8s cubic-bezier(.3, 1.5, .5, 1) infinite; }
+.ia-dot { animation: ia-dot 1s ease-in-out infinite; }
+
+/* Footer (ft-*) */
+.ft-link { color: #a8b3c9; text-decoration: none; transition: color .2s, transform .2s; display: inline-flex; }
+.ft-link:hover { color: #fff; transform: translateX(4px); }
+.ft-soc { transition: transform .3s cubic-bezier(.3, 1.5, .5, 1), background .3s, border-color .3s, box-shadow .3s, color .3s; }
+.ft-soc:hover { transform: translateY(-4px); background: #1a66f5 !important; border-color: #4d8bff !important; color: #fff !important; box-shadow: 0 0 24px rgba(77, 139, 255, .7); }
+@keyframes ft-line { 0% { background-position: -60% 0; } 100% { background-position: 160% 0; } }
+.ft-line { background: linear-gradient(90deg, transparent, #4d8bff, transparent) no-repeat; background-size: 40% 100%; animation: ft-line 6s linear infinite; }
+
+/* Accesibilidad: sin movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }
