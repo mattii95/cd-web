@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight } from "@/components/icons";
+import { ArrowUpRight, User } from "@/components/icons";
 import { MobileMenu } from "@/components/mobile-menu";
 import { site } from "@/lib/site";
 
@@ -50,13 +50,23 @@ export function SiteHeader() {
           ))}
         </ul>
 
-        <Link
-          href={cta.href}
-          className="fx-btn hidden min-h-11 items-center gap-2 rounded-full bg-accent px-[22px] py-[13px] text-sm font-semibold text-white no-underline md:inline-flex"
-        >
-          {cta.label}
-          <ArrowUpRight />
-        </Link>
+        <div className="hidden items-center gap-2.5 md:flex">
+          {/* Solo visual: no hay login todavía (spec 03). */}
+          <button
+            type="button"
+            className="fx-ghost inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-white/[0.22] bg-transparent px-[18px] py-3 text-sm font-semibold text-white"
+          >
+            <User />
+            Ingresar
+          </button>
+          <Link
+            href={cta.href}
+            className="fx-btn inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-[22px] py-[13px] text-sm font-semibold text-white no-underline"
+          >
+            {cta.label}
+            <ArrowUpRight />
+          </Link>
+        </div>
 
         <MobileMenu links={navLinks} cta={cta} />
       </nav>

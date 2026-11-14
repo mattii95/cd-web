@@ -33,6 +33,10 @@ function Icon({
   );
 }
 
+export const User = (p: IconProps) => (
+  <Icon size={16} strokeWidth={2} {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0116 0" /></Icon>
+);
+
 // Flechas y acciones
 export const ArrowRight = (p: IconProps) => (
   <Icon strokeWidth={2} {...p}><path d="M5 12h14M13 6l6 6-6 6" /></Icon>
