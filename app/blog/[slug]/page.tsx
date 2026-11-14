@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ArticleCta } from "@/components/blog/article-cta";
+import { AuthorBox } from "@/components/blog/author-box";
+import { RelatedPosts } from "@/components/blog/related-posts";
 import { ArticleBody } from "@/components/blog/article-body";
 import { ShareButton } from "@/components/blog/share-button";
 import { ArticleToc } from "@/components/blog/article-toc";
@@ -44,10 +47,15 @@ export default async function ArticlePage({
             <ShareButton title={post.title} />
           </aside>
           <div className="min-w-0 flex-[999_1_560px]">
-            <ArticleBody body={post.body} />
+            <div className="flex max-w-[760px] flex-col gap-6">
+              <ArticleBody body={post.body} />
+              <AuthorBox />
+              <ArticleCta post={post} />
+            </div>
           </div>
         </div>
       </section>
+      <RelatedPosts post={post} />
     </main>
   );
 }
