@@ -79,12 +79,24 @@ export const Layers = (p: IconProps) => (
     <path d="M3 17.5l9 5 9-5" />
   </Icon>
 );
+export const Cloud = (p: IconProps) => (
+  <Icon size={28} {...p}><path d="M7 18a4.5 4.5 0 01-.6-9A6 6 0 0118 8.5a4 4 0 01-.5 9.5H7z" /></Icon>
+);
 export const Sparkles = (p: IconProps) => (
   <Icon size={28} {...p}>
     <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" />
     <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" />
   </Icon>
 );
+
+// Ícono de cada servicio (hero y "Otros servicios"), según los artboards Servicio-*
+export const serviceIcons = {
+  code: Code,
+  layers: Layers,
+  cloud: Cloud,
+  sparkles: Sparkles,
+};
+export type ServiceIcon = keyof typeof serviceIcons;
 
 // Diferenciales de "Nosotros"
 export const Bolt = (p: IconProps) => (
