@@ -38,7 +38,7 @@ async function CurrentYear() {
 }
 
 const columnTitle = "font-mono text-xs text-accent-soft";
-const columnList = "m-0 flex list-none flex-col gap-1 p-0";
+const columnList = "m-0 flex list-none flex-col p-0";
 
 export function SiteFooter() {
   return (
@@ -92,7 +92,7 @@ export function SiteFooter() {
             <ul className={columnList}>
               {services.map((s) => (
                 <li key={s.slug}>
-                  <Link href={`/servicios/${s.slug}`} className="ft-link py-1.5 text-[15px]">
+                  <Link href={`/servicios/${s.slug}`} className="ft-link min-h-11 items-center text-[15px]">
                     {s.title}
                   </Link>
                 </li>
@@ -105,7 +105,7 @@ export function SiteFooter() {
             <ul className={columnList}>
               {company.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="ft-link py-1.5 text-[15px]">
+                  <Link href={l.href} className="ft-link min-h-11 items-center text-[15px]">
                     {l.label}
                   </Link>
                 </li>
@@ -115,20 +115,20 @@ export function SiteFooter() {
 
           <div className="flex flex-[1.4_1_240px] flex-col gap-3.5">
             <span className={columnTitle}>{"// contacto"}</span>
-            <ul className="m-0 flex list-none flex-col gap-3 p-0">
-              <li className="flex items-start gap-3 text-[15px] leading-normal">
-                <Mail size={18} className="mt-0.5 flex-none text-accent-soft" />
-                <a href={`mailto:${site.email}`} className="ft-link">
+            <ul className="m-0 flex list-none flex-col p-0">
+              <li className="flex items-center gap-3 text-[15px] leading-normal">
+                <Mail size={18} className="flex-none text-accent-soft" />
+                <a href={`mailto:${site.email}`} className="ft-link min-h-11 items-center">
                   {site.email}
                 </a>
               </li>
-              <li className="flex items-start gap-3 text-[15px] leading-normal">
-                <WhatsApp size={18} className="mt-0.5 flex-none text-accent-soft" />
+              <li className="flex items-center gap-3 text-[15px] leading-normal">
+                <WhatsApp size={18} className="flex-none text-accent-soft" />
                 <a
                   href={`https://wa.me/${site.whatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ft-link"
+                  className="ft-link min-h-11 items-center"
                 >
                   WhatsApp {site.whatsappDisplay}
                 </a>
@@ -151,16 +151,16 @@ export function SiteFooter() {
             © <CurrentYear /> {site.name}. Todos los derechos reservados.
           </span>
           <span className="flex flex-wrap gap-x-5 gap-y-1">
-            <Link href="/terminos" className="ft-link py-3">
+            <Link href="/terminos" className="ft-link min-h-11 items-center">
               Términos y condiciones
             </Link>
-            <Link href="/privacidad" className="ft-link py-3">
+            <Link href="/privacidad" className="ft-link min-h-11 items-center">
               Política de privacidad
             </Link>
           </span>
           <Link
             href="/#inicio"
-            className="ft-link items-center gap-2 py-3 font-mono text-xs"
+            className="ft-link min-h-11 items-center gap-2 font-mono text-xs"
           >
             volver_arriba
             <ArrowUp />
