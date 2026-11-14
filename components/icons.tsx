@@ -44,6 +44,12 @@ export const ArrowRight = (p: IconProps) => (
 export const ArrowLeft = (p: IconProps) => (
   <Icon size={16} strokeWidth={2} {...p}><path d="M19 12H5M11 18l-6-6 6-6" /></Icon>
 );
+export const Eye = (p: IconProps) => (
+  <Icon {...p}><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></Icon>
+);
+export const EyeOff = (p: IconProps) => (
+  <Icon {...p}><path d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.9 5.1A9.8 9.8 0 0112 5c5 0 9 4.5 10 7a13 13 0 01-3 4.2M6.1 6.1A13 13 0 002 12c1 2.5 5 7 10 7a9.7 9.7 0 004.4-1" /></Icon>
+);
 export const ArrowUpRight = (p: IconProps) => (
   <Icon strokeWidth={2} {...p}><path d="M7 17L17 7M8 7h9v9" /></Icon>
 );
