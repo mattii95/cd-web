@@ -1,12 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useState } from "react";
-import { ArrowUpRight, User } from "@/components/icons";
+import { type ReactNode, useEffect, useId, useState } from "react";
+import { ArrowUpRight } from "@/components/icons";
 
 type NavLink = { href: string; label: string };
 
-export function MobileMenu({ links, cta }: { links: NavLink[]; cta: NavLink }) {
+export function MobileMenu({
+  links,
+  cta,
+  account,
+}: {
+  links: NavLink[];
+  cta: NavLink;
+  account: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
 
@@ -64,14 +72,7 @@ export function MobileMenu({ links, cta }: { links: NavLink[]; cta: NavLink }) {
             {link.label}
           </Link>
         ))}
-        <Link
-          href="/cuenta/login"
-          onClick={close}
-          className="fx-ghost mt-2 flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/[0.22] bg-transparent px-[22px] py-3 text-sm font-semibold text-white no-underline"
-        >
-          <User />
-          Ingresar
-        </Link>
+        <div onClick={close}>{account}</div>
         <Link
           href={cta.href}
           onClick={close}

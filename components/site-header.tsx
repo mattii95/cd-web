@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, User } from "@/components/icons";
+import { Suspense } from "react";
+import { LoginLink } from "@/components/auth/login-link";
+import { MobileAccount, UserMenu } from "@/components/auth/user-menu";
+import { ArrowUpRight } from "@/components/icons";
 import { MobileMenu } from "@/components/mobile-menu";
 import { site } from "@/lib/site";
 
@@ -51,13 +54,9 @@ export function SiteHeader() {
         </ul>
 
         <div className="hidden items-center gap-2.5 md:flex">
-          <Link
-            href="/cuenta/login"
-            className="fx-ghost inline-flex min-h-11 items-center gap-2 rounded-full border border-white/[0.22] bg-transparent px-[18px] py-3 text-sm font-semibold text-white no-underline"
-          >
-            <User />
-            Ingresar
-          </Link>
+          <Suspense fallback={<LoginLink />}>
+            <UserMenu />
+          </Suspense>
           <Link
             href={cta.href}
             className="fx-btn inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-[22px] py-[13px] text-sm font-semibold text-white no-underline"
@@ -67,7 +66,15 @@ export function SiteHeader() {
           </Link>
         </div>
 
-        <MobileMenu links={navLinks} cta={cta} />
+        <MobileMenu
+          links={navLinks}
+          cta={cta}
+          account={
+            <Suspense fallback={<LoginLink className="mt-2 px-[22px]" />}>
+              <MobileAccount />
+            </Suspense>
+          }
+        />
       </nav>
     </header>
   );
