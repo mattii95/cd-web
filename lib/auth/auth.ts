@@ -57,6 +57,8 @@ function createAuth() {
         "/send-verification-email": { max: 3, window: 60 },
       },
     },
+    // Por defecto Better Auth solo marca Secure si BETTER_AUTH_URL es https; en producción siempre.
+    advanced: { useSecureCookies: process.env.NODE_ENV === "production" },
     plugins: [nextCookies()],
   });
 }
