@@ -1,6 +1,6 @@
 # SPEC 06 — Base de datos
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 05
 > **Fecha:** 2026-11-14
 > **Objetivo:** Conectar la app al Postgres de `docker-compose.yaml` con Drizzle ORM, con migraciones versionadas, una base de test aparte, `/api/health` y un job de CI, sin tablas de dominio.
@@ -146,32 +146,32 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` termina sin errores.
-- [ ] `npx tsc --noEmit` termina sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado y sin `DATABASE_URL`.
-- [ ] El build no prerenderiza `/api/health`: la ruta figura como dinámica en la salida de `next build`.
-- [ ] `docker-compose.yaml` no tiene ninguna contraseña ni usuario de Postgres escritos. Los lee de `.env`.
-- [ ] Sin `.env`, `docker compose up -d` falla con un mensaje que nombra la variable que falta.
-- [ ] Con el volumen vacío, `docker compose up -d` deja `postgres18` en estado `healthy`.
-- [ ] Con el volumen vacío, existen las bases `DB_CD26` y `DB_CD26_test` después del primer arranque.
-- [ ] `.env.example` está versionado. `.env`, `.env.local` y `.env.test.local` no aparecen en `git status`.
-- [ ] `docker/data/` y `docker/pgadmin/` no aparecen en `git status` después de levantar Docker.
-- [ ] `getDatabaseUrl()` lanza un error que menciona `DATABASE_URL` si la variable falta, es `http://…` o no es una URL.
-- [ ] Importar `db/client.ts` desde un archivo con `"use client"` hace fallar `npm run build`.
-- [ ] `npm run db:migrate` aplica `0000_init.sql` y crea la tabla `drizzle.__drizzle_migrations`.
-- [ ] Correr `npm run db:migrate` dos veces seguidas no da error.
-- [ ] `npm run db:generate` sin cambios en el esquema no crea migraciones nuevas.
-- [ ] `npm run db:seed` termina con código 0.
-- [ ] `npm run db:studio` abre Drizzle Studio conectado a `DB_CD26`.
-- [ ] `npm run test:run` pasa con Docker apagado y no corre el proyecto `db`.
-- [ ] `npm run test:db` pasa con Docker levantado.
-- [ ] Con `DATABASE_URL` apuntando a `DB_CD26`, `npm run test:db` falla antes de correr los tests, con un mensaje que pide una base `_test`.
-- [ ] `GET /api/health` con la base disponible responde 200 con `{ "status": "ok", "db": "up" }` y `Cache-Control: no-store`.
-- [ ] `GET /api/health` con Docker apagado responde 503 con `{ "status": "error", "db": "down" }`, sin la URL ni el mensaje de error en la respuesta.
-- [ ] Diez requests seguidos a `/api/health` en `next dev` no aumentan la cantidad de conexiones en `pg_stat_activity` más allá del tamaño del pool.
+- [x] `npm run lint` termina sin errores.
+- [x] `npx tsc --noEmit` termina sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado y sin `DATABASE_URL`.
+- [x] El build no prerenderiza `/api/health`: la ruta figura como dinámica en la salida de `next build`.
+- [x] `docker-compose.yaml` no tiene ninguna contraseña ni usuario de Postgres escritos. Los lee de `.env`.
+- [x] Sin `.env`, `docker compose up -d` falla con un mensaje que nombra la variable que falta.
+- [x] Con el volumen vacío, `docker compose up -d` deja `postgres18` en estado `healthy`.
+- [x] Con el volumen vacío, existen las bases `DB_CD26` y `DB_CD26_test` después del primer arranque.
+- [x] `.env.example` está versionado. `.env`, `.env.local` y `.env.test.local` no aparecen en `git status`.
+- [x] `docker/data/` y `docker/pgadmin/` no aparecen en `git status` después de levantar Docker.
+- [x] `getDatabaseUrl()` lanza un error que menciona `DATABASE_URL` si la variable falta, es `http://…` o no es una URL.
+- [x] Importar `db/client.ts` desde un archivo con `"use client"` hace fallar `npm run build`.
+- [x] `npm run db:migrate` aplica `0000_init.sql` y crea la tabla `drizzle.__drizzle_migrations`.
+- [x] Correr `npm run db:migrate` dos veces seguidas no da error.
+- [x] `npm run db:generate` sin cambios en el esquema no crea migraciones nuevas.
+- [x] `npm run db:seed` termina con código 0.
+- [x] `npm run db:studio` abre Drizzle Studio conectado a `DB_CD26`.
+- [x] `npm run test:run` pasa con Docker apagado y no corre el proyecto `db`.
+- [x] `npm run test:db` pasa con Docker levantado.
+- [x] Con `DATABASE_URL` apuntando a `DB_CD26`, `npm run test:db` falla antes de correr los tests, con un mensaje que pide una base `_test`.
+- [x] `GET /api/health` con la base disponible responde 200 con `{ "status": "ok", "db": "up" }` y `Cache-Control: no-store`.
+- [x] `GET /api/health` con Docker apagado responde 503 con `{ "status": "error", "db": "down" }`, sin la URL ni el mensaje de error en la respuesta.
+- [x] Diez requests seguidos a `/api/health` en `next dev` no aumentan la cantidad de conexiones en `pg_stat_activity` más allá del tamaño del pool.
 - [ ] El job `db` del CI corre en un PR a `main` y pasa.
 - [ ] Los jobs `checks` y `e2e` siguen pasando sin Postgres.
-- [ ] `README.md` explica cómo levantar la base, los scripts `db:*` y `test:db`, y cómo crear `DB_CD26_test` a mano.
+- [x] `README.md` explica cómo levantar la base, los scripts `db:*` y `test:db`, y cómo crear `DB_CD26_test` a mano.
 
 ## Decisiones
 
