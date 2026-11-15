@@ -11,6 +11,7 @@ const RULES = {
   "sign-up": { max: 3, window: 60 },
   "request-reset": { max: 3, window: 60 },
   "send-verification": { max: 3, window: 60 },
+  "sign-in-social": { max: 10, window: 60 },
 } as const;
 
 export type RateLimitRule = keyof typeof RULES;
