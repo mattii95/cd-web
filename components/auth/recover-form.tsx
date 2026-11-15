@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { requestResetAction } from "@/app/cuenta/actions";
 import { AuthForm } from "./auth-form";
 import { inputClass, labelClass } from "./field-styles";
 
 export function RecoverForm() {
   return (
     <AuthForm
+      action={requestResetAction}
       title="Recuperá tu contraseña"
       subtitle="Te enviamos un link para crear una nueva."
       submitLabel="Enviar link"
