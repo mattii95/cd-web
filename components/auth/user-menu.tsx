@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { signOutAction } from "@/app/cuenta/actions";
+import { avatarSrc } from "@/lib/auth/avatar";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { LoginLink } from "./login-link";
+import { UserAvatar } from "./user-avatar";
 import { UserMenuDropdown } from "./user-menu-dropdown";
 
 // Sin sesión (o con la base caída) muestra "Ingresar", igual que el fallback del <Suspense>.
 export async function UserMenu() {
   const user = await getCurrentUser();
   if (!user) return <LoginLink />;
-  return <UserMenuDropdown name={user.name} isAdmin={user.role === "admin"} />;
+  return <UserMenuDropdown name={user.name} image={avatarSrc(user.image)} isAdmin={user.role === "admin"} />;
 }
 
 const mobileItem =
@@ -20,6 +22,15 @@ export async function MobileAccount() {
   if (!user) return <LoginLink className="mt-2 px-[22px]" />;
   return (
     <div className="mt-2 flex flex-col gap-1 border-t border-white/10 pt-2">
+      <div className="flex items-center gap-3 px-4 py-2">
+        <span
+          aria-hidden="true"
+          className="flex size-11 flex-none items-center justify-center rounded-full border border-accent-light/40 bg-accent/20 font-display text-lg font-bold text-accent-pale"
+        >
+          <UserAvatar name={user.name} image={avatarSrc(user.image)} />
+        </span>
+        <span className="min-w-0 truncate text-base font-semibold text-white">{user.name}</span>
+      </div>
       <Link href="/cuenta/perfil" className={mobileItem}>
         Mi perfil
       </Link>

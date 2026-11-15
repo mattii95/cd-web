@@ -3,11 +3,20 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { signOutAction } from "@/app/cuenta/actions";
+import { UserAvatar } from "./user-avatar";
 
 const itemClass =
   "block w-full cursor-pointer rounded-xl border-0 bg-transparent px-4 py-3 text-left text-sm font-medium text-text no-underline transition-colors hover:bg-white/10 hover:text-white";
 
-export function UserMenuDropdown({ name, isAdmin }: { name: string; isAdmin: boolean }) {
+export function UserMenuDropdown({
+  name,
+  image,
+  isAdmin,
+}: {
+  name: string;
+  image: string | null; // ya pasó por avatarSrc: solo hosts permitidos
+  isAdmin: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const ref = useRef<HTMLDivElement>(null);
@@ -36,7 +45,7 @@ export function UserMenuDropdown({ name, isAdmin }: { name: string; isAdmin: boo
         onClick={() => setOpen((v) => !v)}
         className="flex size-11 cursor-pointer items-center justify-center rounded-full border border-accent-light/40 bg-accent/20 font-display text-lg font-bold text-accent-pale transition-colors hover:bg-accent/35"
       >
-        {name.trim().charAt(0).toUpperCase()}
+        <UserAvatar name={name} image={image} />
       </button>
       <div
         id={panelId}

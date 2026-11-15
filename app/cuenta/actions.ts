@@ -6,6 +6,7 @@ import { isAPIError } from "better-auth/api";
 import { z } from "zod";
 import { resolveAfterLogin } from "@/lib/back-href";
 import { getAuth } from "@/lib/auth/auth";
+import { getEnabledProviders } from "@/lib/auth/providers";
 import { isRateLimited, type RateLimitRule } from "@/lib/auth/rate-limit";
 
 export type FormState =
@@ -148,6 +149,31 @@ export async function resetPasswordAction(_: FormState, data: FormData): Promise
     return toState(e);
   }
   redirect("/cuenta/login?estado=contrasena-actualizada");
+}
+
+// Redirige a la pantalla del proveedor. Sin JavaScript también anda: es un form con Server Action.
+export async function signInSocialAction(_: FormState, data: FormData): Promise<FormState> {
+  if (await limited("sign-in-social")) return error(MSG.limite);
+  const provider = field(data, "provider");
+  const destino = resolveAfterLogin(field(data, "volver").slice(0, 200) || null);
+
+  let url: string | undefined;
+  try {
+    if (!getEnabledProviders().some((p) => p === provider)) return error(MSG.datos);
+    ({ url } = await getAuth().api.signInSocial({
+      body: {
+        provider,
+        callbackURL: destino,
+        newUserCallbackURL: destino,
+        errorCallbackURL: "/cuenta/login",
+      },
+      headers: await headers(),
+    }));
+  } catch (e) {
+    return toState(e);
+  }
+  if (!url) return error(MSG.inesperado);
+  redirect(url);
 }
 
 export async function signOutAction() {

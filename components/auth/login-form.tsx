@@ -1,17 +1,19 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { AuthForm } from "./auth-form";
 import { inputClass, labelClass } from "./field-styles";
 import { signInAction } from "@/app/cuenta/actions";
 import { LoginContext } from "./login-context";
 import { PasswordInput } from "./password-input";
 
-export function LoginForm() {
+export function LoginForm({ social }: { social?: ReactNode }) {
   return (
     <AuthForm
       action={signInAction}
       title="Iniciá sesión"
       subtitle="Bienvenido de nuevo. Ingresá con tu cuenta para participar."
       submitLabel="Ingresar"
+      social={social}
       footer={
         <>
           ¿No tenés cuenta?{" "}

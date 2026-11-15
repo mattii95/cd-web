@@ -79,6 +79,13 @@ jobs:
       SMTP_HOST: localhost
       SMTP_PORT: "1025"
       MAIL_FROM: Courroux Digital <no-reply@localhost>
+      # Falsos: el E2E solo llega hasta el redirect al proveedor.
+      GOOGLE_CLIENT_ID: test-google-id
+      GOOGLE_CLIENT_SECRET: test-google-secret
+      GITHUB_CLIENT_ID: test-github-id
+      GITHUB_CLIENT_SECRET: test-github-secret
+      MICROSOFT_CLIENT_ID: test-microsoft-id
+      MICROSOFT_CLIENT_SECRET: test-microsoft-secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

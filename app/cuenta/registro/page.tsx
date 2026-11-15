@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { AuthPanel } from "@/components/auth/auth-panel";
+import { SocialSection } from "@/components/auth/social-section";
 import { RegisterForm } from "@/components/auth/register-form";
 
 export const metadata: Metadata = {
@@ -26,7 +28,13 @@ export default function RegisterPage() {
         />
       }
     >
-      <RegisterForm />
+      <RegisterForm
+        social={
+          <Suspense fallback={null}>
+            <SocialSection variant="registro" />
+          </Suspense>
+        }
+      />
     </AuthLayout>
   );
 }

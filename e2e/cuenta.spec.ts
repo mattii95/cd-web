@@ -12,10 +12,14 @@ test("enviar el login vacío no manda nada", async ({ page }) => {
   await expect(page).toHaveURL(/\/cuenta\/login$/);
 });
 
-test("ninguna página de cuenta ofrece Google ni avisa que no hay cuentas", async ({ page }) => {
+// Los proveedores solo aparecen en login y registro (ver oauth.spec.ts).
+test("solo login y registro ofrecen proveedores, y ninguna avisa que no hay cuentas", async ({ page }) => {
   for (const ruta of ["login", "registro", "recuperar", "verificar", "nueva-contrasena"]) {
     await page.goto(`/cuenta/${ruta}`);
-    await expect(page.getByText(/Google|todavía no están disponibles|o con tu email/)).toHaveCount(0);
+    await expect(page.getByText(/todavía no están disponibles/)).toHaveCount(0);
+    if (ruta !== "login" && ruta !== "registro") {
+      await expect(page.getByText(/Google|o con tu email/)).toHaveCount(0);
+    }
   }
 });
 
