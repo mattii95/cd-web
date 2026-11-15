@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOutAction } from "@/app/cuenta/actions";
+import { avatarSrc } from "@/lib/auth/avatar";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { LoginLink } from "./login-link";
 import { UserMenuDropdown } from "./user-menu-dropdown";
@@ -8,7 +9,7 @@ import { UserMenuDropdown } from "./user-menu-dropdown";
 export async function UserMenu() {
   const user = await getCurrentUser();
   if (!user) return <LoginLink />;
-  return <UserMenuDropdown name={user.name} isAdmin={user.role === "admin"} />;
+  return <UserMenuDropdown name={user.name} image={avatarSrc(user.image)} isAdmin={user.role === "admin"} />;
 }
 
 const mobileItem =
