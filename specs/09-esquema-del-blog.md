@@ -1,6 +1,6 @@
 # SPEC 09 — Esquema del blog en la base de datos
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 03, SPEC 06, SPEC 07
 > **Fecha:** 2026-11-15
 > **Objetivo:** Crear en Postgres las tablas de categorías, posts, perfiles de autor, comentarios, valoraciones y votos "Útil" del blog, con su migración, un seed con los datos mock de SPEC 03 y funciones de lectura probadas, sin cambiar las páginas.
@@ -270,42 +270,42 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado y sin `DATABASE_URL`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado, incluidos los tests de auth de SPEC 07 y 08.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado y sin `DATABASE_URL`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado, incluidos los tests de auth de SPEC 07 y 08.
 - [ ] Los jobs `checks`, `db` y `e2e` del CI pasan en un PR a `main`.
-- [ ] `npm run db:migrate` crea `category`, `author_profile`, `post`, `post_rating`, `comment`, `comment_vote` y los enums `post_status` y `comment_status`.
-- [ ] Después de la migración, `npm run db:generate` no crea migraciones nuevas.
-- [ ] `/blog`, `/blog/[slug]` y la home se ven igual que antes y siguen leyendo `lib/blog-posts.ts`.
-- [ ] `blogBodySchema` acepta el `body` de los 8 posts de `lib/blog-posts.ts` y rechaza un bloque `{ type: "video" }`, un `h2` sin `id` y un objeto que no es array.
-- [ ] Insertar una segunda valoración del mismo usuario en el mismo post falla por la PK.
-- [ ] Insertar una valoración 0 o 6 falla por el check.
-- [ ] Insertar un post `publicado` con `published_at` nulo falla por el check.
-- [ ] Insertar un comentario con `reply_text` y sin `replied_at` falla por el check.
-- [ ] Un comentario nuevo sin `status` queda `pendiente`.
-- [ ] Un mismo usuario puede guardar dos comentarios en el mismo post.
-- [ ] Votar "Útil" dos veces con el mismo usuario en el mismo comentario falla por la PK.
-- [ ] Borrar un lector borra sus valoraciones, comentarios y votos.
-- [ ] Borrar un post borra sus valoraciones, comentarios y los votos de esos comentarios.
-- [ ] Borrar el usuario autor de un post falla. Borrar una categoría con posts falla.
-- [ ] `getPublishedPosts()` no devuelve posts `borrador` y los ordena por `publishedAt` descendente.
-- [ ] `getPublishedPostBySlug` devuelve `null` para un slug que no existe y para un post `borrador`.
-- [ ] `getPublishedPostBySlug` lanza un error que nombra el slug si el `body` guardado no cumple `blogBodySchema`.
-- [ ] `getApprovedComments` no devuelve comentarios `pendiente` ni `oculto`.
-- [ ] `getApprovedComments` devuelve `rating` con la valoración del mismo usuario, y `null` si ese usuario no puntuó.
-- [ ] Ningún resultado de `db/blog.ts` incluye el email de quien comenta.
-- [ ] `getRatingSummary` de un post sin valoraciones devuelve `{ average: 0, total: 0 }` y la distribución en ceros.
-- [ ] Después de `seedBlog`, `getCategories()` devuelve las 4 categorías en el orden web, sistemas, saas, ia.
-- [ ] Después de `seedBlog`, `getPublishedPosts()` devuelve los 8 posts en el orden de `blogPosts`, con el autor del email dado y su cargo "Fundador de Courroux Digital".
-- [ ] Después de `seedBlog`, `getRatingSummary` de `senales-sistema-a-medida` da total 24, distribución 18, 4, 1, 1, 0 y un promedio que redondeado a una decimal es 4,6.
-- [ ] Después de `seedBlog`, `getApprovedComments` de `senales-sistema-a-medida` devuelve Lucía, Martín, Carla y Diego, en ese orden, con "Útil" 12, 5, 8 y 2, y respuesta del autor solo en Lucía y Diego.
-- [ ] Correr `seedBlog` dos veces deja la misma cantidad de filas en las seis tablas y en `user`.
-- [ ] `seedBlog` con un email que no existe lanza un error que menciona ese email.
-- [ ] `npm run db:seed` sin `SEED_AUTHOR_EMAIL` termina con código 1 y un mensaje que menciona `SEED_AUTHOR_EMAIL`.
-- [ ] `NODE_ENV=production npm run db:seed` termina con código 1 sin insertar nada.
-- [ ] Ningún usuario `@demo.invalid` tiene fila en `account`.
-- [ ] `README.md` explica `SEED_AUTHOR_EMAIL`, el orden registrarse → `auth:make-admin` → `db:seed` y que los usuarios demo no pueden entrar.
+- [x] `npm run db:migrate` crea `category`, `author_profile`, `post`, `post_rating`, `comment`, `comment_vote` y los enums `post_status` y `comment_status`.
+- [x] Después de la migración, `npm run db:generate` no crea migraciones nuevas.
+- [x] `/blog`, `/blog/[slug]` y la home se ven igual que antes y siguen leyendo `lib/blog-posts.ts`.
+- [x] `blogBodySchema` acepta el `body` de los 8 posts de `lib/blog-posts.ts` y rechaza un bloque `{ type: "video" }`, un `h2` sin `id` y un objeto que no es array.
+- [x] Insertar una segunda valoración del mismo usuario en el mismo post falla por la PK.
+- [x] Insertar una valoración 0 o 6 falla por el check.
+- [x] Insertar un post `publicado` con `published_at` nulo falla por el check.
+- [x] Insertar un comentario con `reply_text` y sin `replied_at` falla por el check.
+- [x] Un comentario nuevo sin `status` queda `pendiente`.
+- [x] Un mismo usuario puede guardar dos comentarios en el mismo post.
+- [x] Votar "Útil" dos veces con el mismo usuario en el mismo comentario falla por la PK.
+- [x] Borrar un lector borra sus valoraciones, comentarios y votos.
+- [x] Borrar un post borra sus valoraciones, comentarios y los votos de esos comentarios.
+- [x] Borrar el usuario autor de un post falla. Borrar una categoría con posts falla.
+- [x] `getPublishedPosts()` no devuelve posts `borrador` y los ordena por `publishedAt` descendente.
+- [x] `getPublishedPostBySlug` devuelve `null` para un slug que no existe y para un post `borrador`.
+- [x] `getPublishedPostBySlug` lanza un error que nombra el slug si el `body` guardado no cumple `blogBodySchema`.
+- [x] `getApprovedComments` no devuelve comentarios `pendiente` ni `oculto`.
+- [x] `getApprovedComments` devuelve `rating` con la valoración del mismo usuario, y `null` si ese usuario no puntuó.
+- [x] Ningún resultado de `db/blog.ts` incluye el email de quien comenta.
+- [x] `getRatingSummary` de un post sin valoraciones devuelve `{ average: 0, total: 0 }` y la distribución en ceros.
+- [x] Después de `seedBlog`, `getCategories()` devuelve las 4 categorías en el orden web, sistemas, saas, ia.
+- [x] Después de `seedBlog`, `getPublishedPosts()` devuelve los 8 posts en el orden de `blogPosts`, con el autor del email dado y su cargo "Fundador de Courroux Digital".
+- [x] Después de `seedBlog`, `getRatingSummary` de `senales-sistema-a-medida` da total 24, distribución 18, 4, 1, 1, 0 y un promedio que redondeado a una decimal es 4,6.
+- [x] Después de `seedBlog`, `getApprovedComments` de `senales-sistema-a-medida` devuelve Lucía, Martín, Carla y Diego, en ese orden, con "Útil" 12, 5, 8 y 2, y respuesta del autor solo en Lucía y Diego.
+- [x] Correr `seedBlog` dos veces deja la misma cantidad de filas en las seis tablas y en `user`.
+- [x] `seedBlog` con un email que no existe lanza un error que menciona ese email.
+- [x] `npm run db:seed` sin `SEED_AUTHOR_EMAIL` termina con código 1 y un mensaje que menciona `SEED_AUTHOR_EMAIL`.
+- [x] `NODE_ENV=production npm run db:seed` termina con código 1 sin insertar nada.
+- [x] Ningún usuario `@demo.invalid` tiene fila en `account`.
+- [x] `README.md` explica `SEED_AUTHOR_EMAIL`, el orden registrarse → `auth:make-admin` → `db:seed` y que los usuarios demo no pueden entrar.
 
 ## Decisiones
 
