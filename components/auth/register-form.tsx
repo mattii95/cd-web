@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { AuthForm } from "./auth-form";
 import { inputClass, labelClass } from "./field-styles";
 import { signUpAction } from "@/app/cuenta/actions";
 import { PasswordInput } from "./password-input";
 import { PasswordStrength } from "./password-strength";
 
-export function RegisterForm() {
+export function RegisterForm({ social }: { social?: ReactNode }) {
   const [password, setPassword] = useState("");
 
   return (
@@ -17,6 +17,7 @@ export function RegisterForm() {
       title="Crear cuenta"
       subtitle="Completá tus datos para empezar a participar."
       submitLabel="Crear cuenta"
+      social={social}
       footer={
         <>
           ¿Ya tenés cuenta?{" "}
