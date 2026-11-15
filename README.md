@@ -33,7 +33,7 @@ Scripts:
 - `npm run db:generate` — generates a migration from changes in `db/schema/`. Commit the result; do not edit merged migrations.
 - `npm run db:migrate` — applies pending migrations.
 - `npm run db:studio` — opens Drizzle Studio.
-- `npm run db:seed` — loads the blog (categories, 8 posts, ratings, comments) from the mock data in `lib/blog-posts.ts`. Idempotent; refuses to run with `NODE_ENV=production`. See "Blog seed" below.
+- `npm run db:seed` — runs `db/seed.ts` (no data yet).
 - `npm run test:db` — runs the `db` Vitest project against the `_test` database. It refuses to run if the database name does not end in `_test`.
 
 `GET /api/health` returns `200 {"status":"ok","db":"up"}` or `503 {"status":"error","db":"down"}`.
@@ -43,18 +43,6 @@ If the `docker/data` volume already existed, `docker/initdb/` did not run and `D
 ```bash
 docker exec postgres18 psql -U postgres -c 'CREATE DATABASE "DB_CD26_test";'
 ```
-
-### Blog seed
-
-The seed needs an existing user as the author of the 8 posts. Set `SEED_AUTHOR_EMAIL` in `.env.local` (see `.env.example`), then, in this order:
-
-1. Register that user in the app.
-2. `npm run auth:make-admin -- autor@ejemplo.com` (the seed does not change roles).
-3. `npm run db:seed`.
-
-Without `SEED_AUTHOR_EMAIL`, or if that user does not exist, the seed exits with code 1.
-
-It also creates 24 demo users (`@demo.invalid`) for the ratings and comments. They have no `account` row, so they cannot sign in.
 
 ## Authentication
 
