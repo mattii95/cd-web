@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { signOutAction } from "@/app/cuenta/actions";
+import { UserAvatar } from "./user-avatar";
 
 const itemClass =
   "block w-full cursor-pointer rounded-xl border-0 bg-transparent px-4 py-3 text-left text-sm font-medium text-text no-underline transition-colors hover:bg-white/10 hover:text-white";
@@ -18,7 +18,6 @@ export function UserMenuDropdown({
   isAdmin: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [failedImage, setFailedImage] = useState<string | null>(null);
   const panelId = useId();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -46,18 +45,7 @@ export function UserMenuDropdown({
         onClick={() => setOpen((v) => !v)}
         className="flex size-11 cursor-pointer items-center justify-center rounded-full border border-accent-light/40 bg-accent/20 font-display text-lg font-bold text-accent-pale transition-colors hover:bg-accent/35"
       >
-        {image && image !== failedImage ? (
-          <Image
-            src={image}
-            alt=""
-            width={32}
-            height={32}
-            onError={() => setFailedImage(image)}
-            className="size-8 rounded-full object-cover"
-          />
-        ) : (
-          name.trim().charAt(0).toUpperCase()
-        )}
+        <UserAvatar name={name} image={image} />
       </button>
       <div
         id={panelId}

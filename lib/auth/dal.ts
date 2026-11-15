@@ -20,8 +20,12 @@ export type CurrentUser = {
 
 // Lee la sesión una sola vez por request. Si la base falla, devuelve null.
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
+  // Fuera del try: en el prerender headers() posterga la página. Si lo tragara el catch
+  // (p. ej. porque getAuth() falla sin variables en el build), el redirect a login
+  // quedaría horneado en el HTML estático.
+  const requestHeaders = await headers();
   try {
-    const session = await getAuth().api.getSession({ headers: await headers() });
+    const session = await getAuth().api.getSession({ headers: requestHeaders });
     if (!session) return null;
     const { id, name, email, image, role, createdAt } = session.user;
     return {

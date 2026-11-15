@@ -11,6 +11,8 @@ const isCI = !!process.env.CI;
 export default defineConfig({
   testDir: "e2e",
   globalSetup: "./e2e/global-setup.ts",
+  // Los límites de intentos son por IP y la base es una sola: un worker evita que archivos distintos se pisen.
+  workers: 1,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
@@ -22,7 +24,7 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     {
       name: "mobile",
-      testIgnore: /(auth|oauth)\.spec/,
+      testIgnore: /(auth|oauth|avatar)\.spec/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 375, height: 812 } },
     },
   ],

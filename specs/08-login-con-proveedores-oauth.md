@@ -1,6 +1,6 @@
 # SPEC 08 — Login con proveedores OAuth
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 04, SPEC 07
 > **Fecha:** 2026-11-15
 > **Objetivo:** Sumar "Continuar con Google, GitHub y Microsoft" en login y registro con los `socialProviders` de Better Auth, vinculando cuentas por email de forma segura y mostrando la foto y los métodos de acceso del usuario.
@@ -189,34 +189,34 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin ninguna variable de proveedor.
-- [ ] El build prerenderiza el shell de `/cuenta/login` y `/cuenta/registro` (figuran como prerenderizadas parcialmente en la salida de `next build`), y el HTML del shell ya incluye el formulario de email.
-- [ ] Con un build hecho sin variables de proveedor, sumar `GITHUB_CLIENT_ID` y `GITHUB_CLIENT_SECRET` y reiniciar `npm run start`, sin volver a hacer el build, muestra "Continuar con GitHub".
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado.
-- [ ] `npm run test:e2e` pasa con Docker levantado, y los jobs `checks`, `db` y `e2e` del CI pasan en un PR a `main`.
-- [ ] Sin variables de proveedor, login y registro no muestran ningún botón "Continuar con …" ni el separador "o con tu email".
-- [ ] Con solo `GITHUB_CLIENT_ID` y `GITHUB_CLIENT_SECRET`, login y registro muestran solo "Continuar con GitHub" y el separador.
-- [ ] Con las seis variables, login y registro muestran los tres botones en el orden Google, GitHub, Microsoft.
-- [ ] Con `GOOGLE_CLIENT_ID` y sin `GOOGLE_CLIENT_SECRET`, `getSocialProvidersConfig()` lanza un error que menciona `GOOGLE_CLIENT_SECRET`.
-- [ ] Cada botón redirige a la URL `authorize` de su proveedor con el `client_id` configurado y `redirect_uri` igual a `{BETTER_AUTH_URL}/api/auth/callback/{proveedor}`.
-- [ ] Desde `/cuenta/login?volver=/blog/senales-sistema-a-medida`, el `callbackURL` que guarda Better Auth es `/blog/senales-sistema-a-medida`. Con `?volver=https://otro.com`, es `/cuenta/perfil`.
-- [ ] `/cuenta/login?error=access_denied` muestra "No pudimos iniciar sesión con ese proveedor. Probá de nuevo o usá tu email." con `role="alert"`.
-- [ ] El undécimo intento de `signInSocialAction` en un minuto desde la misma IP muestra "Demasiados intentos. Probá de nuevo en un minuto.".
-- [ ] Registro muestra "Al continuar con un proveedor aceptás los términos y la política de privacidad." cuando hay al menos un proveedor.
-- [ ] Mientras un botón de proveedor envía, está `disabled` y no se puede enviar dos veces.
-- [ ] `removeUnverifiedPassword` borra la fila `credential` de un usuario con `email_verified = false` y no borra la de un usuario verificado.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin ninguna variable de proveedor.
+- [x] El build prerenderiza el shell de `/cuenta/login` y `/cuenta/registro` (figuran como prerenderizadas parcialmente en la salida de `next build`), y el HTML del shell ya incluye el formulario de email.
+- [x] Con un build hecho sin variables de proveedor, sumar `GITHUB_CLIENT_ID` y `GITHUB_CLIENT_SECRET` y reiniciar `npm run start`, sin volver a hacer el build, muestra "Continuar con GitHub".
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado.
+- [x] `npm run test:e2e` pasa con Docker levantado, y los jobs `checks`, `db` y `e2e` del CI pasan en un PR a `main`.
+- [x] Sin variables de proveedor, login y registro no muestran ningún botón "Continuar con …" ni el separador "o con tu email".
+- [x] Con solo `GITHUB_CLIENT_ID` y `GITHUB_CLIENT_SECRET`, login y registro muestran solo "Continuar con GitHub" y el separador.
+- [x] Con las seis variables, login y registro muestran los tres botones en el orden Google, GitHub, Microsoft.
+- [x] Con `GOOGLE_CLIENT_ID` y sin `GOOGLE_CLIENT_SECRET`, `getSocialProvidersConfig()` lanza un error que menciona `GOOGLE_CLIENT_SECRET`.
+- [x] Cada botón redirige a la URL `authorize` de su proveedor con el `client_id` configurado y `redirect_uri` igual a `{BETTER_AUTH_URL}/api/auth/callback/{proveedor}`.
+- [x] Desde `/cuenta/login?volver=/blog/senales-sistema-a-medida`, el `callbackURL` que guarda Better Auth es `/blog/senales-sistema-a-medida`. Con `?volver=https://otro.com`, es `/cuenta/perfil`.
+- [x] `/cuenta/login?error=access_denied` muestra "No pudimos iniciar sesión con ese proveedor. Probá de nuevo o usá tu email." con `role="alert"`.
+- [x] El undécimo intento de `signInSocialAction` en un minuto desde la misma IP muestra "Demasiados intentos. Probá de nuevo en un minuto.".
+- [x] Registro muestra "Al continuar con un proveedor aceptás los términos y la política de privacidad." cuando hay al menos un proveedor.
+- [x] Mientras un botón de proveedor envía, está `disabled` y no se puede enviar dos veces.
+- [x] `removeUnverifiedPassword` borra la fila `credential` de un usuario con `email_verified = false` y no borra la de un usuario verificado.
 - [ ] Prueba manual: entrar con GitHub con un email nuevo crea un usuario `lector` con `email_verified = true` y una fila `account` con `provider_id = 'github'`, y lleva a `/cuenta/perfil`.
 - [ ] Prueba manual: entrar con Google con el email de una cuenta verificada con contraseña no crea otro usuario, suma la fila `google` y la contraseña sigue sirviendo.
 - [ ] Prueba manual: registrar con contraseña un email sin verificarlo y después entrar con Google con ese email deja al usuario sin fila `credential`, y la contraseña del registro ya no sirve.
 - [ ] Prueba manual: un usuario solo OAuth que pide "Recuperar" recibe el email y puede crear una contraseña con la que después inicia sesión.
 - [ ] Prueba manual: cancelar en la pantalla del proveedor vuelve a `/cuenta/login` con el mensaje de error.
-- [ ] `/cuenta/perfil` muestra "Métodos de acceso" con "Email y contraseña" y "GitHub" para un usuario que tiene los dos.
-- [ ] Con sesión de un usuario de Google o GitHub, el botón del header (desktop y mobile) muestra su foto. Con un usuario de contraseña o de Microsoft, muestra la inicial.
-- [ ] `avatarSrc` devuelve `null` para `http://`, para un `data:` y para un host que no es `lh3.googleusercontent.com` ni `avatars.githubusercontent.com`.
-- [ ] Ninguna respuesta HTML ni payload RSC incluye `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_SECRET` ni `MICROSOFT_CLIENT_SECRET`.
-- [ ] A 375px de ancho no hay scroll horizontal en login, registro y perfil.
+- [x] `/cuenta/perfil` muestra "Métodos de acceso" con "Email y contraseña" y "GitHub" para un usuario que tiene los dos.
+- [x] Con sesión de un usuario de Google o GitHub, el botón del header (desktop y mobile) muestra su foto. Con un usuario de contraseña o de Microsoft, muestra la inicial.
+- [x] `avatarSrc` devuelve `null` para `http://`, para un `data:` y para un host que no es `lh3.googleusercontent.com` ni `avatars.githubusercontent.com`.
+- [x] Ninguna respuesta HTML ni payload RSC incluye `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_SECRET` ni `MICROSOFT_CLIENT_SECRET`.
+- [x] A 375px de ancho no hay scroll horizontal en login, registro y perfil.
 
 ## Decisiones
 
@@ -254,17 +254,17 @@ Convenciones:
 
 ## Riesgos
 
-| Riesgo                                                                                                        | Mitigación                                                                                                                                                          |
-| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Los botones llegan en streaming después del shell y el formulario de email baja unos píxeles al aparecer.     | Es el costo de leer el entorno en cada request. El criterio de 375px lo revisa, y `/frontend-design` puede reservar el alto si el salto molesta.                   |
+| Riesgo                                                                                                           | Mitigación                                                                                                                                                                          |
+| ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Los botones llegan en streaming después del shell y el formulario de email baja unos píxeles al aparecer.        | Es el costo de leer el entorno en cada request. El criterio de 375px lo revisa, y `/frontend-design` puede reservar el alto si el salto molesta.                                    |
 | Una variable de proveedor mal cargada (solo el ID o solo el secret) rompe la sección en runtime, no en el build. | `getSocialProvidersConfig()` también corre al crear la instancia de Better Auth, así que el error aparece en el primer request a `/api/auth` con un mensaje que nombra la variable. |
-| En `account.create.before` Better Auth ya marcó `emailVerified = true` y la guardia no borra la contraseña.   | El paso 3 verifica el orden con un test de `db` sobre el flujo de vinculación. Si el orden es otro, la guardia se mueve al hook que corre antes de marcar el email. |
-| `resetPassword` no crea la fila `credential` para un usuario solo OAuth.                                      | El criterio manual lo verifica. Si falla, `resetPasswordAction` crea la fila con el hash de Better Auth.                                                            |
-| GitHub devuelve el email privado y Better Auth no lo obtiene.                                                 | Better Auth pide el scope `user:email`. Si igual falla, el usuario ve el mensaje genérico y puede usar email.                                                       |
-| Las URLs de callback no coinciden entre la consola del proveedor y `BETTER_AUTH_URL`.                         | El README lista la URL exacta por proveedor. El E2E verifica el `redirect_uri`.                                                                                     |
-| La foto de Google o GitHub cambia de host o la borra el usuario.                                              | `avatarSrc` devuelve `null` con otro host y el `onError` muestra la inicial.                                                                                        |
-| El E2E sale a internet al seguir el redirect.                                                                 | `page.route` intercepta y aborta la request al proveedor.                                                                                                           |
-| Un usuario sin verificar pierde la contraseña que puso, si es la dueña real que eligió el proveedor después.  | Puede entrar con el proveedor o crear otra contraseña con "Recuperar".                                                                                              |
+| En `account.create.before` Better Auth ya marcó `emailVerified = true` y la guardia no borra la contraseña.      | El paso 3 verifica el orden con un test de `db` sobre el flujo de vinculación. Si el orden es otro, la guardia se mueve al hook que corre antes de marcar el email.                 |
+| `resetPassword` no crea la fila `credential` para un usuario solo OAuth.                                         | El criterio manual lo verifica. Si falla, `resetPasswordAction` crea la fila con el hash de Better Auth.                                                                            |
+| GitHub devuelve el email privado y Better Auth no lo obtiene.                                                    | Better Auth pide el scope `user:email`. Si igual falla, el usuario ve el mensaje genérico y puede usar email.                                                                       |
+| Las URLs de callback no coinciden entre la consola del proveedor y `BETTER_AUTH_URL`.                            | El README lista la URL exacta por proveedor. El E2E verifica el `redirect_uri`.                                                                                                     |
+| La foto de Google o GitHub cambia de host o la borra el usuario.                                                 | `avatarSrc` devuelve `null` con otro host y el `onError` muestra la inicial.                                                                                                        |
+| El E2E sale a internet al seguir el redirect.                                                                    | `page.route` intercepta y aborta la request al proveedor.                                                                                                                           |
+| Un usuario sin verificar pierde la contraseña que puso, si es la dueña real que eligió el proveedor después.     | Puede entrar con el proveedor o crear otra contraseña con "Recuperar".                                                                                                              |
 
 ## Qué **no** incluye este spec
 

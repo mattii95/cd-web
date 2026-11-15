@@ -65,3 +65,31 @@ npm run auth:make-admin -- usuario@email.com
 ```
 
 It exits with code 1 if the user does not exist. `/cuenta/perfil` and `/admin` need a session; `/admin` returns the 404 page for a `lector`.
+
+### Sign in with Google, GitHub and Microsoft
+
+Login and sign-up show a button for each provider that has credentials. With none set, no button shows. Providers are read on every request, so changing these variables only needs a server restart, not a new `npm run build`.
+
+Set both variables of a provider in `.env.local`, or neither. With only one of the two, `/api/auth` fails and the error names the missing variable.
+
+| Provider  | Variables                                       | Where to create the app                                                                          |
+| --------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Google    | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`      | https://console.cloud.google.com → APIs & Services → Credentials → OAuth client ID (Web application) |
+| GitHub    | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`      | https://github.com/settings/developers → OAuth Apps → New OAuth App                              |
+| Microsoft | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` | https://entra.microsoft.com → App registrations → New registration                               |
+
+The callback URL of each app is `{BETTER_AUTH_URL}/api/auth/callback/{google|github|microsoft}`. In development, for example, `http://localhost:3000/api/auth/callback/github`.
+
+- **Google:** while the consent screen is in Testing mode, only the test users you add can sign in. The basic scopes (`openid`, `email`, `profile`) need no verification to publish.
+- **GitHub:** an app takes one callback URL. Create a separate app for production.
+- **Microsoft:** choose "Accounts in any organizational directory and personal Microsoft accounts", because the app uses the `common` tenant. Copy the secret's **Value**, not its ID. Secrets expire (24 months at most).
+
+An account with the same email is linked automatically for Google and GitHub. If the existing account has an unverified email, its password is deleted before linking, so nobody can take an account by registering someone else's email. Microsoft links only when Microsoft reports the email as verified.
+
+`.env.test.local` and the CI `e2e` job use fake values (`test-google-id`, `test-google-secret`, and so on). The E2E tests only follow the redirect to the provider's `authorize` URL, and abort the request before it leaves the machine. The complete sign-in is tested by hand:
+
+1. With real credentials, sign in with GitHub and a new email. It creates a `lector` user with a verified email and takes you to `/cuenta/perfil`.
+2. Sign in with Google using the email of a verified account with a password. It links the account and the password keeps working.
+3. Register with a password and do not verify the email. Then sign in with Google using that email. The password stops working.
+4. Cancel on the provider's screen. It returns to `/cuenta/login` with an error message.
+5. As an OAuth-only user, use "Recuperar" to set a password, then sign in with it.
