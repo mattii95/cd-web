@@ -42,7 +42,7 @@ async function Profile() {
         {rows.map(([label, value]) => (
           <div
             key={label}
-            className="grid gap-1 py-4 sm:grid-cols-[180px_1fr] sm:gap-6"
+            className="grid gap-1 py-4 sm:grid-cols-[180px_1fr] sm:items-baseline sm:gap-6"
           >
             <dt className="text-sm text-text-subtle">{label}</dt>
             <dd className="m-0 text-base text-text-strong [overflow-wrap:anywhere]">

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 // En móvil cada fila se apila y cada celda muestra su columna con data-label.
 const cell =
-  "block px-5 py-1 before:mr-2 before:text-text-subtle before:content-[attr(data-label)':'] md:table-cell md:py-3.5 md:before:content-none";
+  "block px-0 py-1 before:mr-2 before:font-normal before:text-text-subtle before:content-[attr(data-label)':'] md:table-cell md:px-5 md:py-3.5 md:before:content-none";
 
 async function Users() {
   await requireAdmin();
