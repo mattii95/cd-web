@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { SignOutButton } from "@/components/account/sign-out-button";
-import { requireUser } from "@/lib/auth/dal";
+import { getLoginMethods, requireUser, type LoginMethod } from "@/lib/auth/dal";
 import { formatDate } from "@/lib/format-date";
 
 export const metadata: Metadata = {
@@ -10,12 +10,21 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+const METHOD_LABEL: Record<LoginMethod, string> = {
+  credential: "Email y contraseña",
+  google: "Google",
+  github: "GitHub",
+  microsoft: "Microsoft",
+};
+
 async function Profile() {
   const user = await requireUser("/cuenta/perfil");
+  const methods = await getLoginMethods(user.id);
   const rows = [
     ["Nombre", user.name],
     ["Email", user.email],
     ["Rol", user.role === "admin" ? "Administrador" : "Lector"],
+    ["Métodos de acceso", methods.map((m) => METHOD_LABEL[m]).join(", ")],
     ["Miembro desde", formatDate(user.createdAt)],
   ];
 
