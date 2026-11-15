@@ -1,6 +1,6 @@
 # SPEC 07 — Autenticación y autorización
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 04, SPEC 05, SPEC 06
 > **Fecha:** 2026-11-14
 > **Objetivo:** Dar cuentas reales con Better Auth sobre Drizzle: registro, verificación de email, login, logout y recuperación de contraseña, con roles `lector` y `admin` que protegen `/cuenta/perfil` y `/admin`.
