@@ -12,6 +12,7 @@ import {
   verificationEmail,
 } from "@/lib/mail/templates";
 import { getAuthEnv } from "./env";
+import { removeUnverifiedPassword } from "./link-guard";
 import { getSocialProvidersConfig } from "./providers";
 
 function createAuth() {
@@ -47,7 +48,23 @@ function createAuth() {
     socialProviders: getSocialProvidersConfig() as SocialProviders,
     account: {
       // Microsoft no siempre verifica el email (nOAuth): solo Google y GitHub vinculan sin condiciones.
-      accountLinking: { enabled: true, trustedProviders: ["google", "github"] },
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google", "github"],
+        // Por defecto Better Auth no vincula a un usuario sin verificar; el spec lo vincula y
+        // borra su contraseña (databaseHooks), así que se desactiva esa exigencia.
+        requireLocalEmailVerified: false,
+      },
+    },
+    databaseHooks: {
+      account: {
+        create: {
+          // Corre antes de que Better Auth marque emailVerified = true al vincular.
+          before: async (acc) => {
+            if (acc.providerId !== "credential") await removeUnverifiedPassword(acc.userId);
+          },
+        },
+      },
     },
     session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24 },
     user: {
