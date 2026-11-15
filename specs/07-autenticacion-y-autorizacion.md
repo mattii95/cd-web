@@ -214,42 +214,42 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado y sin `DATABASE_URL`.
-- [ ] El build sigue prerenderizando `/cuenta/login`, `/cuenta/registro`, `/cuenta/recuperar`, `/cuenta/verificar`, `/cuenta/nueva-contrasena`, la home, `/blog` y los artículos.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado y sin `DATABASE_URL`.
+- [x] El build sigue prerenderizando `/cuenta/login`, `/cuenta/registro`, `/cuenta/recuperar`, `/cuenta/verificar`, `/cuenta/nueva-contrasena`, la home, `/blog` y los artículos.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado.
 - [ ] `npm run test:e2e` pasa con Docker levantado, y los jobs `checks`, `db` y `e2e` del CI pasan en un PR a `main`.
-- [ ] `npm run db:migrate` crea `user`, `session`, `account`, `verification`, `rate_limit` y el enum `user_role`.
-- [ ] Ninguna página muestra "Las cuentas todavía no están disponibles", "Continuar con Google" ni "o con tu email".
-- [ ] Registrarse con datos válidos crea un usuario con `role = 'lector'` y `email_verified = false`, redirige a `/cuenta/verificar` y deja un email en Mailpit.
-- [ ] Mandar `role: "admin"` en el body de `/api/auth/sign-up/email` crea igual un usuario `lector`.
-- [ ] Registrarse con un email existente redirige igual a `/cuenta/verificar`, no crea otro usuario, y deja en Mailpit un email "Ya tenés una cuenta" para la cuenta existente.
-- [ ] Iniciar sesión sin verificar muestra "Tenés que verificar tu email. Te mandamos un link nuevo." y manda un email nuevo.
-- [ ] Abrir el link de verificación lleva a `/cuenta/verificar?estado=ok` y pone `email_verified = true`.
-- [ ] Abrir un link de verificación alterado lleva a `/cuenta/verificar` con el estado "El link venció o no es válido".
-- [ ] Iniciar sesión verificado, sin `?volver=`, lleva a `/cuenta/perfil` y muestra nombre, email, rol y fecha de alta.
-- [ ] Iniciar sesión desde `/cuenta/login?volver=/blog/senales-sistema-a-medida` lleva a ese artículo.
-- [ ] Con `?volver=https://otro.com`, `//otro.com` o `/blog/no-existe`, el login lleva a `/cuenta/perfil`.
-- [ ] Una contraseña incorrecta muestra "El email o la contraseña no son correctos.", igual que un email que no existe.
-- [ ] El sexto intento de login fallido en un minuto desde la misma IP muestra "Demasiados intentos. Probá de nuevo en un minuto.".
-- [ ] Sin "Recordarme", la cookie de sesión no tiene `Expires` ni `Max-Age`. Con "Recordarme", vence en 30 días.
-- [ ] La cookie de sesión es `HttpOnly` y `SameSite=Lax`, y en producción es `Secure`.
-- [ ] Pedir recuperar con un email existente y con uno inexistente muestra el mismo mensaje. Solo el existente recibe un email.
-- [ ] El link de recuperar lleva a `/cuenta/nueva-contrasena`, permite poner una contraseña nueva y redirige a `/cuenta/login?estado=contrasena-actualizada`, que muestra el aviso.
-- [ ] Después de cambiar la contraseña, las sesiones abiertas de ese usuario dejan de ser válidas y la contraseña vieja no sirve.
-- [ ] Usar dos veces el mismo link de recuperar falla la segunda vez con "El link venció o no es válido. Pedí uno nuevo.".
-- [ ] Sin sesión, `/cuenta/perfil` y `/admin` redirigen a `/cuenta/login?volver=/cuenta/perfil` y `/cuenta/login?volver=/admin`.
-- [ ] Con una cookie de sesión inventada, `/cuenta/perfil` redirige igual a login (la DAL rechaza lo que el proxy deja pasar).
-- [ ] Un `lector` que entra a `/admin` ve la página 404.
-- [ ] `npm run auth:make-admin -- usuario@email.com` cambia el rol a `admin`, y después ese usuario ve en `/admin` la tabla de usuarios.
-- [ ] `npm run auth:make-admin -- noexiste@email.com` termina con código 1.
-- [ ] Con sesión, el header (desktop y mobile) muestra la inicial del nombre y el menú con "Mi perfil" y "Cerrar sesión". Solo un `admin` ve "Administración".
-- [ ] "Cerrar sesión" lleva a `/`, el header vuelve a mostrar "Ingresar" y `/cuenta/perfil` redirige a login.
-- [ ] Ninguna respuesta de `/cuenta/perfil` ni de `/admin` incluye el hash de la contraseña ni tokens de sesión.
-- [ ] `/cuenta/perfil`, `/admin`, `/cuenta/verificar` y `/cuenta/nueva-contrasena` tienen `<meta name="robots">` con `noindex`.
-- [ ] A 375px de ancho no hay scroll horizontal en las cuatro páginas nuevas.
-- [ ] Mientras un formulario envía, su botón está `disabled` y no se puede enviar dos veces.
+- [x] `npm run db:migrate` crea `user`, `session`, `account`, `verification`, `rate_limit` y el enum `user_role`.
+- [x] Ninguna página muestra "Las cuentas todavía no están disponibles", "Continuar con Google" ni "o con tu email".
+- [x] Registrarse con datos válidos crea un usuario con `role = 'lector'` y `email_verified = false`, redirige a `/cuenta/verificar` y deja un email en Mailpit.
+- [x] Mandar `role: "admin"` en el body de `/api/auth/sign-up/email` crea igual un usuario `lector`.
+- [x] Registrarse con un email existente redirige igual a `/cuenta/verificar`, no crea otro usuario, y deja en Mailpit un email "Ya tenés una cuenta" para la cuenta existente.
+- [x] Iniciar sesión sin verificar muestra "Tenés que verificar tu email. Te mandamos un link nuevo." y manda un email nuevo.
+- [x] Abrir el link de verificación lleva a `/cuenta/verificar?estado=ok` y pone `email_verified = true`.
+- [x] Abrir un link de verificación alterado lleva a `/cuenta/verificar` con el estado "El link venció o no es válido".
+- [x] Iniciar sesión verificado, sin `?volver=`, lleva a `/cuenta/perfil` y muestra nombre, email, rol y fecha de alta.
+- [x] Iniciar sesión desde `/cuenta/login?volver=/blog/senales-sistema-a-medida` lleva a ese artículo.
+- [x] Con `?volver=https://otro.com`, `//otro.com` o `/blog/no-existe`, el login lleva a `/cuenta/perfil`.
+- [x] Una contraseña incorrecta muestra "El email o la contraseña no son correctos.", igual que un email que no existe.
+- [x] El sexto intento de login fallido en un minuto desde la misma IP muestra "Demasiados intentos. Probá de nuevo en un minuto.".
+- [x] Sin "Recordarme", la cookie de sesión no tiene `Expires` ni `Max-Age`. Con "Recordarme", vence en 30 días.
+- [x] La cookie de sesión es `HttpOnly` y `SameSite=Lax`, y en producción es `Secure`.
+- [x] Pedir recuperar con un email existente y con uno inexistente muestra el mismo mensaje. Solo el existente recibe un email.
+- [x] El link de recuperar lleva a `/cuenta/nueva-contrasena`, permite poner una contraseña nueva y redirige a `/cuenta/login?estado=contrasena-actualizada`, que muestra el aviso.
+- [x] Después de cambiar la contraseña, las sesiones abiertas de ese usuario dejan de ser válidas y la contraseña vieja no sirve.
+- [x] Usar dos veces el mismo link de recuperar falla la segunda vez con "El link venció o no es válido. Pedí uno nuevo.".
+- [x] Sin sesión, `/cuenta/perfil` y `/admin` redirigen a `/cuenta/login?volver=/cuenta/perfil` y `/cuenta/login?volver=/admin`.
+- [x] Con una cookie de sesión inventada, `/cuenta/perfil` redirige igual a login (la DAL rechaza lo que el proxy deja pasar).
+- [x] Un `lector` que entra a `/admin` ve la página 404.
+- [x] `npm run auth:make-admin -- usuario@email.com` cambia el rol a `admin`, y después ese usuario ve en `/admin` la tabla de usuarios.
+- [x] `npm run auth:make-admin -- noexiste@email.com` termina con código 1.
+- [x] Con sesión, el header (desktop y mobile) muestra la inicial del nombre y el menú con "Mi perfil" y "Cerrar sesión". Solo un `admin` ve "Administración".
+- [x] "Cerrar sesión" lleva a `/`, el header vuelve a mostrar "Ingresar" y `/cuenta/perfil` redirige a login.
+- [x] Ninguna respuesta de `/cuenta/perfil` ni de `/admin` incluye el hash de la contraseña ni tokens de sesión.
+- [x] `/cuenta/perfil`, `/admin`, `/cuenta/verificar` y `/cuenta/nueva-contrasena` tienen `<meta name="robots">` con `noindex`.
+- [x] A 375px de ancho no hay scroll horizontal en las cuatro páginas nuevas.
+- [x] Mientras un formulario envía, su botón está `disabled` y no se puede enviar dos veces.
 
 ## Decisiones
 
