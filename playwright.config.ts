@@ -1,9 +1,16 @@
 import { defineConfig, devices } from "@playwright/test";
 
+try {
+  process.loadEnvFile(".env.test.local");
+} catch {
+  // En CI las variables vienen del entorno.
+}
+
 const isCI = !!process.env.CI;
 
 export default defineConfig({
   testDir: "e2e",
+  globalSetup: "./e2e/global-setup.ts",
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
@@ -15,6 +22,7 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     {
       name: "mobile",
+      testIgnore: /auth\.spec/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 375, height: 812 } },
     },
   ],
@@ -24,5 +32,12 @@ export default defineConfig({
     url: "http://localhost:3100",
     reuseExistingServer: !isCI,
     timeout: 180_000,
+    // El servidor usa la base de test (DATABASE_URL de .env.test.local) y Mailpit.
+    env: {
+      BETTER_AUTH_URL: "http://localhost:3100",
+      SMTP_HOST: process.env.SMTP_HOST ?? "localhost",
+      SMTP_PORT: process.env.SMTP_PORT ?? "1025",
+      MAIL_FROM: process.env.MAIL_FROM ?? "Courroux Digital <no-reply@localhost>",
+    },
   },
 });
