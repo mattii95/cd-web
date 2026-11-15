@@ -22,6 +22,8 @@ const ERR_CREDENCIALES = "El email o la contraseña no son correctos.";
 test("registro, verificación, login y logout", async ({ page }) => {
   const email = uniqueEmail();
   await page.goto("/cuenta/registro");
+  // La contraseña es un input controlado: si se tipea antes de hidratar, React la vacía.
+  await page.waitForLoadState("networkidle");
   await page.getByLabel("Nombre y apellido").fill("Ana Pérez");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
@@ -53,6 +55,12 @@ test("registro, verificación, login y logout", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Ana Pérez" })).toBeVisible();
   await expect(page.getByText(email, { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Lector", { exact: true })).toBeVisible();
+  await expect(page.getByText("Miembro desde")).toBeVisible();
+  await expect(page.getByText(/\d{1,2} de \w+ de \d{4}/)).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  // Se pide la página sola: el DOM de una navegación suave arrastra scripts de la anterior.
+  const html = await (await page.request.get("/cuenta/perfil")).text();
+  expect(html).not.toMatch(/hash|session_token|"password"/i);
 
   await page.getByRole("button", { name: "Menú de Ana Pérez" }).click();
   await expect(page.getByRole("link", { name: "Mi perfil" })).toBeVisible();
@@ -75,6 +83,8 @@ test("un link de verificación alterado muestra el estado de error", async ({ pa
 test("registrar un email existente no crea otro usuario y avisa a la cuenta", async ({ page }) => {
   const { email } = await createVerifiedUser();
   await page.goto("/cuenta/registro");
+  // La contraseña es un input controlado: si se tipea antes de hidratar, React la vacía.
+  await page.waitForLoadState("networkidle");
   await page.getByLabel("Nombre y apellido").fill("Otra Persona");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
@@ -142,6 +152,7 @@ test("cookie de sesión: sin Recordarme es de sesión, con Recordarme dura 30 d�
   expect(cookie.expires).toBe(-1);
   expect(cookie.httpOnly).toBe(true);
   expect(cookie.sameSite).toBe("Lax");
+  expect(cookie.secure).toBe(true); // el build de producción marca la cookie como Secure
 
   await page.context().clearCookies();
   await page.goto("/cuenta/login");
@@ -163,13 +174,15 @@ test("recuperar contraseña: mismo mensaje, link de un solo uso y sesiones revoc
   const { email } = await createVerifiedUser();
   const mensaje = "Si el email tiene una cuenta, te enviamos un link.";
 
-  for (const destino of [uniqueEmail("nadie"), email]) {
+  const destinoInexistente = uniqueEmail("nadie");
+  for (const destino of [destinoInexistente, email]) {
     await page.goto("/cuenta/recuperar");
     await page.getByLabel("Email").fill(destino);
     await page.getByRole("button", { name: "Enviar link" }).click();
     await expect(page.locator("form").getByRole("status")).toHaveText(mensaje);
   }
   const resetLink = await waitForLink(email, "Recuperá tu contraseña");
+  expect(await mailCount(destinoInexistente, "Recuperá tu contraseña")).toBe(0);
 
   // Una sesión abierta antes del cambio.
   const otra = await (await browser.newContext({ baseURL: APP })).newPage();
@@ -178,6 +191,7 @@ test("recuperar contraseña: mismo mensaje, link de un solo uso y sesiones revoc
 
   await page.goto(resetLink);
   await expect(page).toHaveURL(/\/cuenta\/nueva-contrasena\?token=/);
+  const token = new URL(page.url()).searchParams.get("token")!;
   await page.getByLabel("Contraseña nueva", { exact: true }).fill("clave-nueva-123");
   await page.getByRole("button", { name: "Guardar contraseña" }).click();
   await expect(page).toHaveURL(/\/cuenta\/login\?estado=contrasena-actualizada$/);
@@ -194,9 +208,15 @@ test("recuperar contraseña: mismo mensaje, link de un solo uso y sesiones revoc
   await login(page, email, "clave-nueva-123");
   await expect(page).toHaveURL(/\/cuenta\/perfil$/);
 
-  // El link ya se usó.
+  // El link ya se usó: la página lo rechaza y enviar el token de nuevo falla.
   await page.goto(resetLink);
   await expect(page.getByRole("heading", { name: "El link venció o no es válido" })).toBeVisible();
+  await page.goto(`/cuenta/nueva-contrasena?token=${token}`);
+  await page.getByLabel("Contraseña nueva", { exact: true }).fill("otra-clave-456");
+  await page.getByRole("button", { name: "Guardar contraseña" }).click();
+  await expect(page.locator("form").getByRole("alert")).toHaveText(
+    "El link venció o no es válido. Pedí uno nuevo.",
+  );
 });
 
 test("perfil y admin: sin sesión, con cookie inventada, lector y admin", async ({
@@ -211,7 +231,13 @@ test("perfil y admin: sin sesión, con cookie inventada, lector y admin", async 
 
   // El proxy deja pasar la cookie, la DAL la rechaza.
   await context.addCookies([
-    { name: "better-auth.session_token", value: "inventada.firma", url: APP },
+    {
+      name: "__Secure-better-auth.session_token",
+      value: "inventada.firma",
+      domain: "localhost",
+      path: "/",
+      secure: true,
+    },
   ]);
   await page.goto("/cuenta/perfil");
   await expect(page).toHaveURL(/\/cuenta\/login/);
@@ -227,10 +253,11 @@ test("perfil y admin: sin sesión, con cookie inventada, lector y admin", async 
   await sql("update \"user\" set role = 'admin' where email = $1", [email]);
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "Administración" })).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   await expect(page.getByRole("cell", { name: email })).toBeVisible();
   await expect(page.getByRole("cell", { name, exact: true }).first()).toBeVisible();
-  const html = await page.content();
-  expect(html).not.toMatch(/password|session_token/i);
+  const html = await (await page.request.get("/admin")).text();
+  expect(html).not.toMatch(/hash|session_token|"password"/i);
 });
 
 test("las páginas nuevas no tienen scroll horizontal a 375px", async ({ page }) => {
@@ -248,6 +275,30 @@ test("las páginas nuevas no tienen scroll horizontal a 375px", async ({ page })
     );
     expect(overflow, ruta).toBeLessThanOrEqual(0);
   }
+});
+
+test("menú mobile con sesión: perfil, administración y cerrar sesión", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  const { email } = await createVerifiedUser();
+  await login(page, email);
+  await expect(page).toHaveURL(/\/cuenta\/perfil$/);
+
+  await page.getByRole("button", { name: "Abrir menú" }).click();
+  await expect(page.getByRole("link", { name: "Mi perfil" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Administración" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Cerrar sesión" }).first().click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.getByRole("button", { name: "Abrir menú" }).click();
+  await expect(page.getByRole("link", { name: "Ingresar" }).last()).toBeVisible();
+});
+
+test("el menú muestra Administración solo a un admin", async ({ page }) => {
+  const { email } = await createVerifiedUser();
+  await sql("update \"user\" set role = 'admin' where email = $1", [email]);
+  await login(page, email);
+  await expect(page).toHaveURL(/\/cuenta\/perfil$/);
+  await page.getByRole("button", { name: /^Menú de / }).click();
+  await expect(page.getByRole("link", { name: "Administración", exact: true })).toBeVisible();
 });
 
 for (const ruta of ["/cuenta/verificar", "/cuenta/nueva-contrasena"]) {

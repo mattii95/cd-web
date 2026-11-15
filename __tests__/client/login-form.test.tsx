@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginForm } from "@/components/auth/login-form";
@@ -40,6 +40,22 @@ describe("LoginForm", () => {
     expect(data.get("password")).toBe("secreta123");
     expect(data.get("rememberMe")).toBe("on");
     expect(data.get("volver")).toBe("/admin");
+  });
+
+  it("mientras envía, el botón queda deshabilitado y aria-busy", async () => {
+    let finish!: () => void;
+    signInAction.mockReturnValue(
+      new Promise((resolve) => {
+        finish = () => resolve({ status: "idle" });
+      }),
+    );
+    await fillAndSubmit();
+
+    const button = screen.getByRole("button", { name: "Ingresar" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("aria-busy", "true");
+    finish();
+    await waitFor(() => expect(button).toBeEnabled());
   });
 
   it("muestra el error de la action con role=alert", async () => {
