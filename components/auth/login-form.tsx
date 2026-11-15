@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { AuthForm } from "./auth-form";
 import { inputClass, labelClass } from "./field-styles";
-import { GoogleButton } from "./google-button";
+import { signInAction } from "@/app/cuenta/actions";
+import { LoginContext } from "./login-context";
 import { PasswordInput } from "./password-input";
 
 export function LoginForm() {
   return (
     <AuthForm
+      action={signInAction}
       title="Iniciá sesión"
       subtitle="Bienvenido de nuevo. Ingresá con tu cuenta para participar."
       submitLabel="Ingresar"
@@ -19,7 +21,7 @@ export function LoginForm() {
         </>
       }
     >
-      <GoogleButton />
+      <LoginContext />
       <label className={labelClass}>
         Email
         <input
@@ -38,9 +40,8 @@ export function LoginForm() {
         autoComplete="current-password"
       />
       <div className="flex flex-wrap items-center justify-between gap-2">
-        {/* Solo visual: "Recordarme" no hace nada hasta tener sesiones. */}
         <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm text-[#2B3449]">
-          <input type="checkbox" className="au-check" />
+          <input type="checkbox" name="rememberMe" className="au-check" />
           Recordarme
         </label>
         <Link

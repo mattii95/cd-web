@@ -5,7 +5,11 @@ import { nextCookies } from "better-auth/next-js";
 import { getDb } from "@/db/client";
 import * as schema from "@/db/schema";
 import { sendMail } from "@/lib/mail/transport";
-import { resetPasswordEmail, verificationEmail } from "@/lib/mail/templates";
+import {
+  existingAccountEmail,
+  resetPasswordEmail,
+  verificationEmail,
+} from "@/lib/mail/templates";
 import { getAuthEnv } from "./env";
 
 function createAuth() {
@@ -20,6 +24,12 @@ function createAuth() {
       requireEmailVerification: true,
       revokeSessionsOnPasswordReset: true,
       resetPasswordTokenExpiresIn: 3600,
+      // Con requireEmailVerification, Better Auth no revela duplicados: avisamos a la cuenta existente.
+      onExistingUserSignUp: async ({ user }) =>
+        sendMail({
+          to: user.email,
+          ...existingAccountEmail(user.name, `${env.BETTER_AUTH_URL}/cuenta/login`),
+        }),
       sendResetPassword: async ({ user, url }) =>
         sendMail({ to: user.email, ...resetPasswordEmail(user.name, url) }),
     },

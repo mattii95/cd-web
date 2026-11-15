@@ -1,33 +1,31 @@
 "use client";
 
-import { type FormEvent, type ReactNode, useState } from "react";
+import { type ReactNode, useActionState } from "react";
+import type { FormState } from "@/app/cuenta/actions";
 import { ArrowRight } from "@/components/icons";
-import { UnavailableNotice } from "./unavailable-notice";
+import { FormMessage } from "./form-message";
 
-// Todavía no hay cuentas: si la validación nativa pasa, no navega y muestra el aviso.
+// La validación nativa corre en el navegador y Zod la repite en la Server Action.
 export function AuthForm({
+  action,
   title,
   subtitle,
   submitLabel,
   footer,
   children,
 }: {
+  action: (state: FormState, data: FormData) => Promise<FormState>;
   title: string;
   subtitle: string;
   submitLabel: string;
   footer: ReactNode;
   children: ReactNode;
 }) {
-  const [submitted, setSubmitted] = useState(false);
-
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setSubmitted(true);
-  }
+  const [state, formAction, pending] = useActionState(action, { status: "idle" });
 
   return (
     <form
-      onSubmit={onSubmit}
+      action={formAction}
       className="fx-reveal relative flex w-full max-w-[440px] flex-col gap-[18px]"
     >
       <div className="mb-1.5 flex flex-col gap-2">
@@ -35,10 +33,12 @@ export function AuthForm({
         <p className="m-0 text-[15px] leading-normal text-text-faint">{subtitle}</p>
       </div>
       {children}
-      {submitted && <UnavailableNotice />}
+      <FormMessage state={state} />
       <button
         type="submit"
-        className="fx-btn mt-1 flex min-h-[52px] cursor-pointer items-center justify-center gap-2.5 rounded-xl border-0 bg-accent text-base font-semibold text-white"
+        disabled={pending}
+        aria-busy={pending}
+        className="fx-btn mt-1 flex min-h-[52px] cursor-pointer items-center justify-center gap-2.5 rounded-xl border-0 bg-accent disabled:cursor-wait disabled:opacity-70 text-base font-semibold text-white"
       >
         {submitLabel}
         <ArrowRight size={18} />

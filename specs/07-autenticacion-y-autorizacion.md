@@ -35,7 +35,7 @@ Las páginas de login, registro y recuperar se siguen prerenderizando.
 - Migración `db/migrations/0001_auth.sql`, generada con `npm run db:generate -- --name auth`.
 - Configuración de Better Auth en `lib/auth/auth.ts` (`import "server-only"`), con una función `getAuth()` que crea la instancia la primera vez que se llama:
   - `drizzleAdapter(getDb(), { provider: "pg", schema })`.
-  - `emailAndPassword`: habilitado, `minPasswordLength: 8`, `requireEmailVerification: true`, `revokeSessionsOnPasswordReset: true`, `resetPasswordTokenExpiresIn: 3600` y `sendResetPassword` con el mailer.
+  - `emailAndPassword`: habilitado, `minPasswordLength: 8`, `requireEmailVerification: true`, `revokeSessionsOnPasswordReset: true`, `resetPasswordTokenExpiresIn: 3600`, `sendResetPassword` con el mailer y `onExistingUserSignUp`, que manda el email "Ya tenés una cuenta" a la cuenta existente.
   - `emailVerification`: `sendOnSignUp: true`, `sendOnSignIn: true`, `autoSignInAfterVerification: false`, `expiresIn: 86400` y `sendVerificationEmail` con el mailer.
   - `session`: `expiresIn` de 30 días y `updateAge` de 1 día.
   - `user.additionalFields.role`: `input: false`, así el registro no puede elegir el rol.
@@ -44,7 +44,7 @@ Las páginas de login, registro y recuperar se siguen prerenderizando.
 - `app/api/auth/[...all]/route.ts`: `GET` y `POST` que llaman a `getAuth()` dentro del handler y delegan en `toNextJsHandler`.
 - Mailer en `lib/mail/`:
   - `lib/mail/transport.ts` (`server-only`): `sendMail({ to, subject, html, text })` con un transporte SMTP de Nodemailer creado una sola vez.
-  - `lib/mail/templates.ts`: funciones puras `verificationEmail(name, url)` y `resetPasswordEmail(name, url)` que devuelven `{ subject, html, text }` en español.
+  - `lib/mail/templates.ts`: funciones puras `verificationEmail(name, url)`, `resetPasswordEmail(name, url)` y `existingAccountEmail(name, url)` (con el link a `/cuenta/login`) que devuelven `{ subject, html, text }` en español.
 - Data Access Layer en `lib/auth/dal.ts` (`server-only`):
   - `getCurrentUser()`: lee la sesión con `auth.api.getSession({ headers: await headers() })` y devuelve un `CurrentUser` o `null`. Envuelta en `cache` de React para leer una sola vez por request.
   - `requireUser(volver)`: si no hay usuario, redirige a `/cuenta/login?volver={volver}`.
@@ -154,13 +154,14 @@ Mensajes de error en el recuadro `role="alert"`:
 | ---------------------------------------- | ---------------------------------------------------------------------- |
 | Email o contraseña incorrectos           | "El email o la contraseña no son correctos."                           |
 | Email sin verificar al iniciar sesión    | "Tenés que verificar tu email. Te mandamos un link nuevo."             |
-| Email ya registrado                      | "Ya existe una cuenta con ese email."                                  |
 | Datos inválidos según Zod                | "Revisá los datos e intentá de nuevo."                                 |
 | Límite de intentos superado              | "Demasiados intentos. Probá de nuevo en un minuto."                    |
 | Token de recuperación vencido o inválido | "El link venció o no es válido. Pedí uno nuevo."                       |
 | Error inesperado o base caída            | "No pudimos completar la operación. Intentá de nuevo en unos minutos." |
 
 Mensaje de recuperar y de reenviar verificación (`role="status"`), exista o no la cuenta: "Si el email tiene una cuenta, te enviamos un link.".
+
+Registro con un email que ya existe: Better Auth, con `requireEmailVerification`, responde igual que a un registro nuevo para no revelar qué emails tienen cuenta. El formulario redirige a `/cuenta/verificar` y la cuenta existente recibe el email "Ya tenés una cuenta", sin crear otro usuario.
 
 Límites de intentos (por IP, guardados en `rate_limit`):
 
@@ -222,7 +223,7 @@ Convenciones:
 - [ ] Ninguna página muestra "Las cuentas todavía no están disponibles", "Continuar con Google" ni "o con tu email".
 - [ ] Registrarse con datos válidos crea un usuario con `role = 'lector'` y `email_verified = false`, redirige a `/cuenta/verificar` y deja un email en Mailpit.
 - [ ] Mandar `role: "admin"` en el body de `/api/auth/sign-up/email` crea igual un usuario `lector`.
-- [ ] Registrarse con un email existente muestra "Ya existe una cuenta con ese email." con `role="alert"`.
+- [ ] Registrarse con un email existente redirige igual a `/cuenta/verificar`, no crea otro usuario, y deja en Mailpit un email "Ya tenés una cuenta" para la cuenta existente.
 - [ ] Iniciar sesión sin verificar muestra "Tenés que verificar tu email. Te mandamos un link nuevo." y manda un email nuevo.
 - [ ] Abrir el link de verificación lleva a `/cuenta/verificar?estado=ok` y pone `email_verified = true`.
 - [ ] Abrir un link de verificación alterado lleva a `/cuenta/verificar` con el estado "El link venció o no es válido".
@@ -282,7 +283,8 @@ Convenciones:
 - **Sí:** errores en un recuadro `role="alert"` en el lugar del aviso de SPEC 04. Cambia poco el diseño. Elegido por el usuario.
 - **No:** errores por campo. Más cambios visuales sobre el artboard.
 - **Sí:** el mismo mensaje en recuperar y en reenviar verificación, exista o no la cuenta. No permite averiguar qué emails tienen cuenta.
-- **Sí:** "Ya existe una cuenta con ese email." en registro. Esconderlo confunde al usuario real, y el rate limit acota la enumeración.
+- **Sí:** registro con email existente indistinguible de uno nuevo, más un email "Ya tenés una cuenta" a la cuenta existente. Es el comportamiento de Better Auth con `requireEmailVerification`, y no permite averiguar qué emails tienen cuenta. Elegido por el usuario al implementar.
+- **No:** consultar la tabla `user` en `signUpAction` para mostrar "Ya existe una cuenta con ese email.". Revela qué emails tienen cuenta.
 - **Sí:** después del login, `?volver=` validado o `/cuenta/perfil`. Mantiene el contexto del artículo. Elegido por el usuario.
 - **Sí:** `resolveAfterLogin` en `lib/back-href.ts`, al lado de `resolveBackHref`. Reusa la regla contra open redirect de SPEC 04.
 - **Sí:** rate limit de Better Auth con `storage: "database"`. Sobrevive reinicios y varias instancias. Elegido por el usuario.

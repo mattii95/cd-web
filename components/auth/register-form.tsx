@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { AuthForm } from "./auth-form";
 import { inputClass, labelClass } from "./field-styles";
-import { GoogleButton } from "./google-button";
+import { signUpAction } from "@/app/cuenta/actions";
 import { PasswordInput } from "./password-input";
 import { PasswordStrength } from "./password-strength";
 
@@ -13,6 +13,7 @@ export function RegisterForm() {
 
   return (
     <AuthForm
+      action={signUpAction}
       title="Crear cuenta"
       subtitle="Completá tus datos para empezar a participar."
       submitLabel="Crear cuenta"
@@ -25,7 +26,6 @@ export function RegisterForm() {
         </>
       }
     >
-      <GoogleButton />
       <label className={labelClass}>
         Nombre y apellido
         <input

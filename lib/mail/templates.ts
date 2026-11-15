@@ -41,3 +41,14 @@ export function resetPasswordEmail(name: string, url: string): Email {
     "Si no pediste este cambio, ignorá este mensaje: tu contraseña no cambia.",
   );
 }
+
+export function existingAccountEmail(name: string, url: string): Email {
+  return build(
+    "Ya tenés una cuenta",
+    name,
+    "Alguien intentó crear una cuenta con tu email, pero ya tenés una. Podés iniciar sesión o, si no recordás la contraseña, recuperarla desde ahí.",
+    "Iniciar sesión",
+    url,
+    "Si no fuiste vos, ignorá este mensaje: no se creó ninguna cuenta nueva.",
+  );
+}

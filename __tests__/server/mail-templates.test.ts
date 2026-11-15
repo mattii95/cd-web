@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { resetPasswordEmail, verificationEmail } from "@/lib/mail/templates";
+import {
+  existingAccountEmail,
+  resetPasswordEmail,
+  verificationEmail,
+} from "@/lib/mail/templates";
 
 const url = "http://localhost:3000/api/auth/verify-email?token=abc&callbackURL=/x";
 
@@ -17,6 +21,12 @@ describe("plantillas de email", () => {
     expect(mail.subject).toBe("Recuperá tu contraseña");
     expect(mail.text).toContain("1 hora");
     expect(mail.text).toContain(url);
+  });
+
+  it("el aviso de cuenta existente lleva el link de login", () => {
+    const mail = existingAccountEmail("Ana", "http://localhost:3000/cuenta/login");
+    expect(mail.subject).toBe("Ya tenés una cuenta");
+    expect(mail.text).toContain("http://localhost:3000/cuenta/login");
   });
 
   it("escapa el html del nombre", () => {
