@@ -6,6 +6,7 @@ import { isAPIError } from "better-auth/api";
 import { z } from "zod";
 import { resolveAfterLogin } from "@/lib/back-href";
 import { getAuth } from "@/lib/auth/auth";
+import { isRateLimited, type RateLimitRule } from "@/lib/auth/rate-limit";
 
 export type FormState =
   | { status: "idle" }
@@ -47,7 +48,17 @@ const field = (data: FormData, name: string) => {
 
 const VERIFICADO = "/cuenta/verificar?estado=ok";
 
+// Las actions llaman a `auth.api` directo, que no pasa por el límite de intentos de Better Auth.
+async function limited(rule: RateLimitRule): Promise<boolean> {
+  try {
+    return await isRateLimited(rule);
+  } catch {
+    return false; // si la base falla, la operación siguiente falla con su propio error
+  }
+}
+
 export async function signInAction(_: FormState, data: FormData): Promise<FormState> {
+  if (await limited("sign-in")) return error(MSG.limite);
   const parsed = z
     .object({ email, password: z.string().min(1) })
     .safeParse({ email: field(data, "email"), password: field(data, "password") });
@@ -69,6 +80,7 @@ export async function signInAction(_: FormState, data: FormData): Promise<FormSt
 }
 
 export async function signUpAction(_: FormState, data: FormData): Promise<FormState> {
+  if (await limited("sign-up")) return error(MSG.limite);
   const parsed = z
     .object({ name: z.string().trim().min(1).max(100), email, password })
     .safeParse({
@@ -91,9 +103,11 @@ export async function signUpAction(_: FormState, data: FormData): Promise<FormSt
 
 // Responde igual exista o no la cuenta. Solo el límite de intentos se muestra.
 async function sendLink(
+  rule: RateLimitRule,
   data: FormData,
   call: (email: string, headers: Headers) => Promise<unknown>,
 ): Promise<FormState> {
+  if (await limited(rule)) return error(MSG.limite);
   const parsed = email.safeParse(field(data, "email"));
   if (!parsed.success) return error(MSG.datos);
   try {
@@ -105,7 +119,7 @@ async function sendLink(
 }
 
 export async function requestResetAction(_: FormState, data: FormData) {
-  return sendLink(data, (email, headers) =>
+  return sendLink("request-reset", data, (email, headers) =>
     getAuth().api.requestPasswordReset({
       body: { email, redirectTo: "/cuenta/nueva-contrasena" },
       headers,
@@ -114,7 +128,7 @@ export async function requestResetAction(_: FormState, data: FormData) {
 }
 
 export async function resendVerificationAction(_: FormState, data: FormData) {
-  return sendLink(data, (email, headers) =>
+  return sendLink("send-verification", data, (email, headers) =>
     getAuth().api.sendVerificationEmail({
       body: { email, callbackURL: VERIFICADO },
       headers,

@@ -40,6 +40,7 @@ Las páginas de login, registro y recuperar se siguen prerenderizando.
   - `session`: `expiresIn` de 30 días y `updateAge` de 1 día.
   - `user.additionalFields.role`: `input: false`, así el registro no puede elegir el rol.
   - `rateLimit` habilitado, con `storage: "database"` y reglas propias (ver Modelo de datos).
+- `lib/auth/rate-limit.ts` (`server-only`): `isRateLimited(regla)` aplica en las Server Actions las mismas reglas del rate limit, sobre la tabla `rate_limit`, con la IP de `x-forwarded-for` o `x-real-ip`. Better Auth solo limita su handler HTTP y las actions llaman a `auth.api` directo.
   - Plugin `nextCookies()`, para que las Server Actions puedan escribir la cookie de sesión.
 - `app/api/auth/[...all]/route.ts`: `GET` y `POST` que llaman a `getAuth()` dentro del handler y delegan en `toNextJsHandler`.
 - Mailer en `lib/mail/`:
@@ -288,6 +289,8 @@ Convenciones:
 - **Sí:** después del login, `?volver=` validado o `/cuenta/perfil`. Mantiene el contexto del artículo. Elegido por el usuario.
 - **Sí:** `resolveAfterLogin` en `lib/back-href.ts`, al lado de `resolveBackHref`. Reusa la regla contra open redirect de SPEC 04.
 - **Sí:** rate limit de Better Auth con `storage: "database"`. Sobrevive reinicios y varias instancias. Elegido por el usuario.
+- **Sí:** un limitador propio en las Server Actions, con las mismas reglas y la misma tabla. `auth.api` no pasa por el rate limit de Better Auth, que vive en su router HTTP. Elegido por el usuario al implementar.
+- **No:** llamar al handler HTTP desde las actions para heredar el límite. Obliga a reenviar a mano las cookies `Set-Cookie`.
 - **No:** rate limit en memoria. Se pierde al reiniciar.
 - **Sí:** 30 días con "Recordarme", 24 horas para verificar y 1 hora para recuperar. La hora la promete el panel de SPEC 04. Elegido por el usuario.
 - **Sí:** `revokeSessionsOnPasswordReset`. Si alguien robó la sesión, cambiar la contraseña la corta.
