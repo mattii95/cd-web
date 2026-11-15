@@ -31,6 +31,13 @@ describe("LoginForm", () => {
     expect(screen.queryByText(/todavía no están disponibles/)).not.toBeInTheDocument();
   });
 
+  it("monta el slot social fuera del form de email", () => {
+    render(<LoginForm social={<p>botones sociales</p>} />);
+    const social = screen.getByText("botones sociales");
+    expect(social.closest("form")).toBeNull();
+    expect(screen.getByRole("button", { name: "Ingresar" }).closest("form")).not.toBeNull();
+  });
+
   it("envía email, contraseña, rememberMe y volver a la action", async () => {
     signInAction.mockResolvedValue({ status: "idle" });
     await fillAndSubmit();
