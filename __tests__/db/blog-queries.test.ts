@@ -1,11 +1,21 @@
-import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { eq } from "drizzle-orm";
+import { Pool } from "pg";
 import {
   getApprovedComments,
   getCategories,
   getPublishedPostBySlug,
   getPublishedPosts,
   getRatingSummary,
+  getTags,
 } from "@/db/blog";
 import { closeDb, getDb } from "@/db/client";
 import {
@@ -16,6 +26,8 @@ import {
   media,
   post,
   postRating,
+  postTag,
+  tag,
   user,
 } from "@/db/schema";
 import {
@@ -79,12 +91,10 @@ describe("funciones de lectura del blog", () => {
   it("getPublishedPostBySlug devuelve null si no existe o es borrador", async () => {
     const db = getDb();
     const { cat } = await crearBase();
-    await db
-      .insert(post)
-      .values({
-        ...nuevoPost(cat.id, "autor", "borrador"),
-        status: "borrador",
-      });
+    await db.insert(post).values({
+      ...nuevoPost(cat.id, "autor", "borrador"),
+      status: "borrador",
+    });
     expect(await getPublishedPostBySlug("no-existe")).toBeNull();
     expect(await getPublishedPostBySlug("borrador")).toBeNull();
     expect((await getPublishedPostBySlug("post-1"))?.body).toEqual([
@@ -238,6 +248,100 @@ describe("funciones de lectura del blog", () => {
       average: 3.5,
       total: 2,
       distribution: { 1: 0, 2: 1, 3: 0, 4: 0, 5: 1 },
+    });
+  });
+
+  describe("etiquetas", () => {
+    async function etiquetar(postId: string, ...slugs: string[]) {
+      const db = getDb();
+      for (const slug of slugs) {
+        const [t] = await db
+          .insert(tag)
+          .values({ slug, name: slug.toUpperCase() })
+          .onConflictDoUpdate({ target: tag.slug, set: { slug } })
+          .returning();
+        await db.insert(postTag).values({ postId, tagId: t.id });
+      }
+    }
+
+    it("getTags no cuenta borradores ni devuelve etiquetas sin posts publicados", async () => {
+      const db = getDb();
+      const { cat, post: p } = await crearBase();
+      const [borrador] = await db
+        .insert(post)
+        .values({
+          ...nuevoPost(cat.id, "autor", "borrador"),
+          status: "borrador",
+        })
+        .returning();
+      await etiquetar(p.id, "visible");
+      await etiquetar(borrador.id, "visible", "solo-borrador");
+      await db.insert(tag).values({ slug: "huerfana", name: "Huérfana" });
+
+      expect(await getTags()).toEqual([
+        { slug: "visible", name: "VISIBLE", count: 1 },
+      ]);
+    });
+
+    it("getTags ordena por cantidad descendente y slug ascendente", async () => {
+      const db = getDb();
+      const { cat, post: p } = await crearBase();
+      const [p2] = await db
+        .insert(post)
+        .values(nuevoPost(cat.id, "autor", "post-2"))
+        .returning();
+      await etiquetar(p.id, "b", "a", "comun");
+      await etiquetar(p2.id, "comun");
+
+      const tags = await getTags();
+      expect(tags.map((t) => [t.slug, t.count])).toEqual([
+        ["comun", 2],
+        ["a", 1],
+        ["b", 1],
+      ]);
+    });
+
+    it("getPublishedPosts trae las etiquetas por slug, y [] sin etiquetas", async () => {
+      const db = getDb();
+      const { cat, post: p } = await crearBase();
+      await db.insert(post).values({
+        ...nuevoPost(cat.id, "autor", "sin-tags"),
+        publishedAt: new Date("2026-11-01"),
+      });
+      await etiquetar(p.id, "zeta", "alfa");
+
+      const posts = await getPublishedPosts();
+      expect(posts.find((x) => x.slug === "post-1")?.tags).toEqual([
+        { slug: "alfa", name: "ALFA" },
+        { slug: "zeta", name: "ZETA" },
+      ]);
+      expect(posts.find((x) => x.slug === "sin-tags")?.tags).toEqual([]);
+    });
+
+    it("getPublishedPosts resuelve las etiquetas con una sola consulta, sin importar cuántos posts", async () => {
+      const db = getDb();
+      const { cat, post: p } = await crearBase();
+      await etiquetar(p.id, "uno");
+      const spy = vi.spyOn(Pool.prototype, "query");
+      try {
+        await getPublishedPosts();
+        const conUno = spy.mock.calls.length;
+        spy.mockClear();
+
+        for (const slug of ["a", "b", "c"]) {
+          const [x] = await db
+            .insert(post)
+            .values(nuevoPost(cat.id, "autor", slug))
+            .returning();
+          await etiquetar(x.id, `t-${slug}`);
+        }
+        spy.mockClear();
+        await getPublishedPosts();
+        expect(spy.mock.calls.length).toBe(conUno);
+        expect(conUno).toBe(2); // posts + etiquetas
+      } finally {
+        spy.mockRestore();
+      }
     });
   });
 });

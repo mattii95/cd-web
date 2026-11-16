@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowRight } from "@/components/icons";
-import { getCategory, type BlogPost } from "@/lib/blog-posts";
+import { getCategory, getTag, type BlogPost } from "@/lib/blog-posts";
 import { PostThumb } from "./post-thumb";
+import { TagList } from "./tag-list";
 
 export function PostCard({ post }: { post: BlogPost }) {
   const category = getCategory(post.category);
@@ -24,6 +25,7 @@ export function PostCard({ post }: { post: BlogPost }) {
         <p className="m-0 text-[15px] leading-[1.55] text-text-faint">
           {post.excerpt}
         </p>
+        <TagList tags={post.tags.map((s) => getTag(s)!)} />
         <span className="mt-auto inline-flex items-center gap-2 pt-1.5 text-sm font-semibold text-accent">
           Leer artículo
           <ArrowRight size={16} className="fx-arrow" />

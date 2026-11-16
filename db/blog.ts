@@ -5,6 +5,8 @@ import type {
   BlogCategoryTag,
   BlogImage,
   BlogRating,
+  BlogTag,
+  BlogTagSlug,
 } from "@/lib/blog-posts";
 import type { ServiceSlug } from "@/lib/services";
 import { blogBodySchema, type StoredBlogBlock } from "./blog-body";
@@ -17,6 +19,8 @@ import {
   media,
   post,
   postRating,
+  postTag,
+  tag,
   user,
 } from "./schema";
 
@@ -42,7 +46,9 @@ export type PostSummary = {
   category: BlogCategoryRow;
   author: PostAuthor;
   cover: BlogImage | null;
+  tags: BlogTag[]; // slug ascendente
 };
+export type TagRow = BlogTag & { count: number }; // count de posts publicados
 export type PostDetail = PostSummary & { body: BlogBlock[]; cta: string };
 export type RatingSummary = {
   average: number; // 0 si no hay valoraciones; sin redondear
@@ -103,7 +109,7 @@ const mediaImage = (m: typeof media.$inferSelect): BlogImage => ({
   alt: m.alt,
 });
 
-const toSummary = (r: PublishedRow): PostSummary => ({
+const toSummary = (r: PublishedRow, tags: BlogTag[]): PostSummary => ({
   id: r.post.id,
   slug: r.post.slug,
   title: r.post.title,
@@ -118,7 +124,29 @@ const toSummary = (r: PublishedRow): PostSummary => ({
     bio: r.bio,
   },
   cover: r.cover ? mediaImage(r.cover) : null,
+  tags,
 });
+
+const bySlug = (a: { slug: string }, b: { slug: string }) =>
+  a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0; // en código: la collation de la base cambia entre entornos
+
+// Una sola consulta para las etiquetas de todos los posts.
+async function getTagsByPost(postIds: string[]) {
+  const byPost = new Map<string, BlogTag[]>();
+  if (postIds.length === 0) return byPost;
+  const rows = await getDb()
+    .select({ postId: postTag.postId, slug: tag.slug, name: tag.name })
+    .from(postTag)
+    .innerJoin(tag, eq(tag.id, postTag.tagId))
+    .where(inArray(postTag.postId, postIds));
+  for (const r of rows) {
+    const list = byPost.get(r.postId) ?? [];
+    list.push({ slug: r.slug as BlogTagSlug, name: r.name });
+    byPost.set(r.postId, list);
+  }
+  for (const list of byPost.values()) list.sort(bySlug);
+  return byPost;
+}
 
 // Cambia el mediaId de los bloques image por la imagen de la biblioteca.
 async function resolveBody(
@@ -152,7 +180,26 @@ export async function getPublishedPosts(): Promise<PostSummary[]> {
   const rows = await selectPublished()
     .where(eq(post.status, "publicado"))
     .orderBy(desc(post.publishedAt));
-  return rows.map(toSummary);
+  const tagsByPost = await getTagsByPost(rows.map((r) => r.post.id));
+  return rows.map((r) => toSummary(r, tagsByPost.get(r.post.id) ?? []));
+}
+
+// Etiquetas con al menos un post publicado, por cantidad descendente y slug ascendente.
+export async function getTags(): Promise<TagRow[]> {
+  const rows = await getDb()
+    .select({
+      slug: tag.slug,
+      name: tag.name,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(tag)
+    .innerJoin(postTag, eq(postTag.tagId, tag.id))
+    .innerJoin(post, eq(post.id, postTag.postId))
+    .where(eq(post.status, "publicado"))
+    .groupBy(tag.id);
+  return rows
+    .map((r) => ({ ...r, slug: r.slug as BlogTagSlug }))
+    .sort((a, b) => b.count - a.count || bySlug(a, b));
 }
 
 export async function getPublishedPostBySlug(
@@ -169,7 +216,10 @@ export async function getPublishedPostBySlug(
     );
   }
   return {
-    ...toSummary(row),
+    ...toSummary(
+      row,
+      (await getTagsByPost([row.post.id])).get(row.post.id) ?? [],
+    ),
     body: await resolveBody(slug, body.data),
     cta: row.post.cta,
   };

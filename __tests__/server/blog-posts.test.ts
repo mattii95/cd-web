@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   blogPosts,
+  blogTags,
   formatAverage,
   formatPostDate,
   getPost,
   getRatingSummary,
   getRelatedPosts,
+  getTag,
+  getUsedTags,
 } from "@/lib/blog-posts";
 
 describe("getPost", () => {
@@ -72,5 +75,53 @@ describe("getRelatedPosts", () => {
 describe("formatPostDate", () => {
   it("formatea en es-AR sin puntos ni 'de'", () => {
     expect(formatPostDate("2026-03-05")).toBe("5 mar 2026");
+  });
+});
+
+describe("etiquetas del mock", () => {
+  const known = new Set(blogTags.map((t) => t.slug));
+
+  it("cada post tiene 2 o 3 etiquetas conocidas, sin repetir y ordenadas por slug", () => {
+    for (const { tags } of blogPosts) {
+      expect(tags.length).toBeGreaterThanOrEqual(2);
+      expect(tags.length).toBeLessThanOrEqual(3);
+      expect(new Set(tags).size).toBe(tags.length);
+      tags.forEach((t) => expect(known.has(t)).toBe(true));
+      expect(tags).toEqual([...tags].sort());
+    }
+  });
+
+  it("suma 19 asignaciones", () => {
+    expect(blogPosts.flatMap((p) => p.tags)).toHaveLength(19);
+  });
+});
+
+describe("getTag", () => {
+  it("devuelve la etiqueta por slug", () => {
+    expect(getTag("pymes")).toEqual({ slug: "pymes", name: "Pymes" });
+  });
+});
+
+describe("getUsedTags", () => {
+  it("devuelve las 11 etiquetas en el orden y con los conteos del spec", () => {
+    expect(getUsedTags(blogPosts).map((t) => [t.slug, t.count])).toEqual([
+      ["automatizacion", 3],
+      ["pymes", 3],
+      ["gestion", 2],
+      ["mvp", 2],
+      ["validacion", 2],
+      ["ventas", 2],
+      ["atencion-al-cliente", 1],
+      ["chatbots", 1],
+      ["landing-page", 1],
+      ["rendimiento", 1],
+      ["seo", 1],
+    ]);
+  });
+
+  it("omite las etiquetas sin posts", () => {
+    expect(getUsedTags([{ tags: ["seo"] }])).toEqual([
+      { slug: "seo", name: "SEO", count: 1 },
+    ]);
   });
 });

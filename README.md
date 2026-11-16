@@ -56,6 +56,8 @@ Without `SEED_AUTHOR_EMAIL`, or if that user does not exist, the seed exits with
 
 It also creates 24 demo users (`@demo.invalid`) for the ratings and comments. They have no `account` row, so they cannot sign in.
 
+Post tags (`tag`, `post_tag`) are also loaded only by this seed, from `blogTags` and each post's `tags` in `lib/blog-posts.ts`. Until the post editor exists there is no screen to assign them.
+
 ## Blog images
 
 Admins upload images at `/admin/medios`. Each upload is re-encoded to WebP (1920 px wide at most, no EXIF or GPS data) with `sharp`, and the file is saved to `MEDIA_DIR` as `<id>.webp`. The database keeps one row per image in `media`. Posts store the image `id`, and `/media/<id>` serves the file.

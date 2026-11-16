@@ -4,9 +4,11 @@ import {
   formatAverage,
   getCategory,
   getRatingSummary,
+  getTag,
   type BlogPost,
 } from "@/lib/blog-posts";
 import { PostThumb } from "./post-thumb";
+import { TagList } from "./tag-list";
 
 const gridBg =
   "bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:56px_56px]";
@@ -50,6 +52,9 @@ export function ArticleHero({
         <p className="fx-rise d3 m-0 max-w-[720px] text-[19px] leading-[1.6] text-text-muted">
           {post.excerpt}
         </p>
+        <div className="fx-rise d3">
+          <TagList tags={post.tags.map((s) => getTag(s)!)} tone="dark" />
+        </div>
         <div className="fx-rise d4 flex flex-wrap items-center gap-[18px] text-sm text-text-muted">
           <span className="flex items-center gap-3">
             <span

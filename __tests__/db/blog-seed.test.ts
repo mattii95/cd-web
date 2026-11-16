@@ -11,13 +11,14 @@ import {
   it,
   vi,
 } from "vitest";
-import { count, like } from "drizzle-orm";
+import { count, eq, like } from "drizzle-orm";
 import {
   getApprovedComments,
   getCategories,
   getPublishedPostBySlug,
   getPublishedPosts,
   getRatingSummary,
+  getTags,
 } from "@/db/blog";
 import { closeDb, getDb } from "@/db/client";
 import {
@@ -29,6 +30,8 @@ import {
   media,
   post,
   postRating,
+  postTag,
+  tag,
   user,
 } from "@/db/schema";
 import { seedBlog } from "@/db/seed/blog";
@@ -46,6 +49,8 @@ const tablas = [
   comment,
   commentVote,
   media,
+  tag,
+  postTag,
   user,
 ];
 async function contar() {
@@ -152,6 +157,63 @@ describe("seedBlog", () => {
     expect((await db.select({ n: count() }).from(media))[0].n).toBe(2);
   });
 
+  it("carga 11 etiquetas y 19 filas post_tag, en el orden del spec", async () => {
+    const db = getDb();
+    await seedBlog(db, { authorEmail: AUTOR });
+    expect((await db.select({ n: count() }).from(tag))[0].n).toBe(11);
+    expect((await db.select({ n: count() }).from(postTag))[0].n).toBe(19);
+    expect((await getTags()).map((t) => t.slug)).toEqual([
+      "automatizacion",
+      "pymes",
+      "gestion",
+      "mvp",
+      "validacion",
+      "ventas",
+      "atencion-al-cliente",
+      "chatbots",
+      "landing-page",
+      "rendimiento",
+      "seo",
+    ]);
+  });
+
+  it("el post de señales tiene sus tres etiquetas", async () => {
+    await seedBlog(getDb(), { authorEmail: AUTOR });
+    const p = await getPublishedPostBySlug(SLUG);
+    expect(p?.tags.map((t) => t.slug)).toEqual([
+      "automatizacion",
+      "gestion",
+      "pymes",
+    ]);
+  });
+
+  it("correr el seed dos veces deja 11 etiquetas y 19 post_tag", async () => {
+    const db = getDb();
+    await seedBlog(db, { authorEmail: AUTOR });
+    await seedBlog(db, { authorEmail: AUTOR });
+    expect((await db.select({ n: count() }).from(tag))[0].n).toBe(11);
+    expect((await db.select({ n: count() }).from(postTag))[0].n).toBe(19);
+  });
+
+  it("actualiza el name de una etiqueta existente", async () => {
+    const db = getDb();
+    await seedBlog(db, { authorEmail: AUTOR });
+    await db.update(tag).set({ name: "viejo" }).where(eq(tag.slug, "seo"));
+    await seedBlog(db, { authorEmail: AUTOR });
+    const [t] = await db.select().from(tag).where(eq(tag.slug, "seo"));
+    expect(t.name).toBe("SEO");
+  });
+
+  it("no borra una fila post_tag agregada a mano", async () => {
+    const db = getDb();
+    await seedBlog(db, { authorEmail: AUTOR });
+    const [p] = await db.select().from(post).where(eq(post.slug, SLUG));
+    const [t] = await db.select().from(tag).where(eq(tag.slug, "seo"));
+    await db.insert(postTag).values({ postId: p.id, tagId: t.id });
+    await seedBlog(db, { authorEmail: AUTOR });
+    expect((await db.select({ n: count() }).from(postTag))[0].n).toBe(20);
+  });
+
   it("los usuarios demo no tienen fila en account", async () => {
     const db = getDb();
     await seedBlog(db, { authorEmail: AUTOR });
@@ -160,7 +222,12 @@ describe("seedBlog", () => {
       .from(user)
       .where(like(user.email, "%@demo.invalid"));
     expect(demo.length).toBeGreaterThan(24);
-    const accounts = await db.select({ n: count() }).from(account);
+    // Solo las de usuarios demo: otros tests pueden dejar cuentas de otros usuarios.
+    const accounts = await db
+      .select({ n: count() })
+      .from(account)
+      .innerJoin(user, eq(user.id, account.userId))
+      .where(like(user.email, "%@demo.invalid"));
     expect(accounts[0].n).toBe(0);
   });
 
