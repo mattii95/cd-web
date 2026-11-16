@@ -8,6 +8,7 @@ import {
   media,
   post,
   postRating,
+  tag,
   user,
 } from "@/db/schema";
 
@@ -18,6 +19,7 @@ export async function resetBlog() {
   await db.delete(comment);
   await db.delete(postRating);
   await db.delete(post);
+  await db.delete(tag); // post_tag cae por cascade
   await db.delete(media);
   await db.delete(authorProfile);
   await db.delete(category);
