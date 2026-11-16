@@ -63,7 +63,10 @@ export async function seedBlog(
 
   const bodies = new Map<string, StoredBlogBlock[]>();
   for (const p of blogPosts) {
-    const parsed = blogBodySchema.safeParse(p.body);
+    // Temporal hasta el paso 9: el seed todavía no carga imágenes, así que las omite.
+    const parsed = blogBodySchema.safeParse(
+      p.body.filter((b) => b.type !== "image"),
+    );
     if (!parsed.success) {
       throw new Error(`El body del post "${p.slug}" no cumple blogBodySchema`);
     }

@@ -133,12 +133,28 @@ export const blogPosts: BlogPost[] = [
     title: "5 señales de que tu empresa necesita un sistema a medida",
     excerpt:
       "Si tu equipo vive copiando datos entre planillas, es momento de mirar esto.",
+    cover: {
+      src: "/blog/senales-portada.webp",
+      width: 1920,
+      height: 1080,
+      alt: "Planillas sueltas que convergen en un único sistema ordenado",
+    },
     body: [
       {
         type: "p",
         text: "Muchas empresas arrancan con planillas de Excel y herramientas sueltas, y está perfecto: es la forma más rápida de empezar. El problema aparece cuando el negocio crece y esas herramientas, en lugar de ayudar, empiezan a frenar. Estas son las cinco señales más comunes de que llegó el momento de pensar en un sistema propio.",
       },
       { type: "h2", id: "s1", text: "Tu equipo copia datos de un lado a otro" },
+      {
+        type: "image",
+        image: {
+          src: "/blog/senales-diagrama.webp",
+          width: 1600,
+          height: 900,
+          alt: "Cinco señales sobre una línea de tiempo, cada una más intensa que la anterior",
+        },
+        caption: "Cada señal que ignorás cuesta más que la anterior.",
+      },
       {
         type: "p",
         text: "Si la misma información se carga en una planilla, después en otra y finalmente en el sistema de facturación, estás pagando horas de trabajo que no suman valor y multiplicando las chances de error.",

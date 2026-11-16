@@ -1,12 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { blogBodySchema } from "@/db/blog-body";
-import { blogPosts } from "@/lib/blog-posts";
+import { blogPosts, type BlogBlock } from "@/lib/blog-posts";
+
+// El mock usa la forma resuelta (image); la guardada lleva mediaId.
+const toStored = (body: BlogBlock[]) =>
+  body.map((b) =>
+    b.type === "image"
+      ? { type: "image", mediaId: "0b7c1c5e-6f0e-4a55-9a43-2d2a4f6c1b11" }
+      : b,
+  );
 
 describe("blogBodySchema", () => {
   it.each(blogPosts.map((p) => [p.slug, p.body] as const))(
     "acepta el body de %s",
     (_slug, body) => {
-      expect(blogBodySchema.safeParse(body).success).toBe(true);
+      expect(blogBodySchema.safeParse(toStored(body)).success).toBe(true);
     },
   );
 
