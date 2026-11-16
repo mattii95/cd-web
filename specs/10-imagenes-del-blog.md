@@ -1,6 +1,6 @@
 # SPEC 10 — Imágenes del blog
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 03, SPEC 07, SPEC 09
 > **Fecha:** 2026-11-15
 > **Objetivo:** Permitir que un admin suba imágenes a una biblioteca propia guardada en disco local, y usarlas como portada y como bloque dentro del cuerpo de los posts, sin servicios de terceros.
@@ -258,51 +258,51 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado, incluidos los tests de SPEC 07, 08 y 09.
-- [ ] `npm run test:e2e` pasa.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado, incluidos los tests de SPEC 07, 08 y 09.
+- [x] `npm run test:e2e` pasa.
 - [ ] Los jobs `checks`, `db` y `e2e` del CI pasan en un PR a `main`.
-- [ ] `package.json` tiene `sharp` en `dependencies` y ningún paquete de almacenamiento de terceros.
-- [ ] `npm run db:migrate` crea la tabla `media` y la columna `post.cover_media_id`, y después `db:generate` no crea migraciones nuevas.
-- [ ] `processImage` con un JPEG de 4000×3000 devuelve un WebP de 1920×1440.
-- [ ] `processImage` con un PNG de 800×600 devuelve un WebP de 800×600 (no agranda).
-- [ ] `processImage` con un JPEG con EXIF de orientación 6 devuelve la imagen girada y sin EXIF ni GPS.
-- [ ] `processImage` rechaza con `MediaError` un GIF, un archivo de texto renombrado a `.jpg`, un archivo de más de 10 MB y una imagen de más de 40 megapíxeles.
-- [ ] `blogBodySchema` acepta un bloque `{ type: "image", mediaId: <uuid> }` y rechaza uno sin `mediaId`, uno con `mediaId` que no es UUID y uno con `alt` vacío.
-- [ ] `PostThumb` sin `cover` renderiza el dibujo de la categoría como antes.
-- [ ] `PostThumb` con `cover` en `card` renderiza un `<img>` con `alt=""`, y en `banner` con el `alt` de la imagen.
-- [ ] `ArticleBody` con un bloque `image` y `caption` renderiza `<figure>`, `<img>` con su `alt` y `<figcaption>` con el texto.
-- [ ] `/blog` muestra la portada de `senales-sistema-a-medida` en su tarjeta, y los otros 7 posts muestran el dibujo generado.
-- [ ] `/blog/senales-sistema-a-medida` muestra la portada en el hero y la imagen del cuerpo después del primer `h2`.
-- [ ] `createMedia` guarda `<id>.webp` en `MEDIA_DIR` y una fila con medidas y `bytes` iguales al archivo.
-- [ ] `createMedia` dos veces con el mismo archivo devuelve la misma fila, `duplicate: true` en la segunda, y deja un solo archivo.
-- [ ] `createMedia` con un archivo inválido no deja ni fila ni archivo.
-- [ ] Insertar `media` con `alt` vacío o solo espacios falla por el check.
-- [ ] `deleteMedia` de una imagen que es portada lanza `MediaInUseError` con el título del post.
-- [ ] `deleteMedia` de una imagen usada en el `body` de un post `borrador` lanza `MediaInUseError`.
-- [ ] `deleteMedia` de una imagen sin usar borra la fila y el archivo.
-- [ ] Borrar el usuario que subió una imagen deja la imagen con `uploaded_by` nulo.
-- [ ] `getPublishedPostBySlug` devuelve el bloque `image` con `src` `/media/<id>`, las medidas de `media` y el `alt` del bloque si lo tiene o el de `media` si no.
-- [ ] `getPublishedPosts` devuelve `cover: null` para un post sin portada.
-- [ ] `getPublishedPostBySlug` lanza un error que nombra el slug y el `mediaId` si un bloque apunta a un `media` inexistente.
-- [ ] `GET /media/<id>` de una imagen existente devuelve 200, `Content-Type: image/webp` y `Cache-Control: public, max-age=31536000, immutable`.
-- [ ] `GET /media/no-es-uuid` y `GET /media/<uuid inexistente>` devuelven 404.
-- [ ] Después de `seedBlog`, `getPublishedPostBySlug("senales-sistema-a-medida")` tiene `cover` y un bloque `image` resuelto, y hay 2 filas en `media`.
-- [ ] Correr `seedBlog` dos veces deja la misma cantidad de filas en `media` y de archivos en `MEDIA_DIR`.
-- [ ] Un usuario `lector` que abre `/admin/medios` no ve la página (mismo comportamiento que `/admin`).
-- [ ] Llamar a `uploadMediaAction`, `updateMediaAltAction` o `deleteMediaAction` sin sesión de admin no cambia nada en la base ni en el disco.
-- [ ] E2E: un admin sube `e2e/fixtures/imagen.png` con alt, ve "Imagen subida." y la tarjeta con ese alt, y `GET` del `src` de la tarjeta devuelve `image/webp`.
-- [ ] E2E: subir el mismo archivo otra vez muestra "Esa imagen ya estaba subida." y la grilla no suma tarjetas.
-- [ ] E2E: un archivo `.txt` muestra el mensaje de formato no soportado.
-- [ ] E2E: editar el alt y recargar muestra el alt nuevo.
-- [ ] E2E: una imagen sin usar se borra con "Borrar" → "Sí" y desaparece de la grilla.
-- [ ] Una imagen en uso muestra "En uso en: <título>" y su botón de borrar está deshabilitado.
-- [ ] "Copiar id" deja el id en el portapapeles y muestra "Copiado".
-- [ ] `/admin` tiene un enlace a `/admin/medios`.
-- [ ] `/storage` está en `.gitignore` y `MEDIA_DIR` está en `.env.example`.
-- [ ] `README.md` explica `MEDIA_DIR`, que la carpeta debe persistir y entrar en el backup, y que serverless no sirve con este almacenamiento.
+- [x] `package.json` tiene `sharp` en `dependencies` y ningún paquete de almacenamiento de terceros.
+- [x] `npm run db:migrate` crea la tabla `media` y la columna `post.cover_media_id`, y después `db:generate` no crea migraciones nuevas.
+- [x] `processImage` con un JPEG de 4000×3000 devuelve un WebP de 1920×1440.
+- [x] `processImage` con un PNG de 800×600 devuelve un WebP de 800×600 (no agranda).
+- [x] `processImage` con un JPEG con EXIF de orientación 6 devuelve la imagen girada y sin EXIF ni GPS.
+- [x] `processImage` rechaza con `MediaError` un GIF, un archivo de texto renombrado a `.jpg`, un archivo de más de 10 MB y una imagen de más de 40 megapíxeles.
+- [x] `blogBodySchema` acepta un bloque `{ type: "image", mediaId: <uuid> }` y rechaza uno sin `mediaId`, uno con `mediaId` que no es UUID y uno con `alt` vacío.
+- [x] `PostThumb` sin `cover` renderiza el dibujo de la categoría como antes.
+- [x] `PostThumb` con `cover` en `card` renderiza un `<img>` con `alt=""`, y en `banner` con el `alt` de la imagen.
+- [x] `ArticleBody` con un bloque `image` y `caption` renderiza `<figure>`, `<img>` con su `alt` y `<figcaption>` con el texto.
+- [x] `/blog` muestra la portada de `senales-sistema-a-medida` en su tarjeta, y los otros 7 posts muestran el dibujo generado.
+- [x] `/blog/senales-sistema-a-medida` muestra la portada en el hero y la imagen del cuerpo después del primer `h2`.
+- [x] `createMedia` guarda `<id>.webp` en `MEDIA_DIR` y una fila con medidas y `bytes` iguales al archivo.
+- [x] `createMedia` dos veces con el mismo archivo devuelve la misma fila, `duplicate: true` en la segunda, y deja un solo archivo.
+- [x] `createMedia` con un archivo inválido no deja ni fila ni archivo.
+- [x] Insertar `media` con `alt` vacío o solo espacios falla por el check.
+- [x] `deleteMedia` de una imagen que es portada lanza `MediaInUseError` con el título del post.
+- [x] `deleteMedia` de una imagen usada en el `body` de un post `borrador` lanza `MediaInUseError`.
+- [x] `deleteMedia` de una imagen sin usar borra la fila y el archivo.
+- [x] Borrar el usuario que subió una imagen deja la imagen con `uploaded_by` nulo.
+- [x] `getPublishedPostBySlug` devuelve el bloque `image` con `src` `/media/<id>`, las medidas de `media` y el `alt` del bloque si lo tiene o el de `media` si no.
+- [x] `getPublishedPosts` devuelve `cover: null` para un post sin portada.
+- [x] `getPublishedPostBySlug` lanza un error que nombra el slug y el `mediaId` si un bloque apunta a un `media` inexistente.
+- [x] `GET /media/<id>` de una imagen existente devuelve 200, `Content-Type: image/webp` y `Cache-Control: public, max-age=31536000, immutable`.
+- [x] `GET /media/no-es-uuid` y `GET /media/<uuid inexistente>` devuelven 404.
+- [x] Después de `seedBlog`, `getPublishedPostBySlug("senales-sistema-a-medida")` tiene `cover` y un bloque `image` resuelto, y hay 2 filas en `media`.
+- [x] Correr `seedBlog` dos veces deja la misma cantidad de filas en `media` y de archivos en `MEDIA_DIR`.
+- [x] Un usuario `lector` que abre `/admin/medios` no ve la página (mismo comportamiento que `/admin`).
+- [x] Llamar a `uploadMediaAction`, `updateMediaAltAction` o `deleteMediaAction` sin sesión de admin no cambia nada en la base ni en el disco.
+- [x] E2E: un admin sube `e2e/fixtures/imagen.png` con alt, ve "Imagen subida." y la tarjeta con ese alt, y `GET` del `src` de la tarjeta devuelve `image/webp`.
+- [x] E2E: subir el mismo archivo otra vez muestra "Esa imagen ya estaba subida." y la grilla no suma tarjetas.
+- [x] E2E: un archivo `.txt` muestra el mensaje de formato no soportado.
+- [x] E2E: editar el alt y recargar muestra el alt nuevo.
+- [x] E2E: una imagen sin usar se borra con "Borrar" → "Sí" y desaparece de la grilla.
+- [x] Una imagen en uso muestra "En uso en: <título>" y su botón de borrar está deshabilitado.
+- [x] "Copiar id" deja el id en el portapapeles y muestra "Copiado".
+- [x] `/admin` tiene un enlace a `/admin/medios`.
+- [x] `/storage` está en `.gitignore` y `MEDIA_DIR` está en `.env.example`.
+- [x] `README.md` explica `MEDIA_DIR`, que la carpeta debe persistir y entrar en el backup, y que serverless no sirve con este almacenamiento.
 
 ## Decisiones
 
