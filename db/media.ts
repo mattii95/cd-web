@@ -77,7 +77,8 @@ async function getUsageByMedia(
         title: post.title,
       })
       .from(post)
-      .where(inArray(post.coverMediaId, ids)),
+      .where(inArray(post.coverMediaId, ids))
+      .orderBy(post.id),
     db.execute<{
       mediaId: string;
       postId: string;
@@ -96,6 +97,7 @@ async function getUsageByMedia(
           ids.map((id) => sql`${id}`),
           sql`, `,
         )})
+      order by 1, 2
     `),
   ]);
   for (const { mediaId, ...r } of covers) {

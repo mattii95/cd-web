@@ -7,8 +7,9 @@ import {
   it,
   vi,
 } from "vitest";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { Pool } from "pg";
+import { InvalidCursorError } from "@/lib/pagination";
 import {
   getApprovedComments,
   getCategories,
@@ -78,7 +79,7 @@ describe("funciones de lectura del blog", () => {
       },
       { ...nuevoPost(cat.id, "autor", "borrador"), status: "borrador" },
     ]);
-    const posts = await getPublishedPosts();
+    const { items: posts } = await getPublishedPosts();
     expect(posts.map((p) => p.slug)).toEqual(["nuevo", "post-1"]);
     expect(posts[0].author).toMatchObject({
       name: "autor",
@@ -175,7 +176,9 @@ describe("funciones de lectura del blog", () => {
           coverMediaId: mediaId,
           publishedAt: new Date("2026-11-12"),
         });
-      const [con, sin] = await getPublishedPosts();
+      const {
+        items: [con, sin],
+      } = await getPublishedPosts();
       expect(con.cover).toEqual({
         src: `/media/${mediaId}`,
         width: 1600,
@@ -216,7 +219,7 @@ describe("funciones de lectura del blog", () => {
     });
     await db.insert(commentVote).values({ commentId: ok.id, userId: "beto" });
 
-    const comments = await getApprovedComments(p.id);
+    const { items: comments } = await getApprovedComments(p.id);
     expect(comments.map((c) => c.text)).toEqual(["aprobado", "sin rating"]);
     expect(comments[0]).toMatchObject({
       authorName: "ana",
@@ -226,6 +229,97 @@ describe("funciones de lectura del blog", () => {
     });
     expect(comments[1]).toMatchObject({ rating: null, reply: null });
     expect(JSON.stringify(comments)).not.toContain("@demo.invalid");
+  });
+
+  it("getPublishedPosts pagina de a 12 sin borradores", async () => {
+    const db = getDb();
+    const { cat } = await crearBase();
+    await db.delete(post);
+    const base = new Date("2026-11-01T10:00:00Z").getTime();
+    await db.insert(post).values(
+      Array.from({ length: 16 }, (_, i) => ({
+        ...nuevoPost(cat.id, "autor", `p-${i}`),
+        ...(i < 14
+          ? { publishedAt: new Date(base + i * 1000) }
+          : { status: "borrador" as const, publishedAt: null }),
+      })),
+    );
+    const p1 = await getPublishedPosts();
+    expect(p1.items).toHaveLength(12);
+    expect(p1.nextCursor).not.toBeNull();
+    const p2 = await getPublishedPosts({ cursor: p1.nextCursor });
+    expect(p2.items).toHaveLength(2);
+    expect(p2.nextCursor).toBeNull();
+    const slugs = [...p1.items, ...p2.items].map((x) => x.slug);
+    expect(new Set(slugs).size).toBe(14);
+    expect(slugs.some((s) => s === "p-14" || s === "p-15")).toBe(false);
+  });
+
+  it("getPublishedPosts desempata por id dos posts con el mismo published_at", async () => {
+    const db = getDb();
+    const { cat } = await crearBase();
+    await db.delete(post);
+    const fecha = new Date("2026-11-10T10:00:00Z");
+    const creados = await db
+      .insert(post)
+      .values(
+        ["a", "b", "c", "d", "e"].map((s) => ({
+          ...nuevoPost(cat.id, "autor", s),
+          publishedAt: fecha,
+        })),
+      )
+      .returning();
+    const vistos: string[] = [];
+    let cursor: string | null = null;
+    do {
+      const page: Awaited<ReturnType<typeof getPublishedPosts>> =
+        await getPublishedPosts({ limit: 2, cursor });
+      vistos.push(...page.items.map((x) => x.id));
+      cursor = page.nextCursor;
+    } while (cursor);
+    expect(vistos).toHaveLength(5);
+    expect(new Set(vistos)).toEqual(new Set(creados.map((c) => c.id)));
+    const orden = await db.execute<{ id: string }>(
+      sql`select id from post order by published_at desc, id desc`,
+    );
+    expect(vistos).toEqual(orden.rows.map((r) => r.id));
+  });
+
+  it("getApprovedComments recorre todos los aprobados con limit 2", async () => {
+    const db = getDb();
+    const { post: p } = await crearBase();
+    await db.insert(postRating).values({ postId: p.id, userId: "ana", rating: 5 });
+    const base = new Date("2026-11-01T10:00:00Z").getTime();
+    await db.insert(comment).values([
+      ...[0, 1, 2, 3, 4].map((i) => ({
+        postId: p.id,
+        userId: i % 2 ? "ana" : "beto",
+        text: `ok-${i}`,
+        status: "aprobado" as const,
+        createdAt: new Date(base + i * 1000),
+      })),
+      { postId: p.id, userId: "ana", text: "pendiente" },
+      { postId: p.id, userId: "ana", text: "oculto", status: "oculto" as const },
+    ]);
+    const textos: string[] = [];
+    let cursor: string | null = null;
+    do {
+      const page: Awaited<ReturnType<typeof getApprovedComments>> =
+        await getApprovedComments(p.id, { limit: 2, cursor });
+      textos.push(...page.items.map((c) => c.text));
+      cursor = page.nextCursor;
+    } while (cursor);
+    expect(textos).toEqual(["ok-4", "ok-3", "ok-2", "ok-1", "ok-0"]);
+  });
+
+  it("con un cursor inválido las funciones lanzan InvalidCursorError", async () => {
+    const { post: p } = await crearBase();
+    await expect(
+      getPublishedPosts({ cursor: "basura" }),
+    ).rejects.toBeInstanceOf(InvalidCursorError);
+    await expect(
+      getApprovedComments(p.id, { cursor: "basura" }),
+    ).rejects.toBeInstanceOf(InvalidCursorError);
   });
 
   it("getRatingSummary sin valoraciones devuelve ceros", async () => {
@@ -310,7 +404,7 @@ describe("funciones de lectura del blog", () => {
       });
       await etiquetar(p.id, "zeta", "alfa");
 
-      const posts = await getPublishedPosts();
+      const { items: posts } = await getPublishedPosts();
       expect(posts.find((x) => x.slug === "post-1")?.tags).toEqual([
         { slug: "alfa", name: "ALFA" },
         { slug: "zeta", name: "ZETA" },
