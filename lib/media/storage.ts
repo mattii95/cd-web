@@ -13,7 +13,8 @@ export async function getMediaDir(): Promise<string> {
     MEDIA_DIR: process.env.MEDIA_DIR || undefined,
   });
   if (!parsed.success) throw new Error("MEDIA_DIR no es una ruta válida");
-  const dir = path.resolve(process.cwd(), parsed.data.MEDIA_DIR);
+  // La carpeta se elige en runtime y no es parte del build: Turbopack no debe trazarla.
+  const dir = path.resolve(/*turbopackIgnore: true*/ process.cwd(), parsed.data.MEDIA_DIR);
   await mkdir(dir, { recursive: true });
   return dir;
 }
