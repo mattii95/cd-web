@@ -187,39 +187,39 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado, incluidos los tests de SPEC 07 a 10.
-- [ ] `npm run test:e2e` pasa.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado, incluidos los tests de SPEC 07 a 10.
+- [x] `npm run test:e2e` pasa.
 - [ ] Los jobs `checks`, `db` y `e2e` del CI pasan en un PR a `main`.
-- [ ] `npm run db:migrate` crea las tablas `tag` y `post_tag`, y después `npm run db:generate` no crea migraciones nuevas.
-- [ ] Cada post de `blogPosts` tiene 2 o 3 etiquetas, todas existen en `blogTags`, no se repiten y están ordenadas por `slug`.
-- [ ] `getUsedTags(blogPosts)` devuelve las 11 etiquetas en el orden y con los conteos de este spec.
-- [ ] `TagList` con etiquetas renderiza una lista con `aria-label="Etiquetas"` y un `<li>` por etiqueta con su `name`. Con una lista vacía no renderiza nada.
-- [ ] Los chips de `TagList` no son enlaces ni botones.
-- [ ] `/blog` muestra los chips de etiquetas en las tarjetas y no en el post destacado.
-- [ ] `/blog/senales-sistema-a-medida` muestra en el hero "Automatización", "Gestión" y "Pymes".
-- [ ] `/blog` muestra la fila "Etiquetas" con "Todas" activo y los 11 chips en el orden de este spec, cada uno con su cantidad.
-- [ ] Activar "Pymes" deja los 3 posts con esa etiqueta y desactiva "Todas". Activar "Todas" muestra los 8.
-- [ ] Activar la categoría "IA" y la etiqueta "Pymes" deja solo `automatizaciones-ia-pymes`.
-- [ ] Activar la categoría "Desarrollo web" y la etiqueta "Chatbots" muestra "No hay artículos con esa combinación." y ninguna tarjeta.
-- [ ] Cada chip de etiqueta del filtro es un `<button>` con `aria-pressed` y alto mínimo de 44 px.
-- [ ] Insertar dos veces la misma pareja `(post_id, tag_id)` falla por la PK.
-- [ ] Insertar una etiqueta con `slug` repetido, con mayúsculas o espacios, o con `name` vacío o solo espacios falla.
-- [ ] Borrar una etiqueta borra sus filas `post_tag` y deja los posts.
-- [ ] Borrar un post borra sus filas `post_tag` y deja las etiquetas.
-- [ ] `getTags()` no cuenta posts `borrador` y no devuelve una etiqueta que solo tiene posts `borrador` o ninguno.
-- [ ] `getTags()` devuelve los conteos de posts `publicado` por cantidad descendente y `slug` ascendente.
-- [ ] `getPublishedPosts()` devuelve `tags` en cada post ordenadas por `slug`, y `[]` en un post sin etiquetas.
-- [ ] `getPublishedPosts()` resuelve las etiquetas con una sola consulta adicional, sin importar cuántos posts haya.
-- [ ] Después de `seedBlog`, `getTags()` devuelve las 11 etiquetas en el orden de este spec.
-- [ ] Después de `seedBlog`, `getPublishedPostBySlug("senales-sistema-a-medida")` tiene las etiquetas `automatizacion`, `gestion` y `pymes`.
-- [ ] Correr `seedBlog` dos veces deja 11 filas en `tag` y 19 en `post_tag`.
-- [ ] `seedBlog` no borra una fila `post_tag` agregada a mano a un post del seed.
-- [ ] E2E: en `/blog`, activar "Pymes" deja 3 tarjetas visibles (contando el destacado), y activar además la categoría "IA" deja 1.
-- [ ] E2E: la combinación sin resultados muestra "No hay artículos con esa combinación.".
-- [ ] `README.md` explica que las etiquetas se cargan solo por seed hasta el spec del editor.
+- [x] `npm run db:migrate` crea las tablas `tag` y `post_tag`, y después `npm run db:generate` no crea migraciones nuevas.
+- [x] Cada post de `blogPosts` tiene 2 o 3 etiquetas, todas existen en `blogTags`, no se repiten y están ordenadas por `slug`.
+- [x] `getUsedTags(blogPosts)` devuelve las 11 etiquetas en el orden y con los conteos de este spec.
+- [x] `TagList` con etiquetas renderiza una lista con `aria-label="Etiquetas"` y un `<li>` por etiqueta con su `name`. Con una lista vacía no renderiza nada.
+- [x] Los chips de `TagList` no son enlaces ni botones.
+- [x] `/blog` muestra los chips de etiquetas en las tarjetas y no en el post destacado.
+- [x] `/blog/senales-sistema-a-medida` muestra en el hero "Automatización", "Gestión" y "Pymes".
+- [x] `/blog` muestra la fila "Etiquetas" con "Todas" activo y los 11 chips en el orden de este spec, cada uno con su cantidad.
+- [x] Activar "Pymes" deja los 3 posts con esa etiqueta y desactiva "Todas". Activar "Todas" muestra los 8.
+- [x] Activar la categoría "IA" y la etiqueta "Pymes" deja solo `automatizaciones-ia-pymes`.
+- [x] Activar la categoría "Desarrollo web" y la etiqueta "Chatbots" muestra "No hay artículos con esa combinación." y ninguna tarjeta.
+- [x] Cada chip de etiqueta del filtro es un `<button>` con `aria-pressed` y alto mínimo de 44 px.
+- [x] Insertar dos veces la misma pareja `(post_id, tag_id)` falla por la PK.
+- [x] Insertar una etiqueta con `slug` repetido, con mayúsculas o espacios, o con `name` vacío o solo espacios falla.
+- [x] Borrar una etiqueta borra sus filas `post_tag` y deja los posts.
+- [x] Borrar un post borra sus filas `post_tag` y deja las etiquetas.
+- [x] `getTags()` no cuenta posts `borrador` y no devuelve una etiqueta que solo tiene posts `borrador` o ninguno.
+- [x] `getTags()` devuelve los conteos de posts `publicado` por cantidad descendente y `slug` ascendente.
+- [x] `getPublishedPosts()` devuelve `tags` en cada post ordenadas por `slug`, y `[]` en un post sin etiquetas.
+- [x] `getPublishedPosts()` resuelve las etiquetas con una sola consulta adicional, sin importar cuántos posts haya.
+- [x] Después de `seedBlog`, `getTags()` devuelve las 11 etiquetas en el orden de este spec.
+- [x] Después de `seedBlog`, `getPublishedPostBySlug("senales-sistema-a-medida")` tiene las etiquetas `automatizacion`, `gestion` y `pymes`.
+- [x] Correr `seedBlog` dos veces deja 11 filas en `tag` y 19 en `post_tag`.
+- [x] `seedBlog` no borra una fila `post_tag` agregada a mano a un post del seed.
+- [x] E2E: en `/blog`, activar "Pymes" deja 3 tarjetas visibles (contando el destacado), y activar además la categoría "IA" deja 1.
+- [x] E2E: la combinación sin resultados muestra "No hay artículos con esa combinación.".
+- [x] `README.md` explica que las etiquetas se cargan solo por seed hasta el spec del editor.
 
 ## Decisiones
 

@@ -222,7 +222,12 @@ describe("seedBlog", () => {
       .from(user)
       .where(like(user.email, "%@demo.invalid"));
     expect(demo.length).toBeGreaterThan(24);
-    const accounts = await db.select({ n: count() }).from(account);
+    // Solo las de usuarios demo: otros tests pueden dejar cuentas de otros usuarios.
+    const accounts = await db
+      .select({ n: count() })
+      .from(account)
+      .innerJoin(user, eq(user.id, account.userId))
+      .where(like(user.email, "%@demo.invalid"));
     expect(accounts[0].n).toBe(0);
   });
 
