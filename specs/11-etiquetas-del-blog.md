@@ -1,6 +1,6 @@
 # SPEC 11 — Etiquetas del blog
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 03, SPEC 09, SPEC 10
 > **Fecha:** 2026-11-16
 > **Objetivo:** Sumar etiquetas a los posts del blog (tablas, migración, seed, lectura y un filtro por etiqueta en `/blog` sobre el mock), sin UI para asignarlas.
