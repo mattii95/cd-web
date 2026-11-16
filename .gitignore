@@ -37,6 +37,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# imágenes subidas (MEDIA_DIR por defecto)
+/storage
+
 # docker volumes
 /docker/data
 /docker/pgadmin
