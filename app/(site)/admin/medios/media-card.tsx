@@ -37,11 +37,22 @@ function CopyId({ id }: { id: string }) {
   );
 }
 
-function AltEditor({ item, onDone }: { item: Item; onDone: () => void }) {
+function AltEditor({
+  item,
+  onDone,
+  onSaved,
+}: {
+  item: Item;
+  onDone: () => void;
+  onSaved: (alt: string) => void;
+}) {
   const [state, action, pending] = useActionState<FormState, FormData>(
     async (prev, data) => {
       const next = await updateMediaAltAction(prev, data);
-      if (next.status === "success") onDone();
+      if (next.status === "success") {
+        onSaved(String(data.get("alt")).trim());
+        onDone();
+      }
       return next;
     },
     idle,
@@ -72,10 +83,20 @@ function AltEditor({ item, onDone }: { item: Item; onDone: () => void }) {
   );
 }
 
-function DeleteControl({ item }: { item: Item }) {
+function DeleteControl({
+  item,
+  onDeleted,
+}: {
+  item: Item;
+  onDeleted: () => void;
+}) {
   const [confirming, setConfirming] = useState(false);
   const [state, action, pending] = useActionState<FormState, FormData>(
-    deleteMediaAction,
+    async (prev, data) => {
+      const next = await deleteMediaAction(prev, data);
+      if (next.status === "success") onDeleted();
+      return next;
+    },
     idle,
   );
   const inUse = item.titles.length > 0;
@@ -116,7 +137,17 @@ function DeleteControl({ item }: { item: Item }) {
   );
 }
 
-export function MediaCard({ item, date }: { item: Item; date: string }) {
+export function MediaCard({
+  item,
+  date,
+  onDeleted,
+  onAltSaved,
+}: {
+  item: Item;
+  date: string;
+  onDeleted: () => void;
+  onAltSaved: (alt: string) => void;
+}) {
   const [editing, setEditing] = useState(false);
   return (
     <li className="flex flex-col overflow-hidden rounded-[18px] border border-border-muted bg-surface-2">
@@ -130,7 +161,11 @@ export function MediaCard({ item, date }: { item: Item; date: string }) {
       />
       <div className="flex flex-1 flex-col gap-2 p-4">
         {editing ? (
-          <AltEditor item={item} onDone={() => setEditing(false)} />
+          <AltEditor
+            item={item}
+            onDone={() => setEditing(false)}
+            onSaved={onAltSaved}
+          />
         ) : (
           <p className="m-0 text-[15px] leading-snug font-semibold text-text-strong [overflow-wrap:anywhere]">
             {item.alt}
@@ -153,7 +188,7 @@ export function MediaCard({ item, date }: { item: Item; date: string }) {
               Editar alt
             </button>
           )}
-          <DeleteControl item={item} />
+          <DeleteControl item={item} onDeleted={onDeleted} />
         </div>
       </div>
     </li>

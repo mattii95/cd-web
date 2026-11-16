@@ -67,7 +67,7 @@ export async function updateMediaAltAction(
   } catch {
     return error("No pudimos guardar el cambio. Intentá de nuevo en unos minutos.");
   }
-  revalidatePath("/admin/medios");
+  // Sin revalidatePath: MediaGrid actualiza su estado local.
   return { status: "success", message: "Texto alternativo guardado." };
 }
 
@@ -88,7 +88,7 @@ export async function deleteMediaAction(
     }
     return error("No pudimos borrar la imagen. Intentá de nuevo en unos minutos.");
   }
-  revalidatePath("/admin/medios");
+  // Sin revalidatePath: MediaGrid saca la tarjeta de su estado local.
   return { status: "success", message: "Imagen borrada." };
 }
 
