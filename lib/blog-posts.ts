@@ -37,6 +37,35 @@ export const blogCategories: BlogCategory[] = [
   },
 ];
 
+export type BlogTagSlug =
+  | "atencion-al-cliente"
+  | "automatizacion"
+  | "chatbots"
+  | "gestion"
+  | "landing-page"
+  | "mvp"
+  | "pymes"
+  | "rendimiento"
+  | "seo"
+  | "validacion"
+  | "ventas";
+
+export type BlogTag = { slug: BlogTagSlug; name: string };
+
+export const blogTags: BlogTag[] = [
+  { slug: "atencion-al-cliente", name: "Atención al cliente" },
+  { slug: "automatizacion", name: "Automatización" },
+  { slug: "chatbots", name: "Chatbots" },
+  { slug: "gestion", name: "Gestión" },
+  { slug: "landing-page", name: "Landing page" },
+  { slug: "mvp", name: "MVP" },
+  { slug: "pymes", name: "Pymes" },
+  { slug: "rendimiento", name: "Rendimiento" },
+  { slug: "seo", name: "SEO" },
+  { slug: "validacion", name: "Validación" },
+  { slug: "ventas", name: "Ventas" },
+];
+
 export type BlogImage = {
   src: string; // "/media/<id>" o "/blog/senales-portada.webp" en el mock
   width: number;
@@ -72,6 +101,7 @@ export type BlogReviews = {
 export type BlogPost = {
   slug: string;
   category: BlogCategoryTag;
+  tags: BlogTagSlug[]; // ordenado por slug ascendente
   readingMinutes: number;
   publishedAt: string; // ISO sin hora
   title: string;
@@ -128,6 +158,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "senales-sistema-a-medida",
     category: "sistemas",
+    tags: ["automatizacion", "gestion", "pymes"],
     readingMinutes: 6,
     publishedAt: "2026-11-10",
     title: "5 señales de que tu empresa necesita un sistema a medida",
@@ -255,6 +286,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "chatbots-ia-atencion-al-cliente",
     category: "ia",
+    tags: ["atencion-al-cliente", "automatizacion", "chatbots"],
     readingMinutes: 5,
     publishedAt: "2026-11-03",
     title: "Chatbots con IA: qué pueden hacer por tu atención al cliente",
@@ -271,6 +303,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "landing-page-o-sitio-web-completo",
     category: "desarrollo-web",
+    tags: ["landing-page", "ventas"],
     readingMinutes: 4,
     publishedAt: "2026-10-27",
     title: "¿Landing page o sitio web completo? Cuál necesita tu negocio",
@@ -286,6 +319,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "validar-idea-saas",
     category: "saas",
+    tags: ["mvp", "validacion"],
     readingMinutes: 7,
     publishedAt: "2026-10-20",
     title: "Cómo validar una idea de SaaS antes de programarla",
@@ -302,6 +336,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "velocidad-web-ventas",
     category: "desarrollo-web",
+    tags: ["rendimiento", "seo", "ventas"],
     readingMinutes: 5,
     publishedAt: "2026-10-13",
     title: "Por qué la velocidad de tu web afecta tus ventas",
@@ -318,6 +353,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "automatizaciones-ia-pymes",
     category: "ia",
+    tags: ["automatizacion", "pymes"],
     readingMinutes: 6,
     publishedAt: "2026-10-06",
     title: "Automatizaciones con IA para pymes: por dónde empezar",
@@ -333,6 +369,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "excel-o-sistema-de-gestion",
     category: "sistemas",
+    tags: ["gestion", "pymes"],
     readingMinutes: 5,
     publishedAt: "2026-09-29",
     title: "Excel o sistema de gestión: cuándo dar el salto",
@@ -349,6 +386,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "mvp-primera-version",
     category: "saas",
+    tags: ["mvp", "validacion"],
     readingMinutes: 6,
     publishedAt: "2026-09-22",
     title: "MVP: qué incluir (y qué no) en la primera versión de tu producto",
@@ -368,6 +406,20 @@ export const getPost = (slug: string) => blogPosts.find((p) => p.slug === slug);
 
 export const getCategory = (tag: BlogCategoryTag) =>
   blogCategories.find((c) => c.tag === tag)!;
+
+export const getTag = (slug: BlogTagSlug) =>
+  blogTags.find((t) => t.slug === slug);
+
+// Etiquetas usadas por los posts, por cantidad descendente y slug ascendente.
+export function getUsedTags(posts: Pick<BlogPost, "tags">[]) {
+  const counts = new Map<BlogTagSlug, number>();
+  for (const { tags } of posts)
+    for (const slug of tags) counts.set(slug, (counts.get(slug) ?? 0) + 1);
+  return blogTags
+    .filter((t) => counts.has(t.slug))
+    .map((t) => ({ ...t, count: counts.get(t.slug)! }))
+    .sort((a, b) => b.count - a.count || (a.slug < b.slug ? -1 : 1));
+}
 
 export function getRatingSummary({ distribution }: BlogReviews) {
   const stars = [1, 2, 3, 4, 5] as const;
