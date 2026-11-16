@@ -139,3 +139,32 @@ export const commentVote = pgTable(
   },
   (t) => [primaryKey({ columns: [t.commentId, t.userId] })],
 );
+
+export const tag = pgTable(
+  "tag",
+  {
+    id: id(),
+    slug: text().notNull().unique(),
+    name: text().notNull(), // "Atención al cliente"
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check("tag_slug_check", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    check("tag_name_check", sql`length(trim(${t.name})) > 0`),
+  ],
+);
+
+export const postTag = pgTable(
+  "post_tag",
+  {
+    postId: text()
+      .notNull()
+      .references(() => post.id, { onDelete: "cascade" }),
+    tagId: text()
+      .notNull()
+      .references(() => tag.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.postId, t.tagId] }), index().on(t.tagId)],
+);
