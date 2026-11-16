@@ -6,7 +6,7 @@ import {
   blogPosts,
   type BlogRating,
 } from "@/lib/blog-posts";
-import { blogBodySchema } from "../blog-body";
+import { blogBodySchema, type StoredBlogBlock } from "../blog-body";
 import * as schema from "../schema";
 
 const {
@@ -61,11 +61,13 @@ export async function seedBlog(
     );
   }
 
+  const bodies = new Map<string, StoredBlogBlock[]>();
   for (const p of blogPosts) {
     const parsed = blogBodySchema.safeParse(p.body);
     if (!parsed.success) {
       throw new Error(`El body del post "${p.slug}" no cumple blogBodySchema`);
     }
+    bodies.set(p.slug, parsed.data);
   }
 
   const reviews = blogPosts.find((p) => p.slug === REVIEWED_SLUG)?.reviews;
@@ -101,7 +103,7 @@ export async function seedBlog(
       const values = {
         title: p.title,
         excerpt: p.excerpt,
-        body: p.body,
+        body: bodies.get(p.slug)!,
         cta: p.cta,
         readingMinutes: p.readingMinutes,
         categoryId: categoryIds.get(p.category)!,

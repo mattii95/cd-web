@@ -37,11 +37,19 @@ export const blogCategories: BlogCategory[] = [
   },
 ];
 
+export type BlogImage = {
+  src: string; // "/media/<id>" o "/blog/senales-portada.webp" en el mock
+  width: number;
+  height: number;
+  alt: string;
+};
+
 export type BlogBlock =
   | { type: "p"; text: string }
   | { type: "h2"; id: string; text: string } // id: "s1", "s2"… → ancla y entrada del índice
   | { type: "tip"; text: string } // recuadro "Consejo"
-  | { type: "summary"; text: string }; // recuadro "En resumen"
+  | { type: "summary"; text: string } // recuadro "En resumen"
+  | { type: "image"; image: BlogImage; caption?: string }; // ya resuelto
 
 export type BlogRating = 1 | 2 | 3 | 4 | 5;
 
@@ -68,6 +76,7 @@ export type BlogPost = {
   publishedAt: string; // ISO sin hora
   title: string;
   excerpt: string;
+  cover?: BlogImage;
   body: BlogBlock[];
   cta: string;
   reviews?: BlogReviews; // mock: solo senales-sistema-a-medida

@@ -11,7 +11,7 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import type { BlogBlock } from "@/lib/blog-posts";
+import type { StoredBlogBlock } from "../blog-body";
 import { user } from "./auth";
 
 export const postStatus = pgEnum("post_status", ["borrador", "publicado"]);
@@ -60,7 +60,7 @@ export const post = pgTable(
     slug: text().notNull().unique(),
     title: text().notNull(),
     excerpt: text().notNull(),
-    body: jsonb().$type<BlogBlock[]>().notNull(),
+    body: jsonb().$type<StoredBlogBlock[]>().notNull(),
     cta: text().notNull(),
     readingMinutes: integer().notNull(),
     categoryId: text()

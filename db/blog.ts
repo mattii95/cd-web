@@ -123,7 +123,17 @@ export async function getPublishedPostBySlug(
       `El body del post "${slug}" no cumple blogBodySchema: ${body.error.message}`,
     );
   }
-  return { ...toSummary(row), body: body.data, cta: row.post.cta };
+  return {
+    ...toSummary(row),
+    // Paso 7: aquí se resuelven los bloques image a BlogImage.
+    body: body.data.map((b) => {
+      if (b.type === "image") {
+        throw new Error(`El post "${slug}" tiene un bloque image sin resolver`);
+      }
+      return b;
+    }),
+    cta: row.post.cta,
+  };
 }
 
 export async function getRatingSummary(postId: string): Promise<RatingSummary> {
