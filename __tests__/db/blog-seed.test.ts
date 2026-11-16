@@ -1,6 +1,10 @@
+import { mkdtemp, readdir, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import {
   afterAll,
   afterEach,
+  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -11,6 +15,7 @@ import { count, like } from "drizzle-orm";
 import {
   getApprovedComments,
   getCategories,
+  getPublishedPostBySlug,
   getPublishedPosts,
   getRatingSummary,
 } from "@/db/blog";
@@ -21,6 +26,7 @@ import {
   category,
   comment,
   commentVote,
+  media,
   post,
   postRating,
   user,
@@ -39,6 +45,7 @@ const tablas = [
   postRating,
   comment,
   commentVote,
+  media,
   user,
 ];
 async function contar() {
@@ -48,7 +55,17 @@ async function contar() {
   );
 }
 
+let dir: string;
+
 describe("seedBlog", () => {
+  beforeAll(async () => {
+    dir = await mkdtemp(path.join(tmpdir(), "cd-seed-media-"));
+    process.env.MEDIA_DIR = dir;
+  });
+  afterAll(() => rm(dir, { recursive: true, force: true }));
+  afterEach(async () => {
+    for (const f of await readdir(dir)) await rm(path.join(dir, f));
+  });
   beforeEach(async () => {
     await resetBlog();
     await getDb().insert(user).values(nuevoUsuario("autor"));
@@ -100,12 +117,39 @@ describe("seedBlog", () => {
     ]);
   });
 
+  it("carga las imágenes del mock: portada y bloque image resueltos", async () => {
+    const db = getDb();
+    await seedBlog(db, { authorEmail: AUTOR });
+
+    const detail = await getPublishedPostBySlug(SLUG);
+    expect(detail?.cover).toMatchObject({ width: 1920, height: 1080 });
+    const image = detail?.body.find((b) => b.type === "image");
+    expect(image).toMatchObject({
+      image: { width: 1600, height: 900 },
+      caption: expect.any(String),
+    });
+    expect((await db.select({ n: count() }).from(media))[0].n).toBe(2);
+    expect(await readdir(dir)).toHaveLength(2);
+  });
+
   it("es idempotente", async () => {
     const db = getDb();
     await seedBlog(db, { authorEmail: AUTOR });
     const primera = await contar();
+    const archivos = await readdir(dir);
     await seedBlog(db, { authorEmail: AUTOR });
     expect(await contar()).toEqual(primera);
+    expect((await readdir(dir)).sort()).toEqual(archivos.sort());
+  });
+
+  it("repone un archivo que falta en disco sin duplicar la fila", async () => {
+    const db = getDb();
+    await seedBlog(db, { authorEmail: AUTOR });
+    const [primero] = await readdir(dir);
+    await rm(path.join(dir, primero));
+    await seedBlog(db, { authorEmail: AUTOR });
+    expect(await readdir(dir)).toContain(primero);
+    expect((await db.select({ n: count() }).from(media))[0].n).toBe(2);
   });
 
   it("los usuarios demo no tienen fila en account", async () => {

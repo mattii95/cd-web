@@ -1,11 +1,17 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { eq, inArray } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import {
   blogAuthor,
   blogCategories,
   blogPosts,
+  type BlogBlock,
+  type BlogImage,
   type BlogRating,
 } from "@/lib/blog-posts";
+import { processImage } from "@/lib/media/process";
+import { readMediaFile, writeMediaFile } from "@/lib/media/storage";
 import { blogBodySchema, type StoredBlogBlock } from "../blog-body";
 import * as schema from "../schema";
 
@@ -14,6 +20,7 @@ const {
   category,
   comment,
   commentVote,
+  media,
   post,
   postRating,
   user,
@@ -43,6 +50,37 @@ const COMMENT_DEMO: Record<
 const lectorEmail = (n: number) =>
   `lector-${String(n).padStart(2, "0")}@demo.invalid`;
 
+// Carga una imagen del mock (un archivo de public/) en la biblioteca. Clave natural: sha256.
+async function seedImage(
+  db: NodePgDatabase<typeof schema>,
+  image: BlogImage,
+  uploadedBy: string,
+): Promise<string> {
+  const original = await readFile(path.join(process.cwd(), "public", image.src));
+  const processed = await processImage(original);
+  const [existing] = await db
+    .select({ id: media.id })
+    .from(media)
+    .where(eq(media.sha256, processed.sha256));
+  let id = existing?.id;
+  if (!id) {
+    id = crypto.randomUUID();
+    await db.insert(media).values({
+      id,
+      sha256: processed.sha256,
+      alt: image.alt,
+      width: processed.width,
+      height: processed.height,
+      bytes: processed.data.length,
+      originalName: path.basename(image.src),
+      uploadedBy,
+    });
+  }
+  // Un archivo que ya está en disco no se reescribe.
+  if (!(await readMediaFile(id))) await writeMediaFile(id, processed.data);
+  return id;
+}
+
 export async function seedBlog(
   db: NodePgDatabase<typeof schema>,
   { authorEmail }: { authorEmail: string },
@@ -61,12 +99,32 @@ export async function seedBlog(
     );
   }
 
-  const bodies = new Map<string, StoredBlogBlock[]>();
-  for (const p of blogPosts) {
-    // Temporal hasta el paso 9: el seed todavía no carga imágenes, así que las omite.
-    const parsed = blogBodySchema.safeParse(
-      p.body.filter((b) => b.type !== "image"),
+  // Las imágenes van antes de la transacción: los archivos no son transaccionales.
+  const mediaIds = new Map<string, string>(); // src → media.id
+  const imageId = async (image: BlogImage) => {
+    if (!mediaIds.has(image.src)) {
+      mediaIds.set(image.src, await seedImage(db, image, author.id));
+    }
+    return mediaIds.get(image.src)!;
+  };
+  const toStored = async (body: BlogBlock[]): Promise<StoredBlogBlock[]> =>
+    Promise.all(
+      body.map(async (b) =>
+        b.type === "image"
+          ? {
+              type: "image" as const,
+              mediaId: await imageId(b.image),
+              ...(b.caption && { caption: b.caption }),
+            }
+          : b,
+      ),
     );
+
+  const bodies = new Map<string, StoredBlogBlock[]>();
+  const covers = new Map<string, string>(); // slug → media.id
+  for (const p of blogPosts) {
+    if (p.cover) covers.set(p.slug, await imageId(p.cover));
+    const parsed = blogBodySchema.safeParse(await toStored(p.body));
     if (!parsed.success) {
       throw new Error(`El body del post "${p.slug}" no cumple blogBodySchema`);
     }
@@ -107,6 +165,7 @@ export async function seedBlog(
         title: p.title,
         excerpt: p.excerpt,
         body: bodies.get(p.slug)!,
+        coverMediaId: covers.get(p.slug) ?? null,
         cta: p.cta,
         readingMinutes: p.readingMinutes,
         categoryId: categoryIds.get(p.category)!,
