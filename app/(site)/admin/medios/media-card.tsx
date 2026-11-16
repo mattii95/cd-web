@@ -5,19 +5,11 @@ import { useActionState, useEffect, useState } from "react";
 import type { FormState } from "@/app/cuenta/actions";
 import { FormMessage } from "@/components/auth/form-message";
 import { deleteMediaAction, updateMediaAltAction } from "./actions";
+import type { CardItem } from "./card-item";
+import { btn } from "./styles";
 
-type Item = {
-  id: string;
-  src: string;
-  alt: string;
-  width: number;
-  height: number;
-  bytes: number;
-  titles: string[]; // posts donde se usa
-};
+type Item = Omit<CardItem, "date">;
 
-const btn =
-  "min-h-10 cursor-pointer rounded-lg border border-border-strong bg-transparent px-3 text-[13px] font-semibold text-text transition-colors hover:border-accent-light hover:text-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border-strong disabled:hover:text-text";
 const idle: FormState = { status: "idle" };
 
 function CopyId({ id }: { id: string }) {

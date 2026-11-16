@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { listMedia } from "@/db/media";
 import { requireAdmin } from "@/lib/auth/dal";
-import { formatDate } from "@/lib/format-date";
+import { toCardItem } from "./card-item";
 import { MediaCard } from "./media-card";
 import { UploadForm } from "./upload-form";
 
@@ -28,21 +28,10 @@ async function Library() {
             {items.length === 1 ? "1 imagen" : `${items.length} imágenes`}
           </p>
           <ul className="m-0 mt-5 grid list-none grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 p-0">
-            {items.map((item) => (
-              <MediaCard
-                key={item.id}
-                item={{
-                  id: item.id,
-                  src: item.src,
-                  alt: item.alt,
-                  width: item.width,
-                  height: item.height,
-                  bytes: item.bytes,
-                  titles: [...new Set(item.usage.map((u) => u.title))],
-                }}
-                date={formatDate(item.createdAt)}
-              />
-            ))}
+            {items.map((item) => {
+              const { date, ...card } = toCardItem(item);
+              return <MediaCard key={item.id} item={card} date={date} />;
+            })}
           </ul>
         </>
       )}

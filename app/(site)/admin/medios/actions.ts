@@ -6,11 +6,13 @@ import type { FormState } from "@/app/cuenta/actions";
 import {
   createMedia,
   deleteMedia,
+  listMedia,
   MediaError,
   MediaInUseError,
   updateMediaAlt,
 } from "@/db/media";
 import { requireAdmin } from "@/lib/auth/dal";
+import { type CardItem, toCardItem } from "./card-item";
 
 const error = (message: string): FormState => ({ status: "error", message });
 
@@ -88,4 +90,31 @@ export async function deleteMediaAction(
   }
   revalidatePath("/admin/medios");
   return { status: "success", message: "Imagen borrada." };
+}
+
+export type LoadMoreState =
+  | { status: "success"; items: CardItem[]; nextCursor: string | null }
+  | { status: "error"; message: string };
+
+const cursorSchema = z.string().min(1).max(200);
+
+const loadError = (): LoadMoreState => ({
+  status: "error",
+  message: "No pudimos cargar más imágenes.",
+});
+
+// Sin revalidatePath: el cliente conserva las páginas ya cargadas.
+export async function loadMoreMediaAction(
+  cursor: string,
+): Promise<LoadMoreState> {
+  await requireAdmin();
+  const parsed = cursorSchema.safeParse(cursor);
+  if (!parsed.success) return loadError();
+  try {
+    // Un cursor inválido (InvalidCursorError) cae acá igual que cualquier otro fallo.
+    const { items, nextCursor } = await listMedia({ cursor: parsed.data });
+    return { status: "success", items: items.map(toCardItem), nextCursor };
+  } catch {
+    return loadError();
+  }
 }
