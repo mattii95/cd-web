@@ -13,6 +13,7 @@ import {
   category,
   comment,
   commentVote,
+  media,
   post,
   postRating,
   user,
@@ -99,6 +100,80 @@ describe("funciones de lectura del blog", () => {
       .set({ body: [{ type: "video" }] as never })
       .where(eq(post.slug, "post-1"));
     await expect(getPublishedPostBySlug("post-1")).rejects.toThrow(/post-1/);
+  });
+
+  describe("imágenes", () => {
+    const mediaId = "0b7c1c5e-6f0e-4a55-9a43-2d2a4f6c1b11";
+    const nuevaMedia = (over: Partial<typeof media.$inferInsert> = {}) => ({
+      id: mediaId,
+      sha256: "a".repeat(64),
+      alt: "Alt de la biblioteca",
+      width: 1600,
+      height: 900,
+      bytes: 1234,
+      originalName: "x.png",
+      ...over,
+    });
+    const setBody = (body: unknown) =>
+      getDb()
+        .update(post)
+        .set({ body: body as never })
+        .where(eq(post.slug, "post-1"));
+
+    it("getPublishedPostBySlug resuelve el bloque image con las medidas de media", async () => {
+      await crearBase();
+      await getDb().insert(media).values(nuevaMedia());
+      await setBody([{ type: "image", mediaId, caption: "Figura 1" }]);
+      expect((await getPublishedPostBySlug("post-1"))?.body).toEqual([
+        {
+          type: "image",
+          image: {
+            src: `/media/${mediaId}`,
+            width: 1600,
+            height: 900,
+            alt: "Alt de la biblioteca",
+          },
+          caption: "Figura 1",
+        },
+      ]);
+    });
+
+    it("el alt del bloque pisa el de media", async () => {
+      await crearBase();
+      await getDb().insert(media).values(nuevaMedia());
+      await setBody([{ type: "image", mediaId, alt: "Alt del bloque" }]);
+      const body = (await getPublishedPostBySlug("post-1"))?.body;
+      expect(body?.[0]).toMatchObject({ image: { alt: "Alt del bloque" } });
+      expect(body?.[0]).not.toHaveProperty("caption");
+    });
+
+    it("getPublishedPostBySlug lanza con el slug y el mediaId si la imagen no existe", async () => {
+      await crearBase();
+      await setBody([{ type: "image", mediaId }]);
+      await expect(getPublishedPostBySlug("post-1")).rejects.toThrow(
+        new RegExp(`post-1.*${mediaId}`),
+      );
+    });
+
+    it("getPublishedPosts trae cover resuelto, o null sin portada", async () => {
+      const { cat } = await crearBase();
+      await getDb().insert(media).values(nuevaMedia());
+      await getDb()
+        .insert(post)
+        .values({
+          ...nuevoPost(cat.id, "autor", "con-portada"),
+          coverMediaId: mediaId,
+          publishedAt: new Date("2026-11-12"),
+        });
+      const [con, sin] = await getPublishedPosts();
+      expect(con.cover).toEqual({
+        src: `/media/${mediaId}`,
+        width: 1600,
+        height: 900,
+        alt: "Alt de la biblioteca",
+      });
+      expect(sin.cover).toBeNull();
+    });
   });
 
   it("getApprovedComments omite pendientes y ocultos, y trae rating, votos y respuesta", async () => {

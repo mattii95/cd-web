@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <pattern id="grid" width="56" height="56" patternUnits="userSpaceOnUse">
+      <path d="M56 0H0V56" fill="none" stroke="#fff" stroke-opacity=".04"/>
+    </pattern>
+    <radialGradient id="glow" cx="50%" cy="50%" r="55%">
+      <stop offset="0" stop-color="#1a66f5" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#1a66f5" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="#050b1c"/>
+  <rect width="1600" height="900" fill="url(#grid)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+
+  <!-- Cinco señales sobre una línea: cada una más encendida que la anterior -->
+  <path d="M170 450H1430" stroke="#2a3a5e" stroke-width="4" stroke-linecap="round"/>
+  <path d="M170 450H1430" stroke="#4d8bff" stroke-width="4" stroke-linecap="round" stroke-dasharray="3 14" stroke-opacity=".7"/>
+
+  <g>
+    <g transform="translate(170 450)"><circle r="46" fill="#0d1730" stroke="#2a3a5e" stroke-width="3"/><circle r="14" fill="#4d8bff" fill-opacity=".45"/></g>
+    <g transform="translate(485 450)"><circle r="46" fill="#0d1730" stroke="#2a3a5e" stroke-width="3"/><circle r="18" fill="#4d8bff" fill-opacity=".6"/></g>
+    <g transform="translate(800 450)"><circle r="46" fill="#0d1730" stroke="#4d8bff" stroke-opacity=".6" stroke-width="3"/><circle r="22" fill="#4d8bff" fill-opacity=".75"/></g>
+    <g transform="translate(1115 450)"><circle r="46" fill="#0d1730" stroke="#4d8bff" stroke-width="3"/><circle r="26" fill="#4d8bff"/></g>
+    <g transform="translate(1430 450)"><circle r="62" fill="#1a66f5" fill-opacity=".3"/><circle r="46" fill="#1a66f5"/><circle r="18" fill="#fff"/></g>
+  </g>
+
+  <!-- Tarjetas arriba y abajo, alternadas -->
+  <g fill="#0d1730" stroke="#22304f" stroke-width="2">
+    <rect x="70" y="190" width="200" height="130" rx="16"/>
+    <rect x="385" y="580" width="200" height="130" rx="16"/>
+    <rect x="700" y="190" width="200" height="130" rx="16"/>
+    <rect x="1015" y="580" width="200" height="130" rx="16"/>
+    <rect x="1330" y="190" width="200" height="130" rx="16"/>
+  </g>
+  <g stroke="#4d8bff" stroke-opacity=".55" stroke-width="8" stroke-linecap="round">
+    <path d="M100 232H220M100 262H180M100 292H200"/>
+    <path d="M415 622H555M415 652H515M415 682H535"/>
+    <path d="M730 232H870M730 262H830M730 292H850"/>
+    <path d="M1045 622H1185M1045 652H1145M1045 682H1165"/>
+    <path d="M1360 232H1500M1360 262H1460M1360 292H1480"/>
+  </g>
+  <g stroke="#2a3a5e" stroke-width="3" stroke-linecap="round">
+    <path d="M170 322V404M485 580V496M800 322V404M1115 580V496M1430 322V388"/>
+  </g>
+</svg>

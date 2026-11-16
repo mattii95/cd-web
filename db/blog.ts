@@ -1,14 +1,20 @@
 import "server-only";
-import { and, asc, desc, eq, sql } from "drizzle-orm";
-import type { BlogBlock, BlogCategoryTag, BlogRating } from "@/lib/blog-posts";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import type {
+  BlogBlock,
+  BlogCategoryTag,
+  BlogImage,
+  BlogRating,
+} from "@/lib/blog-posts";
 import type { ServiceSlug } from "@/lib/services";
-import { blogBodySchema } from "./blog-body";
+import { blogBodySchema, type StoredBlogBlock } from "./blog-body";
 import { getDb } from "./client";
 import {
   authorProfile,
   category,
   comment,
   commentVote,
+  media,
   post,
   postRating,
   user,
@@ -35,6 +41,7 @@ export type PostSummary = {
   publishedAt: Date;
   category: BlogCategoryRow;
   author: PostAuthor;
+  cover: BlogImage | null;
 };
 export type PostDetail = PostSummary & { body: BlogBlock[]; cta: string };
 export type RatingSummary = {
@@ -74,6 +81,7 @@ function selectPublished() {
     .select({
       post,
       category,
+      cover: media,
       authorName: user.name,
       authorImage: user.image,
       jobTitle: authorProfile.jobTitle,
@@ -81,11 +89,19 @@ function selectPublished() {
     })
     .from(post)
     .innerJoin(category, eq(category.id, post.categoryId))
+    .leftJoin(media, eq(media.id, post.coverMediaId))
     .innerJoin(user, eq(user.id, post.authorId))
     .leftJoin(authorProfile, eq(authorProfile.userId, post.authorId));
 }
 
 type PublishedRow = Awaited<ReturnType<typeof selectPublished>>[number];
+
+const mediaImage = (m: typeof media.$inferSelect): BlogImage => ({
+  src: `/media/${m.id}`,
+  width: m.width,
+  height: m.height,
+  alt: m.alt,
+});
 
 const toSummary = (r: PublishedRow): PostSummary => ({
   id: r.post.id,
@@ -101,7 +117,36 @@ const toSummary = (r: PublishedRow): PostSummary => ({
     jobTitle: r.jobTitle,
     bio: r.bio,
   },
+  cover: r.cover ? mediaImage(r.cover) : null,
 });
+
+// Cambia el mediaId de los bloques image por la imagen de la biblioteca.
+async function resolveBody(
+  slug: string,
+  body: StoredBlogBlock[],
+): Promise<BlogBlock[]> {
+  const ids = [
+    ...new Set(body.flatMap((b) => (b.type === "image" ? [b.mediaId] : []))),
+  ];
+  const rows = ids.length
+    ? await getDb().select().from(media).where(inArray(media.id, ids))
+    : [];
+  const byId = new Map(rows.map((m) => [m.id, m]));
+  return body.map((b): BlogBlock => {
+    if (b.type !== "image") return b;
+    const m = byId.get(b.mediaId);
+    if (!m) {
+      throw new Error(
+        `El post "${slug}" usa la imagen ${b.mediaId}, que no existe en media`,
+      );
+    }
+    return {
+      type: "image",
+      image: { ...mediaImage(m), alt: b.alt ?? m.alt },
+      ...(b.caption && { caption: b.caption }),
+    };
+  });
+}
 
 export async function getPublishedPosts(): Promise<PostSummary[]> {
   const rows = await selectPublished()
@@ -123,7 +168,11 @@ export async function getPublishedPostBySlug(
       `El body del post "${slug}" no cumple blogBodySchema: ${body.error.message}`,
     );
   }
-  return { ...toSummary(row), body: body.data, cta: row.post.cta };
+  return {
+    ...toSummary(row),
+    body: await resolveBody(slug, body.data),
+    cta: row.post.cta,
+  };
 }
 
 export async function getRatingSummary(postId: string): Promise<RatingSummary> {

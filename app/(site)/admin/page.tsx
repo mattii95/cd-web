@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { desc } from "drizzle-orm";
+import Link from "next/link";
 import { Suspense } from "react";
 import { getDb } from "@/db/client";
 import { user } from "@/db/schema";
@@ -83,6 +84,12 @@ export default function AdminPage() {
         <h1 className="m-0 font-display text-[clamp(32px,4.4vw,52px)] leading-[1.04] font-bold tracking-[-0.025em]">
           Administración
         </h1>
+        <Link
+          href="/admin/medios"
+          className="mt-6 inline-flex min-h-11 items-center rounded-xl border border-border-strong px-5 text-[15px] font-semibold text-text-strong no-underline transition-colors hover:border-accent-light hover:text-white"
+        >
+          Medios
+        </Link>
         <Suspense fallback={<p className="m-0 mt-3 text-text-muted">Cargando usuarios…</p>}>
           <Users />
         </Suspense>

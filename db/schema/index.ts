@@ -2,3 +2,4 @@
 // y lo reexporta acá: `export * from "./accounts";`
 export * from "./auth";
 export * from "./blog";
+export * from "./media";
