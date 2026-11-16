@@ -61,7 +61,7 @@ export function UploadForm() {
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="fx-btn min-h-[48px] cursor-pointer rounded-xl border-0 bg-accent px-6 text-base font-semibold text-white disabled:cursor-wait disabled:opacity-70 md:mt-7"
+        className="fx-btn min-h-[48px] cursor-pointer rounded-xl border-0 bg-accent px-6 text-base font-semibold text-white disabled:cursor-wait disabled:opacity-70 md:mt-7 md:self-start"
       >
         {pending ? "Subiendo…" : "Subir imagen"}
       </button>

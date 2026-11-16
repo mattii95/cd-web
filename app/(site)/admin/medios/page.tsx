@@ -1,47 +1,16 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
-import { listMedia, type MediaItem } from "@/db/media";
+import { listMedia } from "@/db/media";
 import { requireAdmin } from "@/lib/auth/dal";
 import { formatDate } from "@/lib/format-date";
+import { MediaCard } from "./media-card";
 import { UploadForm } from "./upload-form";
 
 export const metadata: Metadata = {
   title: "Medios",
   robots: { index: false, follow: false },
 };
-
-function MediaCard({ item }: { item: MediaItem }) {
-  const titles = [...new Set(item.usage.map((u) => u.title))];
-  return (
-    <li className="flex flex-col overflow-hidden rounded-[18px] border border-border-muted bg-surface-2">
-      <Image
-        src={item.src}
-        width={item.width}
-        height={item.height}
-        alt={item.alt}
-        sizes="(min-width: 1024px) 280px, (min-width: 640px) 33vw, 50vw"
-        className="aspect-video w-full bg-surface-3 object-cover"
-      />
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <p className="m-0 text-[15px] leading-snug font-semibold text-text-strong [overflow-wrap:anywhere]">
-          {item.alt}
-        </p>
-        <p className="m-0 text-[13px] text-text-subtle">
-          {item.width} × {item.height} px, {Math.max(1, Math.round(item.bytes / 1024))} KB
-          <br />
-          {formatDate(item.createdAt)}
-        </p>
-        <p
-          className={`m-0 mt-auto pt-1 text-[13px] ${titles.length ? "text-accent-soft" : "text-text-subtle"}`}
-        >
-          {titles.length ? `En uso en: ${titles.join(", ")}` : "Sin usar"}
-        </p>
-      </div>
-    </li>
-  );
-}
 
 async function Library() {
   await requireAdmin();
@@ -60,7 +29,19 @@ async function Library() {
           </p>
           <ul className="m-0 mt-5 grid list-none grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 p-0">
             {items.map((item) => (
-              <MediaCard key={item.id} item={item} />
+              <MediaCard
+                key={item.id}
+                item={{
+                  id: item.id,
+                  src: item.src,
+                  alt: item.alt,
+                  width: item.width,
+                  height: item.height,
+                  bytes: item.bytes,
+                  titles: [...new Set(item.usage.map((u) => u.title))],
+                }}
+                date={formatDate(item.createdAt)}
+              />
             ))}
           </ul>
         </>
