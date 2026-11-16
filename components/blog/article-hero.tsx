@@ -90,7 +90,11 @@ export function ArticleHero({
           )}
         </div>
         <div className="fx-rise d4 mt-6 overflow-hidden rounded-t-3xl border border-b-0 border-white/12">
-          <PostThumb category={post.category} variant="banner" />
+          <PostThumb
+            category={post.category}
+            cover={post.cover}
+            variant="banner"
+          />
         </div>
       </div>
     </section>

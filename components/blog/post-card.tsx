@@ -10,7 +10,7 @@ export function PostCard({ post }: { post: BlogPost }) {
       href={`/blog/${post.slug}`}
       className="fx-card group flex flex-1 flex-col overflow-hidden rounded-[20px] border border-paper-border bg-white text-surface no-underline"
     >
-      <PostThumb category={post.category} />
+      <PostThumb category={post.category} cover={post.cover} />
       <div className="flex flex-1 flex-col gap-2.5 px-6 pt-[22px] pb-[26px]">
         <div className="flex items-center gap-2.5 text-[13px] text-text-faint">
           <span className="rounded-full border border-[#c9d9fb] bg-accent-tint px-2.5 py-1 font-mono text-[11px] font-medium text-[#1450c8]">
