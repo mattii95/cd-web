@@ -1,10 +1,17 @@
 import "server-only";
-import { desc, eq, sql } from "drizzle-orm";
+import { count, desc, eq, inArray, sql } from "drizzle-orm";
 import { MediaError, processImage } from "@/lib/media/process";
 import {
   deleteMediaFile,
   writeMediaFile,
 } from "@/lib/media/storage";
+import {
+  decodeCursor,
+  encodeCursor,
+  type Page,
+  type PageParams,
+  resolveLimit,
+} from "@/lib/pagination";
 import { getDb } from "./client";
 import { media, post } from "./schema";
 
@@ -54,21 +61,54 @@ const toItem = (
 });
 
 // Posts de cualquier estado, borrador o publicado.
-export async function getMediaUsage(id: string): Promise<MediaUsage[]> {
+// Resuelve el uso de varias imágenes con 2 consultas: portadas y cuerpos.
+async function getUsageByMedia(
+  ids: string[],
+): Promise<Map<string, MediaUsage[]>> {
+  const usage = new Map<string, MediaUsage[]>(ids.map((id) => [id, []]));
+  if (ids.length === 0) return usage;
   const db = getDb();
-  const cols = { postId: post.id, slug: post.slug, title: post.title };
-  const inBody = JSON.stringify([{ type: "image", mediaId: id }]);
   const [covers, bodies] = await Promise.all([
-    db.select(cols).from(post).where(eq(post.coverMediaId, id)),
     db
-      .select(cols)
+      .select({
+        mediaId: post.coverMediaId,
+        postId: post.id,
+        slug: post.slug,
+        title: post.title,
+      })
       .from(post)
-      .where(sql`${post.body} @> ${inBody}::jsonb`),
+      .where(inArray(post.coverMediaId, ids)),
+    db.execute<{
+      mediaId: string;
+      postId: string;
+      slug: string;
+      title: string;
+    }>(sql`
+      select distinct
+        el->>'mediaId' as "mediaId",
+        p.id as "postId",
+        p.slug as slug,
+        p.title as title
+      from ${post} p
+      cross join lateral jsonb_array_elements(p.body) el
+      where el->>'type' = 'image'
+        and el->>'mediaId' in (${sql.join(
+          ids.map((id) => sql`${id}`),
+          sql`, `,
+        )})
+    `),
   ]);
-  return [
-    ...covers.map((r) => ({ ...r, as: "portada" as const })),
-    ...bodies.map((r) => ({ ...r, as: "cuerpo" as const })),
-  ];
+  for (const { mediaId, ...r } of covers) {
+    if (mediaId) usage.get(mediaId)?.push({ ...r, as: "portada" });
+  }
+  for (const { mediaId, ...r } of bodies.rows) {
+    usage.get(mediaId)?.push({ ...r, as: "cuerpo" });
+  }
+  return usage;
+}
+
+export async function getMediaUsage(id: string): Promise<MediaUsage[]> {
+  return (await getUsageByMedia([id])).get(id) ?? [];
 }
 
 export async function createMedia(input: {
@@ -115,15 +155,39 @@ export async function createMedia(input: {
   }
 }
 
-export async function listMedia(): Promise<MediaItem[]> {
+const DEFAULT_MEDIA_LIMIT = 24;
+
+export async function listMedia(
+  params: PageParams = {},
+): Promise<Page<MediaItem>> {
+  const limit = resolveLimit(params.limit, DEFAULT_MEDIA_LIMIT);
+  const cursor = params.cursor ? decodeCursor(params.cursor) : null;
   const rows = await getDb()
-    .select()
+    .select({ row: media, t: sql<string>`${media.createdAt}::text` })
     .from(media)
-    .orderBy(desc(media.createdAt));
-  // shortcut: 2 consultas por imagen, la biblioteca no pagina; pasar a una sola si crece.
-  return Promise.all(
-    rows.map(async (row) => toItem(row, await getMediaUsage(row.id))),
-  );
+    .where(
+      cursor
+        ? sql`(${media.createdAt}, ${media.id}) < (${cursor.t}::timestamp, ${cursor.id})`
+        : undefined,
+    )
+    .orderBy(desc(media.createdAt), desc(media.id))
+    .limit(limit + 1);
+
+  const page = rows.slice(0, limit);
+  const last = page[page.length - 1];
+  const nextCursor =
+    rows.length > limit ? encodeCursor({ t: last.t, id: last.row.id }) : null;
+
+  const usage = await getUsageByMedia(page.map((r) => r.row.id));
+  return {
+    items: page.map((r) => toItem(r.row, usage.get(r.row.id) ?? [])),
+    nextCursor,
+  };
+}
+
+export async function countMedia(): Promise<number> {
+  const [r] = await getDb().select({ n: count() }).from(media);
+  return r.n;
 }
 
 export async function updateMediaAlt(id: string, alt: string): Promise<void> {

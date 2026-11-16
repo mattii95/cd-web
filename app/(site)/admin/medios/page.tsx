@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 async function Library() {
   await requireAdmin();
-  const items = await listMedia();
+  const { items } = await listMedia();
   return (
     <>
       <UploadForm />
