@@ -6,6 +6,7 @@ import {
   blogAuthor,
   blogCategories,
   blogPosts,
+  blogTags,
   type BlogBlock,
   type BlogImage,
   type BlogRating,
@@ -23,6 +24,8 @@ const {
   media,
   post,
   postRating,
+  postTag,
+  tag,
   user,
 } = schema;
 
@@ -56,7 +59,9 @@ async function seedImage(
   image: BlogImage,
   uploadedBy: string,
 ): Promise<string> {
-  const original = await readFile(path.join(process.cwd(), "public", image.src));
+  const original = await readFile(
+    path.join(process.cwd(), "public", image.src),
+  );
   const processed = await processImage(original);
   const [existing] = await db
     .select({ id: media.id })
@@ -179,6 +184,31 @@ export async function seedBlog(
         .onConflictDoUpdate({ target: post.slug, set: values })
         .returning({ id: post.id });
       postIds.set(p.slug, row.id);
+    }
+
+    // Etiquetas: clave natural slug. Las filas post_tag solo se agregan: no pisan asignaciones a mano.
+    const tagIds = new Map<string, string>();
+    for (const t of blogTags) {
+      const [row] = await tx
+        .insert(tag)
+        .values(t)
+        .onConflictDoUpdate({ target: tag.slug, set: { name: t.name } })
+        .returning({ id: tag.id });
+      tagIds.set(t.slug, row.id);
+    }
+    for (const p of blogPosts) {
+      for (const slug of p.tags) {
+        const tagId = tagIds.get(slug);
+        if (!tagId) {
+          throw new Error(
+            `El post "${p.slug}" usa la etiqueta "${slug}", que no está en blogTags`,
+          );
+        }
+        await tx
+          .insert(postTag)
+          .values({ postId: postIds.get(p.slug)!, tagId })
+          .onConflictDoNothing();
+      }
     }
 
     // Usuarios demo: 4 con comentario y 20 lectores. Sin fila account, no pueden entrar.
