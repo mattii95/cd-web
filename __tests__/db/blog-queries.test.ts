@@ -16,6 +16,7 @@ import {
   getPublishedPostBySlug,
   getPublishedPosts,
   getRatingSummary,
+  getRelatedPosts,
   getTags,
 } from "@/db/blog";
 import { closeDb, getDb } from "@/db/client";
@@ -288,7 +289,9 @@ describe("funciones de lectura del blog", () => {
   it("getApprovedComments recorre todos los aprobados con limit 2", async () => {
     const db = getDb();
     const { post: p } = await crearBase();
-    await db.insert(postRating).values({ postId: p.id, userId: "ana", rating: 5 });
+    await db
+      .insert(postRating)
+      .values({ postId: p.id, userId: "ana", rating: 5 });
     const base = new Date("2026-11-01T10:00:00Z").getTime();
     await db.insert(comment).values([
       ...[0, 1, 2, 3, 4].map((i) => ({
@@ -299,7 +302,12 @@ describe("funciones de lectura del blog", () => {
         createdAt: new Date(base + i * 1000),
       })),
       { postId: p.id, userId: "ana", text: "pendiente" },
-      { postId: p.id, userId: "ana", text: "oculto", status: "oculto" as const },
+      {
+        postId: p.id,
+        userId: "ana",
+        text: "oculto",
+        status: "oculto" as const,
+      },
     ]);
     const textos: string[] = [];
     let cursor: string | null = null;
@@ -436,6 +444,135 @@ describe("funciones de lectura del blog", () => {
       } finally {
         spy.mockRestore();
       }
+    });
+  });
+
+  describe("filtros y relacionados", () => {
+    const fecha = (d: number) => new Date(Date.UTC(2026, 10, d));
+
+    async function crearEscenario() {
+      const db = getDb();
+      const { cat, post: p } = await crearBase(); // sistemas, post-1 (10 nov)
+      const [ia] = await db
+        .insert(category)
+        .values({ ...nuevaCategoria("ia"), position: 2 })
+        .returning();
+      const insertar = async (
+        categoryId: string,
+        slug: string,
+        day: number,
+        status: "publicado" | "borrador" = "publicado",
+      ) => {
+        const [x] = await db
+          .insert(post)
+          .values({
+            ...nuevoPost(categoryId, "autor", slug),
+            publishedAt: fecha(day),
+            status,
+          })
+          .returning();
+        return x;
+      };
+      const etiquetar = async (postId: string, ...slugs: string[]) => {
+        for (const slug of slugs) {
+          const [t] = await db
+            .insert(tag)
+            .values({ slug, name: slug.toUpperCase() })
+            .onConflictDoUpdate({ target: tag.slug, set: { slug } })
+            .returning();
+          await db.insert(postTag).values({ postId, tagId: t.id });
+        }
+      };
+      return { cat, ia, p, insertar, etiquetar };
+    }
+
+    it("category devuelve solo posts publicados de esa categoría", async () => {
+      const { ia, insertar } = await crearEscenario();
+      await insertar(ia.id, "ia-1", 11);
+      const { items } = await getPublishedPosts({ category: "sistemas" });
+      expect(items.map((x) => x.slug)).toEqual(["post-1"]);
+    });
+
+    it("tag devuelve solo posts con esa etiqueta, con todas sus etiquetas", async () => {
+      const { cat, p, insertar, etiquetar } = await crearEscenario();
+      const otro = await insertar(cat.id, "otro", 11);
+      await etiquetar(p.id, "pymes", "ventas");
+      await etiquetar(otro.id, "ventas");
+      const { items } = await getPublishedPosts({ tag: "pymes" });
+      expect(items.map((x) => x.slug)).toEqual(["post-1"]);
+      expect(items[0].tags.map((t) => t.slug)).toEqual(["pymes", "ventas"]);
+    });
+
+    it("category y tag se combinan con y", async () => {
+      const { ia, p, insertar, etiquetar } = await crearEscenario();
+      const enIa = await insertar(ia.id, "ia-1", 11);
+      await etiquetar(p.id, "pymes");
+      await etiquetar(enIa.id, "pymes");
+      const { items } = await getPublishedPosts({
+        category: "ia",
+        tag: "pymes",
+      });
+      expect(items.map((x) => x.slug)).toEqual(["ia-1"]);
+    });
+
+    it("recorrer con cursor y category devuelve cada post una sola vez", async () => {
+      const { cat, ia, insertar } = await crearEscenario();
+      for (let i = 1; i <= 5; i++) await insertar(cat.id, `s-${i}`, 10 + i);
+      await insertar(ia.id, "ia-1", 20);
+      const vistos: string[] = [];
+      let cursor: string | undefined;
+      do {
+        const page = await getPublishedPosts({
+          category: "sistemas",
+          limit: 2,
+          cursor,
+        });
+        vistos.push(...page.items.map((x) => x.slug));
+        cursor = page.nextCursor ?? undefined;
+      } while (cursor);
+      expect([...vistos].sort()).toEqual(
+        ["post-1", "s-1", "s-2", "s-3", "s-4", "s-5"].sort(),
+      );
+    });
+
+    it("una categoría inexistente devuelve una página vacía", async () => {
+      await crearEscenario();
+      expect(await getPublishedPosts({ category: "no-existe" })).toEqual({
+        items: [],
+        nextCursor: null,
+      });
+    });
+
+    it("getRelatedPosts pone primero la misma categoría y excluye borradores y el propio post", async () => {
+      const { cat, ia, p, insertar } = await crearEscenario();
+      await insertar(ia.id, "ia-nuevo", 20);
+      await insertar(cat.id, "sis-viejo", 1);
+      await insertar(cat.id, "sis-borrador", 15, "borrador");
+      const rel = await getRelatedPosts(p.id, 5);
+      expect(rel.map((x) => x.slug)).toEqual(["sis-viejo", "ia-nuevo"]);
+    });
+
+    it("getRelatedPosts respeta n y trae las etiquetas", async () => {
+      const { cat, p, insertar, etiquetar } = await crearEscenario();
+      for (const [slug, day] of [
+        ["a", 1],
+        ["b", 2],
+        ["c", 3],
+        ["d", 4],
+      ] as const)
+        await insertar(cat.id, slug, day);
+      const [d] = (await getPublishedPosts()).items.filter(
+        (x) => x.slug === "d",
+      );
+      await etiquetar(d.id, "x");
+      const rel = await getRelatedPosts(p.id);
+      expect(rel.map((x) => x.slug)).toEqual(["d", "c", "b"]);
+      expect(rel[0].tags.map((t) => t.slug)).toEqual(["x"]);
+    });
+
+    it("getRelatedPosts con un único post publicado devuelve []", async () => {
+      const { p } = await crearEscenario();
+      expect(await getRelatedPosts(p.id)).toEqual([]);
     });
   });
 });
