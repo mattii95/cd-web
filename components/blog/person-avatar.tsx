@@ -7,15 +7,18 @@ export function PersonAvatar({
   name,
   image,
   className,
+  color,
 }: {
   name: string;
   image: string | null;
   className: string; // tamaño y texto: "size-10 text-sm"
+  color?: string; // fondo de las iniciales; por defecto el acento
 }) {
   const src = avatarSrc(image);
   return (
     <span
       aria-hidden="true"
+      style={color ? { background: color } : undefined}
       className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent font-mono font-semibold text-white ${className}`}
     >
       {src ? (

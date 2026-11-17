@@ -11,8 +11,12 @@ import { ReviewsSection } from "@/components/blog/reviews-section";
 import { ShareButton } from "@/components/blog/share-button";
 import { ArticleToc } from "@/components/blog/article-toc";
 import { ArticleHero } from "@/components/blog/article-hero";
-import { cachedPostBySlug, cachedRatingSummary } from "@/db/blog-cache";
-import { formatPostDate, getPost } from "@/lib/blog-posts";
+import {
+  cachedApprovedComments,
+  cachedPostBySlug,
+  cachedRatingSummary,
+} from "@/db/blog-cache";
+import { formatPostDate } from "@/lib/blog-posts";
 
 // Un slug inexistente responde 200 con noindex: notFound() ocurre durante el streaming.
 export async function generateMetadata({
@@ -42,9 +46,10 @@ async function Article({
   await connection();
   const post = await cachedPostBySlug(slug);
   if (!post) notFound();
-  const rating = await cachedRatingSummary(post.id);
-  // TODO(SPEC 13, paso 8): las valoraciones todavía salen del mock.
-  const mockReviews = getPost(post.slug)?.reviews;
+  const [rating, comments] = await Promise.all([
+    cachedRatingSummary(post.id),
+    cachedApprovedComments(post.id),
+  ]);
 
   return (
     <>
@@ -56,16 +61,21 @@ async function Article({
       <section className="bg-paper px-6 pt-16 pb-24 text-surface">
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-start gap-14">
           <aside className="flex max-w-[300px] flex-[1_1_240px] flex-col gap-6 lg:sticky lg:top-6">
-            <ArticleToc body={post.body} hasReviews={!!mockReviews} />
+            <ArticleToc body={post.body} />
             <ShareButton title={post.title} />
           </aside>
           <div className="min-w-0 flex-[999_1_560px]">
             <div className="flex max-w-[760px] flex-col gap-6">
               <ArticleBody body={post.body} />
               <AuthorBox author={post.author} />
-              {mockReviews && (
-                <ReviewsSection reviews={mockReviews} slug={post.slug} />
-              )}
+              <ReviewsSection
+                postId={post.id}
+                slug={post.slug}
+                author={post.author}
+                summary={rating}
+                initialComments={comments.items}
+                initialCursor={comments.nextCursor}
+              />
               <ArticleCta post={post} />
             </div>
           </div>
