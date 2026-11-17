@@ -177,3 +177,12 @@ export const Users = (p: IconProps) => (
 export const ExternalLink = (p: IconProps) => (
   <Icon size={18} strokeWidth={2} {...p}><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" /></Icon>
 );
+export const Copy = (p: IconProps) => (
+  <Icon size={18} strokeWidth={2} {...p}><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 012-2h9" /></Icon>
+);
+export const Pencil = (p: IconProps) => (
+  <Icon size={18} strokeWidth={2} {...p}><path d="M4 20h4L19 9l-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></Icon>
+);
+export const Trash = (p: IconProps) => (
+  <Icon size={18} strokeWidth={2} {...p}><path d="M4 7h16M10 11v6M14 11v6" /><path d="M6 7l1 13h10l1-13M9 7V4h6v3" /></Icon>
+);
