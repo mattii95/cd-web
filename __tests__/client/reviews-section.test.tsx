@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PublicComment, RatingSummary } from "@/db/blog";
 import type { ViewerState } from "@/db/blog-community";
@@ -13,11 +19,15 @@ const rateAction = vi.fn();
 const toggleVoteAction = vi.fn();
 const createCommentAction = vi.fn();
 const deleteCommentAction = vi.fn();
+const saveReplyAction = vi.fn();
+const deleteReplyAction = vi.fn();
 vi.mock("@/app/(site)/blog/community-actions", () => ({
   rateAction: (...args: unknown[]) => rateAction(...args),
   toggleVoteAction: (...args: unknown[]) => toggleVoteAction(...args),
   createCommentAction: (...args: unknown[]) => createCommentAction(...args),
   deleteCommentAction: (...args: unknown[]) => deleteCommentAction(...args),
+  saveReplyAction: (...args: unknown[]) => saveReplyAction(...args),
+  deleteReplyAction: (...args: unknown[]) => deleteReplyAction(...args),
 }));
 
 import { ReviewsSection } from "@/components/blog/reviews-section";
@@ -80,6 +90,8 @@ beforeEach(() => {
   toggleVoteAction.mockReset();
   createCommentAction.mockReset();
   deleteCommentAction.mockReset();
+  saveReplyAction.mockReset();
+  deleteReplyAction.mockReset();
 });
 
 describe("ReviewsSection · resumen", () => {
@@ -481,5 +493,158 @@ describe("ReviewsSection · Útil", () => {
     );
     const btn = await screen.findByRole("button", { name: "Útil · 2" });
     expect(btn.getAttribute("aria-pressed")).toBe("true");
+  });
+});
+
+describe("ReviewsSection · Responder", () => {
+  const withReply = comment(1, {
+    reply: {
+      text: "Gracias por leerlo",
+      repliedAt: new Date(Date.UTC(2026, 10, 17)),
+    },
+  });
+
+  it("un lector que no es el autor del post no ve Responder, Editar ni Borrar en las respuestas", () => {
+    setup({
+      viewer: viewerOf(),
+      initialComments: [comment(2), withReply],
+    });
+    expect(screen.queryByText("Responder")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Editar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Borrar" })).toBeNull();
+    expect(screen.getByText("Gracias por leerlo")).toBeInTheDocument();
+  });
+
+  it("el autor ve Responder solo en los aprobados sin respuesta", () => {
+    setup({
+      viewer: viewerOf({ isPostAuthor: true }),
+      initialComments: [comment(2), withReply],
+    });
+    expect(screen.getAllByRole("button", { name: "Responder" })).toHaveLength(
+      1,
+    );
+  });
+
+  it("publica una respuesta y la muestra con el badge Autor", async () => {
+    saveReplyAction.mockResolvedValue({
+      status: "success",
+      reply: { text: "Gracias", repliedAt: new Date(Date.UTC(2026, 10, 17)) },
+    });
+    setup({
+      viewer: viewerOf({ isPostAuthor: true }),
+      initialComments: [comment(2)],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Responder" }));
+    const publicar = screen.getByRole("button", {
+      name: "Publicar respuesta",
+    }) as HTMLButtonElement;
+    expect(publicar.disabled).toBe(true);
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Escribí una respuesta" }),
+      {
+        target: { value: "Gracias" },
+      },
+    );
+    fireEvent.click(publicar);
+    await screen.findByText("Autor");
+    expect(saveReplyAction).toHaveBeenCalledWith("c-2", "Gracias");
+    expect(screen.getByText("Gracias")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Responder" })).toBeNull();
+  });
+
+  it("Cancelar cierra el editor sin guardar", () => {
+    setup({
+      viewer: viewerOf({ isPostAuthor: true }),
+      initialComments: [comment(2)],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Responder" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(
+      screen.queryByRole("textbox", { name: "Escribí una respuesta" }),
+    ).toBeNull();
+    expect(saveReplyAction).not.toHaveBeenCalled();
+  });
+
+  it("Editar abre el textarea con el texto actual y reemplaza la respuesta", async () => {
+    saveReplyAction.mockResolvedValue({
+      status: "success",
+      reply: {
+        text: "Texto nuevo",
+        repliedAt: new Date(Date.UTC(2026, 10, 18)),
+      },
+    });
+    setup({
+      viewer: viewerOf({ isPostAuthor: true }),
+      initialComments: [withReply],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Editar" }));
+    const area = screen.getByRole("textbox", {
+      name: "Escribí una respuesta",
+    }) as HTMLTextAreaElement;
+    expect(area.value).toBe("Gracias por leerlo");
+    fireEvent.change(area, { target: { value: "Texto nuevo" } });
+    fireEvent.click(screen.getByRole("button", { name: "Publicar respuesta" }));
+    await screen.findByText("Texto nuevo");
+    expect(screen.queryByText("Gracias por leerlo")).toBeNull();
+  });
+
+  it("Borrar pide confirmación inline y quita la respuesta", async () => {
+    deleteReplyAction.mockResolvedValue({ status: "success" });
+    setup({
+      viewer: viewerOf({ isPostAuthor: true }),
+      initialComments: [withReply],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Borrar" }));
+    const group = screen.getByRole("group", {
+      name: "Confirmar borrado de la respuesta",
+    });
+    expect(within(group).getByText(/¿Borrar respuesta\?/)).toBeInTheDocument();
+    fireEvent.click(within(group).getByRole("button", { name: "Sí, borrar" }));
+    await waitFor(() =>
+      expect(screen.queryByText("Gracias por leerlo")).toBeNull(),
+    );
+    expect(deleteReplyAction).toHaveBeenCalledWith("c-1");
+    expect(
+      screen.getByRole("button", { name: "Responder" }),
+    ).toBeInTheDocument();
+  });
+
+  it("si falla al responder muestra el mensaje en un status y deja el editor abierto", async () => {
+    saveReplyAction.mockResolvedValue({
+      status: "error",
+      message: "No pudimos guardar la respuesta.",
+    });
+    setup({
+      viewer: viewerOf({ isPostAuthor: true }),
+      initialComments: [comment(2)],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Responder" }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Escribí una respuesta" }),
+      {
+        target: { value: "Gracias" },
+      },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Publicar respuesta" }));
+    const status = await screen.findByText("No pudimos guardar la respuesta.");
+    expect(status.getAttribute("role")).toBe("status");
+    expect(
+      screen.getByRole("textbox", { name: "Escribí una respuesta" }),
+    ).toBeInTheDocument();
+  });
+
+  it("si falla al borrar la respuesta la deja y muestra el mensaje", async () => {
+    deleteReplyAction.mockResolvedValue({
+      status: "error",
+      message: "No pudimos guardar la respuesta.",
+    });
+    setup({
+      viewer: viewerOf({ isPostAuthor: true }),
+      initialComments: [withReply],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Borrar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sí, borrar" }));
+    await screen.findByText("No pudimos guardar la respuesta.");
+    expect(screen.getByText("Gracias por leerlo")).toBeInTheDocument();
   });
 });

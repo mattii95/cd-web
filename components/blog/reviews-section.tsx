@@ -6,7 +6,9 @@ import { loadMoreCommentsAction } from "@/app/(site)/blog/actions";
 import {
   createCommentAction,
   deleteCommentAction,
+  deleteReplyAction,
   rateAction,
+  saveReplyAction,
   toggleVoteAction,
 } from "@/app/(site)/blog/community-actions";
 import type { PostAuthor, PublicComment, RatingSummary } from "@/db/blog";
@@ -66,6 +68,13 @@ export function ReviewsSection({
   const [sending, setSending] = useState(false);
   const [pending, setPending] = useState(viewer?.pending ?? []);
   const [ownIds, setOwnIds] = useState(viewer?.ownCommentIds ?? []);
+  const [replies, setReplies] = useState<
+    Record<string, PublicComment["reply"]>
+  >({}); // pisa c.reply tras responder o borrar; null = sin respuesta
+  const [editor, setEditor] = useState<{ id: string; text: string } | null>(
+    null,
+  );
+  const [savingReply, setSavingReply] = useState(false);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<Record<string, string>>({});
   const say = (key: string, message: string) =>
@@ -175,6 +184,82 @@ export function ReviewsSection({
     }
     setConfirming(null);
   }
+
+  const replyOf = (c: PublicComment) =>
+    c.id in replies ? replies[c.id] : c.reply;
+
+  async function saveReply(id: string) {
+    if (!editor || savingReply || editor.text.trim().length < 2) return;
+    setSavingReply(true);
+    say(id, "");
+    try {
+      const result = await saveReplyAction(id, editor.text);
+      if (result.status === "success") {
+        setReplies((prev) => ({ ...prev, [id]: result.reply }));
+        setEditor(null);
+      } else {
+        say(id, result.message);
+      }
+    } catch {
+      say(id, "No pudimos guardar la respuesta.");
+    } finally {
+      setSavingReply(false);
+    }
+  }
+
+  async function removeReply(id: string) {
+    say(id, "");
+    try {
+      const result = await deleteReplyAction(id);
+      if (result.status === "success") {
+        setReplies((prev) => ({ ...prev, [id]: null }));
+      } else {
+        say(id, result.message);
+      }
+    } catch {
+      say(id, "No pudimos guardar la respuesta.");
+    }
+    setConfirming(null);
+  }
+
+  const replyEditor = (id: string) =>
+    editor?.id === id && (
+      <form
+        className="flex flex-col gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          saveReply(id);
+        }}
+      >
+        <textarea
+          aria-label="Escribí una respuesta"
+          rows={3}
+          maxLength={2000}
+          value={editor.text}
+          onChange={(e) => setEditor({ id, text: e.target.value })}
+          className="w-full resize-y rounded-xl border border-paper-border bg-white px-3.5 py-2.5 text-[15px] leading-normal text-[#2b3449] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="submit"
+            disabled={savingReply || editor.text.trim().length < 2}
+            className="inline-flex min-h-10 cursor-pointer items-center rounded-full border-0 bg-accent px-4 py-2 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Publicar respuesta
+          </button>
+          <button
+            type="button"
+            onClick={() => setEditor(null)}
+            className="inline-flex min-h-10 cursor-pointer items-center rounded-full border-0 bg-transparent px-3 py-2 text-[13px] font-semibold text-text-faint"
+          >
+            Cancelar
+          </button>
+          <span className="text-[13px] text-text-faint">
+            {editor.text.length}/2000
+          </span>
+        </div>
+      </form>
+    );
 
   const rows = [
     ...pending.map((c) => ({ c, inReview: true })),
@@ -371,6 +456,7 @@ export function ReviewsSection({
           {rows.map(({ c, inReview }, i) => {
             const isVoted = voted.has(c.id);
             const own = inReview || ownIds.includes(c.id);
+            const reply = replyOf(c);
             return (
               <li
                 key={c.id}
@@ -424,6 +510,17 @@ export function ReviewsSection({
                             Útil · {likesOf(c)}
                           </button>
                         )}
+                        {viewer?.isPostAuthor &&
+                          !reply &&
+                          editor?.id !== c.id && (
+                            <button
+                              type="button"
+                              onClick={() => setEditor({ id: c.id, text: "" })}
+                              className="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border-0 bg-transparent px-3 py-2 text-[13px] font-semibold text-text-faint"
+                            >
+                              Responder
+                            </button>
+                          )}
                       </>
                     )}
                     {own &&
@@ -467,7 +564,8 @@ export function ReviewsSection({
                       {msgs[c.id]}
                     </p>
                   )}
-                  {c.reply && (
+                  {!reply && replyEditor(c.id)}
+                  {reply && (
                     <div className="mt-1.5 flex gap-3 rounded-[14px] border border-paper-border bg-paper px-[18px] py-4">
                       <PersonAvatar
                         name={author.name}
@@ -481,12 +579,65 @@ export function ReviewsSection({
                             Autor
                           </span>
                           <span className="text-[13px] text-text-faint">
-                            {formatPostDate(c.reply.repliedAt)}
+                            {formatPostDate(reply.repliedAt)}
                           </span>
                         </div>
-                        <p className="m-0 text-[15px] leading-[1.6] text-[#2b3449]">
-                          {c.reply.text}
-                        </p>
+                        {editor?.id === c.id ? (
+                          replyEditor(c.id)
+                        ) : (
+                          <>
+                            <p className="m-0 text-[15px] leading-[1.6] text-[#2b3449]">
+                              {reply.text}
+                            </p>
+                            {viewer?.isPostAuthor && (
+                              <div className="-ml-2.5 flex flex-wrap items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setEditor({ id: c.id, text: reply.text })
+                                  }
+                                  className="inline-flex min-h-10 cursor-pointer items-center rounded-full border-0 bg-transparent px-3 py-2 text-[13px] font-semibold text-text-faint"
+                                >
+                                  Editar
+                                </button>
+                                {confirming === `reply:${c.id}` ? (
+                                  <span
+                                    role="group"
+                                    aria-label="Confirmar borrado de la respuesta"
+                                    className="flex flex-wrap items-center gap-1 text-[13px] text-[#2b3449]"
+                                  >
+                                    ¿Borrar respuesta?
+                                    <button
+                                      type="button"
+                                      onClick={() => removeReply(c.id)}
+                                      className="inline-flex min-h-10 cursor-pointer items-center rounded-full border-0 bg-[#050b1c] px-3 py-2 text-[13px] font-semibold text-white"
+                                    >
+                                      Sí, borrar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setConfirming(null)}
+                                      className="inline-flex min-h-10 cursor-pointer items-center rounded-full border-0 bg-transparent px-3 py-2 text-[13px] font-semibold text-text-faint"
+                                    >
+                                      Cancelar
+                                    </button>
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      say(c.id, "");
+                                      setConfirming(`reply:${c.id}`);
+                                    }}
+                                    className="inline-flex min-h-10 cursor-pointer items-center rounded-full border-0 bg-transparent px-3 py-2 text-[13px] font-semibold text-text-faint"
+                                  >
+                                    Borrar
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                   )}
