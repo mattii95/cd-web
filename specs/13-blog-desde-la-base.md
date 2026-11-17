@@ -164,44 +164,44 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado, incluidos los tests de SPEC 07 a 12.
-- [ ] `npm run test:e2e` pasa, incluidos `medios.spec.ts`, `etiquetas.spec.ts`, `navegacion.spec.ts` y `auth.spec.ts`.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado, incluidos los tests de SPEC 07 a 12.
+- [x] `npm run test:e2e` pasa, incluidos `medios.spec.ts`, `etiquetas.spec.ts`, `navegacion.spec.ts` y `auth.spec.ts`.
 - [ ] Los jobs `checks`, `db` y `e2e` del CI pasan en un PR a `main`.
-- [ ] No hay migraciones nuevas: `npm run db:generate` no crea archivos.
-- [ ] Ningún archivo de `app/`, `components/` o `lib/` importa `db/seed/blog-data.ts`.
-- [ ] `lib/blog-posts.ts` no exporta `blogPosts`, `blogAuthor`, `blogCategories`, `blogTags`, `getPost` ni `getRecentPosts`.
-- [ ] `npm run db:seed` carga los mismos posts, categorías, etiquetas, imágenes, valoraciones y comentarios que antes de este spec (`blog-seed.test.ts` pasa sin cambiar sus asserts).
-- [ ] `getPublishedPosts({ category: "sistemas" })` devuelve solo posts publicados de esa categoría.
-- [ ] `getPublishedPosts({ tag: "pymes" })` devuelve solo posts publicados con esa etiqueta, cada uno con todas sus etiquetas.
-- [ ] `getPublishedPosts({ category, tag })` combina los dos filtros con "y".
-- [ ] Recorrer `getPublishedPosts({ category, limit: 2 })` con cursor devuelve cada post de la categoría una sola vez.
-- [ ] `getPublishedPosts({ category: "no-existe" })` devuelve `{ items: [], nextCursor: null }`.
-- [ ] `getRelatedPosts(id)` no incluye el propio post ni borradores, y pone primero los de la misma categoría.
-- [ ] `getRelatedPosts(id)` con un único post publicado devuelve `[]`.
-- [ ] `/blog` sin parámetros muestra como destacado el post publicado más reciente de la base.
-- [ ] `/blog?categoria=ia` muestra solo posts de IA, y el destacado es el más reciente de IA.
-- [ ] `/blog?categoria=xyz&etiqueta=no-existe` se ve igual que `/blog`.
-- [ ] Hacer clic en una etiqueta con `?categoria=sistemas` activo lleva a `/blog?categoria=sistemas&etiqueta=<slug>`.
-- [ ] Con 14 posts publicados, `/blog` muestra el destacado y 11 tarjetas más el botón "Cargar más", y al hacer clic se suman 2 tarjetas y el botón desaparece.
-- [ ] `PostList`: si `loadMorePostsAction` devuelve error, se muestra "No pudimos cargar más artículos." y el botón vuelve a estar habilitado.
-- [ ] `loadMorePostsAction("basura", {})` devuelve `{ status: "error" }` y no lanza.
+- [x] No hay migraciones nuevas: `npm run db:generate` no crea archivos.
+- [x] Ningún archivo de `app/`, `components/` o `lib/` importa `db/seed/blog-data.ts`.
+- [x] `lib/blog-posts.ts` no exporta `blogPosts`, `blogAuthor`, `blogCategories`, `blogTags`, `getPost` ni `getRecentPosts`.
+- [x] `npm run db:seed` carga los mismos posts, categorías, etiquetas, imágenes, valoraciones y comentarios que antes de este spec (`blog-seed.test.ts` pasa sin cambiar sus asserts).
+- [x] `getPublishedPosts({ category: "sistemas" })` devuelve solo posts publicados de esa categoría.
+- [x] `getPublishedPosts({ tag: "pymes" })` devuelve solo posts publicados con esa etiqueta, cada uno con todas sus etiquetas.
+- [x] `getPublishedPosts({ category, tag })` combina los dos filtros con "y".
+- [x] Recorrer `getPublishedPosts({ category, limit: 2 })` con cursor devuelve cada post de la categoría una sola vez.
+- [x] `getPublishedPosts({ category: "no-existe" })` devuelve `{ items: [], nextCursor: null }`.
+- [x] `getRelatedPosts(id)` no incluye el propio post ni borradores, y pone primero los de la misma categoría.
+- [x] `getRelatedPosts(id)` con un único post publicado devuelve `[]`.
+- [x] `/blog` sin parámetros muestra como destacado el post publicado más reciente de la base.
+- [x] `/blog?categoria=ia` muestra solo posts de IA, y el destacado es el más reciente de IA.
+- [x] `/blog?categoria=xyz&etiqueta=no-existe` se ve igual que `/blog`.
+- [x] Hacer clic en una etiqueta con `?categoria=sistemas` activo lleva a `/blog?categoria=sistemas&etiqueta=<slug>`.
+- [x] Con 14 posts publicados, `/blog` muestra el destacado y 11 tarjetas más el botón "Cargar más", y al hacer clic se suman 2 tarjetas y el botón desaparece.
+- [x] `PostList`: si `loadMorePostsAction` devuelve error, se muestra "No pudimos cargar más artículos." y el botón vuelve a estar habilitado.
+- [x] `loadMorePostsAction("basura", {})` devuelve `{ status: "error" }` y no lanza.
 - [ ] Un post publicado nuevo en la base aparece en `/blog` dentro de la hora, sin redeploy.
-- [ ] `/blog/senales-sistema-a-medida` muestra título, cuerpo con las 2 imágenes, autor, CTA del servicio de la categoría, relacionados y valoraciones, todo de la base.
-- [ ] `AuthorBox` muestra el `jobTitle` y la `bio` de `author_profile` del autor del seed.
-- [ ] `/blog/no-existe` muestra la página de no encontrado con `<meta name="robots" content="noindex">`.
-- [ ] Un post en `borrador` no es accesible por su slug y no aparece en `/blog`, en la home ni en relacionados.
-- [ ] Un artículo sin valoraciones ni comentarios muestra "Todavía no hay valoraciones" y "Todavía no hay comentarios".
-- [ ] El promedio y la distribución de `senales-sistema-a-medida` coinciden con `getRatingSummary` de la base.
-- [ ] `ReviewsSection`: con 25 comentarios aprobados muestra 20 y "Ver más comentarios", y al hacer clic muestra 25 y el botón desaparece.
-- [ ] `ReviewsSection` no tiene el selector "Recientes / Mejor valorados / Más útiles".
-- [ ] Un comentario muestra la fecha en formato `formatPostDate` (por ejemplo "16 nov 2026"), no "Hace N días".
-- [ ] Un comentario cuyo autor no valoró el post no muestra estrellas.
-- [ ] La home muestra los 3 posts publicados más recientes de la base.
-- [ ] `resolveBackHref("/blog/cualquier-slug")` devuelve `"/blog/cualquier-slug"`, y `resolveBackHref("//otro.com")`, `resolveBackHref("/blog/../x")` y `resolveBackHref("/blog/Mayus")` devuelven `"/blog"`.
-- [ ] `resolveAfterLogin` acepta `/blog/<slug>` con formato válido, `/cuenta/perfil` y `/admin`, y cualquier otro valor va a `/cuenta/perfil`.
+- [x] `/blog/senales-sistema-a-medida` muestra título, cuerpo con las 2 imágenes, autor, CTA del servicio de la categoría, relacionados y valoraciones, todo de la base.
+- [x] `AuthorBox` muestra el `jobTitle` y la `bio` de `author_profile` del autor del seed.
+- [x] `/blog/no-existe` muestra la página de no encontrado con `<meta name="robots" content="noindex">`.
+- [x] Un post en `borrador` no es accesible por su slug y no aparece en `/blog`, en la home ni en relacionados.
+- [x] Un artículo sin valoraciones ni comentarios muestra "Todavía no hay valoraciones" y "Todavía no hay comentarios".
+- [x] El promedio y la distribución de `senales-sistema-a-medida` coinciden con `getRatingSummary` de la base.
+- [x] `ReviewsSection`: con 25 comentarios aprobados muestra 20 y "Ver más comentarios", y al hacer clic muestra 25 y el botón desaparece.
+- [x] `ReviewsSection` no tiene el selector "Recientes / Mejor valorados / Más útiles".
+- [x] Un comentario muestra la fecha en formato `formatPostDate` (por ejemplo "16 nov 2026"), no "Hace N días".
+- [x] Un comentario cuyo autor no valoró el post no muestra estrellas.
+- [x] La home muestra los 3 posts publicados más recientes de la base.
+- [x] `resolveBackHref("/blog/cualquier-slug")` devuelve `"/blog/cualquier-slug"`, y `resolveBackHref("//otro.com")`, `resolveBackHref("/blog/../x")` y `resolveBackHref("/blog/Mayus")` devuelven `"/blog"`.
+- [x] `resolveAfterLogin` acepta `/blog/<slug>` con formato válido, `/cuenta/perfil` y `/admin`, y cualquier otro valor va a `/cuenta/perfil`.
 
 ## Decisiones
 

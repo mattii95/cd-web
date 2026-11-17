@@ -134,7 +134,7 @@ test("volver: acepta un artículo y rechaza destinos externos", async ({ page })
   await expect(page).toHaveURL(/\/blog\/senales-sistema-a-medida$/);
 
   await page.context().clearCookies();
-  for (const volver of ["https://otro.com", "//otro.com", "/blog/no-existe"]) {
+  for (const volver of ["https://otro.com", "//otro.com", "/blog/Mayus"]) {
     await login(page, email, PASSWORD, volver);
     await expect(page).toHaveURL(/\/cuenta\/perfil$/);
     await page.context().clearCookies();

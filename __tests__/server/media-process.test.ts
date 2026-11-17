@@ -42,9 +42,9 @@ describe("processImage", () => {
   });
 
   it("rechaza un texto renombrado a .jpg", async () => {
-    await expect(processImage(Buffer.from("hola, no soy una imagen"))).rejects.toBeInstanceOf(
-      MediaError,
-    );
+    await expect(
+      processImage(Buffer.from("hola, no soy una imagen")),
+    ).rejects.toBeInstanceOf(MediaError);
   });
 
   it("rechaza más de 10 MB", async () => {
@@ -53,7 +53,9 @@ describe("processImage", () => {
   });
 
   it("rechaza más de 40 megapíxeles", async () => {
-    const png = await sharp(blank(7000, 6000)).png({ compressionLevel: 9 }).toBuffer();
+    const png = await sharp(blank(7000, 6000))
+      .png({ compressionLevel: 9 })
+      .toBuffer();
     await expect(processImage(png)).rejects.toThrow(/megapíxeles/);
   });
 });

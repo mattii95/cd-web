@@ -1,23 +1,4 @@
-// Tipos y formateadores del blog. Los datos mock viven en db/seed/blog-data.ts.
-// TODO(SPEC 13, paso 9): quitar el reexport temporal de abajo.
-import type { PostSummary } from "@/db/blog";
-import {
-  blogAuthor,
-  blogCategories,
-  blogPosts,
-  blogTags,
-  type BlogPost,
-  type BlogReviews,
-} from "@/db/seed/blog-data";
-
-export { blogAuthor, blogCategories, blogPosts, blogTags };
-export type {
-  BlogAuthor,
-  BlogCategory,
-  BlogComment,
-  BlogPost,
-  BlogReviews,
-} from "@/db/seed/blog-data";
+// Tipos compartidos y formateadores del blog. Los datos viven en la base (db/blog.ts).
 
 export type BlogCategoryTag = "desarrollo-web" | "sistemas" | "saas" | "ia";
 
@@ -52,83 +33,17 @@ export type BlogBlock =
 
 export type BlogRating = 1 | 2 | 3 | 4 | 5;
 
-export const getPost = (slug: string) => blogPosts.find((p) => p.slug === slug);
-
-export const getCategory = (tag: BlogCategoryTag) =>
-  blogCategories.find((c) => c.tag === tag)!;
-
-export const getTag = (slug: BlogTagSlug) =>
-  blogTags.find((t) => t.slug === slug);
-
-// Etiquetas usadas por los posts, por cantidad descendente y slug ascendente.
-export function getUsedTags(posts: Pick<BlogPost, "tags">[]) {
-  const counts = new Map<BlogTagSlug, number>();
-  for (const { tags } of posts)
-    for (const slug of tags) counts.set(slug, (counts.get(slug) ?? 0) + 1);
-  return blogTags
-    .filter((t) => counts.has(t.slug))
-    .map((t) => ({ ...t, count: counts.get(t.slug)! }))
-    .sort((a, b) => b.count - a.count || (a.slug < b.slug ? -1 : 1));
-}
-
-export function getRatingSummary({ distribution }: BlogReviews) {
-  const stars = [1, 2, 3, 4, 5] as const;
-  const total = stars.reduce((n, r) => n + distribution[r], 0);
-  const sum = stars.reduce((n, r) => n + r * distribution[r], 0);
-  return { average: total ? sum / total : 0, total };
-}
-
 // "4,6": coma decimal fija, sin depender del locale del entorno.
 export const formatAverage = (n: number) => n.toFixed(1).replace(".", ",");
 
-export const getRecentPosts = (n: number) => blogPosts.slice(0, n);
-
-// Misma categoría primero, después los más recientes.
-export function getRelatedPosts(post: BlogPost, n: number) {
-  const others = blogPosts.filter((p) => p.slug !== post.slug);
-  return [
-    ...others.filter((p) => p.category === post.category),
-    ...others.filter((p) => p.category !== post.category),
-  ].slice(0, n);
-}
-
 // Fecha fija en UTC: no depende de la hora actual, así el prerender no se rompe.
-// TODO(SPEC 13, paso 9): solo Date; acepta string mientras el artículo lee el mock.
-export const formatPostDate = (date: Date | string) =>
+export const formatPostDate = (date: Date) =>
   new Intl.DateTimeFormat("es-AR", {
     day: "numeric",
     month: "short",
     year: "numeric",
     timeZone: "UTC",
   })
-    .format(new Date(date))
+    .format(date)
     .replace(/\./g, "")
     .replace(/ de /g, " ");
-
-// TODO(SPEC 13, pasos 6 y 7): temporal, para que PostCard reciba PostSummary mientras
-// /blog y el artículo siguen leyendo el mock. Se quita junto con el mock.
-export function mockToSummary(post: BlogPost): PostSummary {
-  const c = getCategory(post.category);
-  return {
-    id: post.slug,
-    slug: post.slug,
-    title: post.title,
-    excerpt: post.excerpt,
-    readingMinutes: post.readingMinutes,
-    publishedAt: new Date(post.publishedAt),
-    category: {
-      slug: c.tag,
-      label: c.label,
-      filterLabel: c.filterLabel,
-      serviceSlug: c.service,
-    },
-    author: {
-      name: blogAuthor.name,
-      image: null,
-      jobTitle: blogAuthor.role,
-      bio: blogAuthor.bio,
-    },
-    cover: post.cover ?? null,
-    tags: post.tags.map((s) => getTag(s)!),
-  };
-}
