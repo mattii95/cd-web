@@ -168,9 +168,12 @@ test("Copiar id deja el id en el portapapeles y muestra Copiado", async ({ page 
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(id);
 });
 
-test("/admin tiene un enlace a Medios", async ({ page }) => {
+test("la barra lateral del panel lleva a Medios", async ({ page }) => {
   await page.goto("/admin");
-  await page.getByRole("link", { name: "Medios" }).click();
+  await page
+    .getByRole("navigation", { name: "Navegación del panel" })
+    .getByRole("link", { name: "Medios" })
+    .click();
   await expect(page).toHaveURL(/\/admin\/medios$/);
   await expect(page.getByRole("heading", { name: "Medios" })).toBeVisible();
 });

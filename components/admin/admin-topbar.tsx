@@ -5,7 +5,7 @@ import { AdminLogo } from "./admin-sidebar";
 
 export function AdminTopbar() {
   return (
-    <header className="flex min-h-[68px] items-center justify-between gap-3 border-b border-cms-line pb-5">
+    <header className="flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b border-cms-line pb-5">
       {/* Debajo de lg la barra lateral no se ve: el cajón y el logo ocupan su lugar */}
       <div className="flex items-center gap-1 lg:hidden">
         <AdminDrawer />
