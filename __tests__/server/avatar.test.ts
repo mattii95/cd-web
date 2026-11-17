@@ -13,7 +13,9 @@ describe("avatarSrc", () => {
     expect(avatarSrc("http://lh3.googleusercontent.com/a")).toBeNull();
     expect(avatarSrc("data:image/png;base64,AAAA")).toBeNull();
     expect(avatarSrc("https://evil.com/a.png")).toBeNull();
-    expect(avatarSrc("https://lh3.googleusercontent.com.evil.com/a")).toBeNull();
+    expect(
+      avatarSrc("https://lh3.googleusercontent.com.evil.com/a"),
+    ).toBeNull();
   });
 
   it("devuelve null para vacío o una URL inválida", () => {

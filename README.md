@@ -56,6 +56,18 @@ Without `SEED_AUTHOR_EMAIL`, or if that user does not exist, the seed exits with
 
 It also creates 24 demo users (`@demo.invalid`) for the ratings and comments. They have no `account` row, so they cannot sign in.
 
+Post tags (`tag`, `post_tag`) are also loaded only by this seed, from `blogTags` and each post's `tags` in `lib/blog-posts.ts`. Until the post editor exists there is no screen to assign them.
+
+## Blog images
+
+Admins upload images at `/admin/medios`. Each upload is re-encoded to WebP (1920 px wide at most, no EXIF or GPS data) with `sharp`, and the file is saved to `MEDIA_DIR` as `<id>.webp`. The database keeps one row per image in `media`. Posts store the image `id`, and `/media/<id>` serves the file.
+
+- `MEDIA_DIR`: folder for the files. Default `storage/media` (relative to the repo root, ignored by git). Use `test-results/media` in `.env.test.local` and in CI.
+- **The folder must be persistent.** Mount it as a volume in production. Back it up together with the database: a row without its file answers 404 and logs `console.error`.
+- **Serverless hosting does not work** with this storage, because the disk is lost on every deploy. Moving to another store only means replacing `lib/media/storage.ts`.
+- Limits: JPEG, PNG, WebP or AVIF, up to 10 MB and 40 megapixels. The same image uploaded twice is stored once.
+- An image used as a cover or inside a post cannot be deleted.
+
 ## Authentication
 
 Accounts use Better Auth on top of Drizzle (`lib/auth/`), with email and password, email verification and password recovery. Roles are `lector` (default) and `admin`.

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <pattern id="grid" width="56" height="56" patternUnits="userSpaceOnUse">
+      <path d="M56 0H0V56" fill="none" stroke="#fff" stroke-opacity=".04"/>
+    </pattern>
+    <radialGradient id="glow" cx="72%" cy="48%" r="45%">
+      <stop offset="0" stop-color="#1a66f5" stop-opacity=".5"/>
+      <stop offset="1" stop-color="#1a66f5" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="core" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4d8bff"/>
+      <stop offset="1" stop-color="#0f4fc7"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="#050b1c"/>
+  <rect width="1920" height="1080" fill="url(#grid)"/>
+  <rect width="1920" height="1080" fill="url(#glow)"/>
+
+  <!-- Planillas sueltas, torcidas y desparejas -->
+  <g fill="#0d1730" stroke="#2a3a5e" stroke-width="2">
+    <g transform="translate(150 190) rotate(-9)"><rect width="250" height="150" rx="14"/><path d="M24 44H226M24 76H190M24 108H210" stroke="#22304f" stroke-width="6" stroke-linecap="round"/></g>
+    <g transform="translate(430 120) rotate(6)"><rect width="210" height="130" rx="14"/><path d="M22 40H188M22 68H150M22 96H176" stroke="#22304f" stroke-width="6" stroke-linecap="round"/></g>
+    <g transform="translate(120 450) rotate(4)"><rect width="280" height="170" rx="14"/><path d="M24 48H256M24 84H200M24 120H236" stroke="#22304f" stroke-width="6" stroke-linecap="round"/></g>
+    <g transform="translate(470 400) rotate(-5)"><rect width="230" height="140" rx="14"/><path d="M22 42H206M22 72H160M22 102H190" stroke="#22304f" stroke-width="6" stroke-linecap="round"/></g>
+    <g transform="translate(210 740) rotate(-3)"><rect width="260" height="160" rx="14"/><path d="M24 46H236M24 80H180M24 114H220" stroke="#22304f" stroke-width="6" stroke-linecap="round"/></g>
+    <g transform="translate(540 690) rotate(8)"><rect width="200" height="125" rx="14"/><path d="M20 38H180M20 64H140M20 90H166" stroke="#22304f" stroke-width="6" stroke-linecap="round"/></g>
+  </g>
+
+  <!-- Los datos se copian de una a otra y llegan al sistema -->
+  <g fill="none" stroke="#4d8bff" stroke-opacity=".55" stroke-width="3" stroke-dasharray="3 14" stroke-linecap="round">
+    <path d="M400 265C650 265 760 450 1000 500"/>
+    <path d="M640 185C820 185 860 420 1000 480"/>
+    <path d="M400 535C640 535 800 540 1000 540"/>
+    <path d="M700 470C820 490 900 520 1000 530"/>
+    <path d="M470 820C700 820 820 640 1000 580"/>
+    <path d="M740 750C860 740 920 650 1000 590"/>
+  </g>
+
+  <!-- El sistema: un solo bloque ordenado -->
+  <rect x="1000" y="330" width="460" height="420" rx="36" fill="#1a66f5" fill-opacity=".28"/>
+  <rect x="1020" y="350" width="420" height="380" rx="28" fill="url(#core)"/>
+  <g stroke="#fff" stroke-opacity=".9" stroke-width="10" stroke-linecap="round">
+    <path d="M1070 420H1250"/>
+    <path d="M1070 480H1390" stroke-opacity=".55"/>
+    <path d="M1070 540H1390" stroke-opacity=".55"/>
+    <path d="M1070 600H1330" stroke-opacity=".55"/>
+  </g>
+  <circle cx="1370" cy="420" r="22" fill="#fff"/>
+  <rect x="1070" y="650" width="320" height="28" rx="14" fill="#050b1c" fill-opacity=".35"/>
+  <rect x="1070" y="650" width="210" height="28" rx="14" fill="#fff"/>
+
+  <!-- Salida limpia -->
+  <g fill="#bfd3ff">
+    <rect x="1560" y="400" width="240" height="22" rx="11" fill-opacity=".9"/>
+    <rect x="1560" y="460" width="240" height="22" rx="11" fill-opacity=".7"/>
+    <rect x="1560" y="520" width="240" height="22" rx="11" fill-opacity=".5"/>
+    <rect x="1560" y="580" width="240" height="22" rx="11" fill-opacity=".35"/>
+    <rect x="1560" y="640" width="240" height="22" rx="11" fill-opacity=".2"/>
+  </g>
+  <path d="M1460 540H1540" stroke="#4d8bff" stroke-width="4" stroke-linecap="round"/>
+</svg>

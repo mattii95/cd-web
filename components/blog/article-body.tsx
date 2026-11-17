@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Bolt } from "@/components/icons";
 import type { BlogBlock } from "@/lib/blog-posts";
 
@@ -42,6 +43,24 @@ export function ArticleBody({ body }: { body: BlogBlock[] }) {
                   </span>
                 </span>
               </aside>
+            );
+          case "image":
+            return (
+              <figure key={i} className="m-0 my-2 flex flex-col gap-3">
+                <Image
+                  src={block.image.src}
+                  width={block.image.width}
+                  height={block.image.height}
+                  alt={block.image.alt}
+                  sizes="(min-width: 800px) 760px, 100vw"
+                  className="h-auto w-full rounded-[18px] border border-paper-border"
+                />
+                {block.caption && (
+                  <figcaption className="text-sm leading-[1.5] text-text-faint">
+                    {block.caption}
+                  </figcaption>
+                )}
+              </figure>
             );
           case "summary":
             return (

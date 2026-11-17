@@ -39,6 +39,24 @@
   --color-text-subtle: #7f8ba6;
   --color-text-faint: #5b6478;
 
+  /* Panel de administración (CMS) */
+  --color-cms-canvas: #e3e9f7;
+  --color-cms-panel: #ffffff;
+  --color-cms-panel-alt: #f6f8fd;
+  --color-cms-head: #edf1fb;
+  --color-cms-line: #aebbdd;
+  --color-cms-line-soft: #cfd8ee;
+  --color-cms-control: #8794b8;
+  --color-cms-ink: #0b1020;
+  --color-cms-text: #3d4760;
+  --color-cms-muted: #55607a;
+  --color-cms-chip: #e8eeff;
+  --color-cms-link: #1d4ed8;
+  --color-cms-nav: #0b1020;
+  --color-cms-nav-text: #c5cee6;
+  --color-cms-nav-label: #8fa0c8;
+  --color-cms-nav-line: #2a3557;
+
   /* Fuentes */
   --font-display: var(--font-space-grotesk);
   --font-sans: var(--font-inter);
@@ -54,8 +72,13 @@ html {
   outline: 2px solid var(--color-accent-light);
   outline-offset: 3px;
 }
-.bg-paper :focus-visible {
+.bg-paper :focus-visible,
+.bg-cms-canvas :focus-visible {
   outline-color: var(--color-accent);
+}
+/* La barra lateral y el cajón son oscuros: ahí el foco sigue en accent-light */
+.bg-cms-nav :focus-visible {
+  outline-color: var(--color-accent-light);
 }
 
 body {

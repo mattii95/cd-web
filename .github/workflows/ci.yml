@@ -76,6 +76,7 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/DB_CD26_test
       BETTER_AUTH_SECRET: ci-secret-ci-secret-ci-secret-ci-secret
       BETTER_AUTH_URL: http://localhost:3100
+      MEDIA_DIR: test-results/media
       SMTP_HOST: localhost
       SMTP_PORT: "1025"
       MAIL_FROM: Courroux Digital <no-reply@localhost>

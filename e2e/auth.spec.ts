@@ -134,7 +134,7 @@ test("volver: acepta un artículo y rechaza destinos externos", async ({ page })
   await expect(page).toHaveURL(/\/blog\/senales-sistema-a-medida$/);
 
   await page.context().clearCookies();
-  for (const volver of ["https://otro.com", "//otro.com", "/blog/no-existe"]) {
+  for (const volver of ["https://otro.com", "//otro.com", "/blog/Mayus"]) {
     await login(page, email, PASSWORD, volver);
     await expect(page).toHaveURL(/\/cuenta\/perfil$/);
     await page.context().clearCookies();
@@ -252,11 +252,12 @@ test("perfil y admin: sin sesión, con cookie inventada, lector y admin", async 
 
   await sql("update \"user\" set role = 'admin' where email = $1", [email]);
   await page.goto("/admin");
-  await expect(page.getByRole("heading", { name: "Administración" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Inicio" })).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  await page.goto("/admin/usuarios");
   await expect(page.getByRole("cell", { name: email })).toBeVisible();
   await expect(page.getByRole("cell", { name, exact: true }).first()).toBeVisible();
-  const html = await (await page.request.get("/admin")).text();
+  const html = await (await page.request.get("/admin/usuarios")).text();
   expect(html).not.toMatch(/hash|session_token|"password"/i);
 });
 
@@ -267,7 +268,7 @@ test("las páginas nuevas no tienen scroll horizontal a 375px", async ({ page })
   await login(page, email);
   await expect(page).toHaveURL(/\/cuenta\/perfil$/);
 
-  for (const ruta of ["/cuenta/perfil", "/admin", "/cuenta/verificar", "/cuenta/nueva-contrasena?token=x"]) {
+  for (const ruta of ["/cuenta/perfil", "/admin", "/admin/articulos", "/admin/medios", "/admin/usuarios", "/cuenta/verificar", "/cuenta/nueva-contrasena?token=x"]) {
     await page.goto(ruta);
     await page.waitForLoadState("networkidle");
     const overflow = await page.evaluate(

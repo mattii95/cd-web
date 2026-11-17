@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { headers, getSession } = vi.hoisted(() => ({ headers: vi.fn(), getSession: vi.fn() }));
+const { headers, getSession } = vi.hoisted(() => ({
+  headers: vi.fn(),
+  getSession: vi.fn(),
+}));
 const getAuth = vi.hoisted(() => vi.fn());
 
 vi.mock("next/headers", () => ({ headers }));

@@ -7,6 +7,8 @@ import {
   commentVote,
   post,
   postRating,
+  postTag,
+  tag,
   user,
 } from "@/db/schema";
 import {
@@ -150,9 +152,7 @@ describe("esquema del blog", () => {
   it("borrar el autor de un post falla", async () => {
     const db = getDb();
     await crearBase();
-    await expect(
-      db.delete(user).where(eq(user.id, "autor")),
-    ).rejects.toThrow();
+    await expect(db.delete(user).where(eq(user.id, "autor"))).rejects.toThrow();
   });
 
   it("borrar una categoría con posts falla", async () => {
@@ -161,5 +161,54 @@ describe("esquema del blog", () => {
     await expect(
       db.delete(category).where(eq(category.id, cat.id)),
     ).rejects.toThrow();
+  });
+
+  describe("etiquetas", () => {
+    const nuevaTag = (slug = "pymes", name = "Pymes") => ({ slug, name });
+
+    it("insertar dos veces la misma pareja (post_id, tag_id) falla por la PK", async () => {
+      const db = getDb();
+      const { post: p } = await crearBase();
+      const [t] = await db.insert(tag).values(nuevaTag()).returning();
+      const fila = { postId: p.id, tagId: t.id };
+      await db.insert(postTag).values(fila);
+      await expect(db.insert(postTag).values(fila)).rejects.toThrow();
+    });
+
+    it.each([
+      ["slug repetido", nuevaTag("pymes", "Otra")],
+      ["slug con mayúsculas", nuevaTag("Pymes")],
+      ["slug con espacios", nuevaTag("a b")],
+      ["name vacío", nuevaTag("vacio", "")],
+      ["name solo espacios", nuevaTag("blancos", "   ")],
+    ])("rechaza una etiqueta con %s", async (_caso, fila) => {
+      const db = getDb();
+      await db.insert(tag).values(nuevaTag());
+      await expect(db.insert(tag).values(fila)).rejects.toThrow();
+    });
+
+    it("borrar una etiqueta borra sus filas post_tag y deja los posts", async () => {
+      const db = getDb();
+      const { post: p } = await crearBase();
+      const [t] = await db.insert(tag).values(nuevaTag()).returning();
+      await db.insert(postTag).values({ postId: p.id, tagId: t.id });
+
+      await db.delete(tag).where(eq(tag.id, t.id));
+
+      expect(await db.select().from(postTag)).toHaveLength(0);
+      expect(await db.select().from(post)).toHaveLength(1);
+    });
+
+    it("borrar un post borra sus filas post_tag y deja las etiquetas", async () => {
+      const db = getDb();
+      const { post: p } = await crearBase();
+      const [t] = await db.insert(tag).values(nuevaTag()).returning();
+      await db.insert(postTag).values({ postId: p.id, tagId: t.id });
+
+      await db.delete(post).where(eq(post.id, p.id));
+
+      expect(await db.select().from(postTag)).toHaveLength(0);
+      expect(await db.select().from(tag)).toHaveLength(1);
+    });
   });
 });

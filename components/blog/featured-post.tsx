@@ -1,28 +1,27 @@
 import Link from "next/link";
-import { blogAuthor, getCategory, type BlogPost } from "@/lib/blog-posts";
+import type { PostSummary } from "@/db/blog";
+import { formatPostDate } from "@/lib/blog-posts";
+import { PersonAvatar } from "./person-avatar";
 import { PostThumb } from "./post-thumb";
 
-export function FeaturedPost({
-  post,
-  date,
-}: {
-  post: BlogPost;
-  date: string; // ya formateada en el servidor
-}) {
-  const category = getCategory(post.category);
+export function FeaturedPost({ post }: { post: PostSummary }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
       className="fx-card group grid grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))] overflow-hidden rounded-3xl border border-paper-border bg-white text-surface no-underline"
     >
-      <PostThumb category={post.category} variant="featured" />
+      <PostThumb
+        category={post.category.slug}
+        cover={post.cover}
+        variant="featured"
+      />
       <div className="flex flex-col justify-center gap-4 p-[clamp(28px,4vw,48px)]">
         <div className="flex flex-wrap items-center gap-2.5 text-[13px] text-text-faint">
           <span className="rounded-full bg-[#050b1c] px-3 py-[5px] text-xs font-semibold text-white">
             Destacado
           </span>
           <span className="rounded-full border border-[#c9d9fb] bg-accent-tint px-2.5 py-1 font-mono text-[11px] font-medium text-[#1450c8]">
-            {category.label}
+            {post.category.label}
           </span>
           {post.readingMinutes} min de lectura
         </div>
@@ -33,15 +32,16 @@ export function FeaturedPost({
           {post.excerpt}
         </p>
         <span className="mt-2 flex items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="flex size-9 items-center justify-center rounded-full bg-accent font-mono text-xs font-semibold text-white"
-          >
-            {blogAuthor.initials}
-          </span>
+          <PersonAvatar
+            name={post.author.name}
+            image={post.author.image}
+            className="size-9 text-xs"
+          />
           <span className="flex flex-col text-[13px]">
-            <strong className="text-sm">{blogAuthor.name}</strong>
-            <span className="text-text-faint">{date}</span>
+            <strong className="text-sm">{post.author.name}</strong>
+            <span className="text-text-faint">
+              {formatPostDate(post.publishedAt)}
+            </span>
           </span>
         </span>
       </div>

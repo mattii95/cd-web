@@ -4,7 +4,7 @@ import Link from "next/link";
 import { type ReactNode, useState } from "react";
 import { AuthForm } from "./auth-form";
 import { inputClass, labelClass } from "./field-styles";
-import { signUpAction } from "@/app/cuenta/actions";
+import { signUpAction } from "@/actions/cuenta";
 import { PasswordInput } from "./password-input";
 import { PasswordStrength } from "./password-strength";
 

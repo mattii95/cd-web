@@ -1,5 +1,6 @@
+import Image from "next/image";
 import { Cloud, Code, Layers, Sparkles } from "@/components/icons";
-import type { BlogCategoryTag } from "@/lib/blog-posts";
+import type { BlogCategoryTag, BlogImage } from "@/lib/blog-posts";
 
 // Ícono de la miniatura según la categoría del post.
 const thumbIcons = {
@@ -9,11 +10,19 @@ const thumbIcons = {
   "desarrollo-web": Code,
 };
 
+const coverSizes = {
+  card: "(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw",
+  featured: "(min-width: 1024px) 600px, 100vw",
+  banner: "(min-width: 1200px) 1152px, 100vw",
+};
+
 export function PostThumb({
   category,
+  cover,
   variant = "card",
 }: {
   category: BlogCategoryTag;
+  cover?: BlogImage | null;
   variant?: "card" | "featured" | "banner";
 }) {
   const Icon = thumbIcons[category];
@@ -23,6 +32,23 @@ export function PostThumb({
     featured: "min-h-[340px]",
     banner: "h-[clamp(220px,32vw,420px)]",
   }[variant];
+  if (cover) {
+    const banner = variant === "banner";
+    return (
+      <div className={`relative ${height} overflow-hidden bg-background`}>
+        <Image
+          src={cover.src}
+          width={cover.width}
+          height={cover.height}
+          // En tarjetas el título ya es el texto del enlace: la portada es decorativa.
+          alt={banner ? cover.alt : ""}
+          sizes={coverSizes[variant]}
+          fetchPriority={banner ? "high" : undefined}
+          className="absolute inset-0 size-full object-cover transition-transform duration-500 ease-[cubic-bezier(.2,.7,.2,1)] group-hover:scale-[1.03]"
+        />
+      </div>
+    );
+  }
   return (
     <div
       aria-hidden="true"

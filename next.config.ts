@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   /* config options here */
   experimental: {
     agentFeedback: false,
+    serverActions: {
+      // Un archivo de 10 MB más el resto del formulario.
+      bodySizeLimit: "11mb",
+    },
   },
   cacheComponents: true,
   partialPrefetching: true,

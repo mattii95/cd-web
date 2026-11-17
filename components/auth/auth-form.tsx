@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useActionState } from "react";
-import type { FormState } from "@/app/cuenta/actions";
+import type { FormState } from "@/actions/cuenta";
 import { ArrowRight } from "@/components/icons";
 import { FormMessage } from "./form-message";
 

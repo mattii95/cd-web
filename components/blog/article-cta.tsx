@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { ArrowRight } from "@/components/icons";
-import { getCategory, type BlogPost } from "@/lib/blog-posts";
+import type { PostDetail } from "@/db/blog";
 import { getService } from "@/lib/services";
 
-export function ArticleCta({ post }: { post: BlogPost }) {
-  const service = getService(getCategory(post.category).service)!;
+export function ArticleCta({ post }: { post: PostDetail }) {
+  const service = getService(post.category.serviceSlug)!;
   return (
     <div className="fx-reveal fx-beam relative flex flex-wrap items-center justify-between gap-5 overflow-hidden rounded-3xl bg-[#050b1c] p-8 text-white">
       <div

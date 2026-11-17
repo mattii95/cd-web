@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { signOutAction } from "@/app/cuenta/actions";
+import { signOutAction } from "@/actions/cuenta";
 import { avatarSrc } from "@/lib/auth/avatar";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { LoginLink } from "./login-link";

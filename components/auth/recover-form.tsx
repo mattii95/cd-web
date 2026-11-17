@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requestResetAction } from "@/app/cuenta/actions";
+import { requestResetAction } from "@/actions/cuenta";
 import { AuthForm } from "./auth-form";
 import { inputClass, labelClass } from "./field-styles";
 

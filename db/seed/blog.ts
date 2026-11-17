@@ -1,12 +1,12 @@
-import { eq, inArray } from "drizzle-orm";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { eq, inArray, like } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import {
-  blogAuthor,
-  blogCategories,
-  blogPosts,
-  type BlogRating,
-} from "@/lib/blog-posts";
-import { blogBodySchema } from "../blog-body";
+import type { BlogBlock, BlogImage, BlogRating } from "@/lib/blog-posts";
+import { blogAuthor, blogCategories, blogPosts, blogTags } from "./blog-data";
+import { processImage } from "@/lib/media/process";
+import { readMediaFile, writeMediaFile } from "@/lib/media/storage";
+import { blogBodySchema, type StoredBlogBlock } from "../blog-body";
 import * as schema from "../schema";
 
 const {
@@ -14,8 +14,11 @@ const {
   category,
   comment,
   commentVote,
+  media,
   post,
   postRating,
+  postTag,
+  tag,
   user,
 } = schema;
 
@@ -43,6 +46,39 @@ const COMMENT_DEMO: Record<
 const lectorEmail = (n: number) =>
   `lector-${String(n).padStart(2, "0")}@demo.invalid`;
 
+// Carga una imagen del mock (un archivo de public/) en la biblioteca. Clave natural: sha256.
+async function seedImage(
+  db: NodePgDatabase<typeof schema>,
+  image: BlogImage,
+  uploadedBy: string,
+): Promise<string> {
+  const original = await readFile(
+    path.join(process.cwd(), "public", image.src),
+  );
+  const processed = await processImage(original);
+  const [existing] = await db
+    .select({ id: media.id })
+    .from(media)
+    .where(eq(media.sha256, processed.sha256));
+  let id = existing?.id;
+  if (!id) {
+    id = crypto.randomUUID();
+    await db.insert(media).values({
+      id,
+      sha256: processed.sha256,
+      alt: image.alt,
+      width: processed.width,
+      height: processed.height,
+      bytes: processed.data.length,
+      originalName: path.basename(image.src),
+      uploadedBy,
+    });
+  }
+  // Un archivo que ya está en disco no se reescribe.
+  if (!(await readMediaFile(id))) await writeMediaFile(id, processed.data);
+  return id;
+}
+
 export async function seedBlog(
   db: NodePgDatabase<typeof schema>,
   { authorEmail }: { authorEmail: string },
@@ -61,11 +97,36 @@ export async function seedBlog(
     );
   }
 
+  // Las imágenes van antes de la transacción: los archivos no son transaccionales.
+  const mediaIds = new Map<string, string>(); // src → media.id
+  const imageId = async (image: BlogImage) => {
+    if (!mediaIds.has(image.src)) {
+      mediaIds.set(image.src, await seedImage(db, image, author.id));
+    }
+    return mediaIds.get(image.src)!;
+  };
+  const toStored = async (body: BlogBlock[]): Promise<StoredBlogBlock[]> =>
+    Promise.all(
+      body.map(async (b) =>
+        b.type === "image"
+          ? {
+              type: "image" as const,
+              mediaId: await imageId(b.image),
+              ...(b.caption && { caption: b.caption }),
+            }
+          : b,
+      ),
+    );
+
+  const bodies = new Map<string, StoredBlogBlock[]>();
+  const covers = new Map<string, string>(); // slug → media.id
   for (const p of blogPosts) {
-    const parsed = blogBodySchema.safeParse(p.body);
+    if (p.cover) covers.set(p.slug, await imageId(p.cover));
+    const parsed = blogBodySchema.safeParse(await toStored(p.body));
     if (!parsed.success) {
       throw new Error(`El body del post "${p.slug}" no cumple blogBodySchema`);
     }
+    bodies.set(p.slug, parsed.data);
   }
 
   const reviews = blogPosts.find((p) => p.slug === REVIEWED_SLUG)?.reviews;
@@ -101,7 +162,8 @@ export async function seedBlog(
       const values = {
         title: p.title,
         excerpt: p.excerpt,
-        body: p.body,
+        body: bodies.get(p.slug)!,
+        coverMediaId: covers.get(p.slug) ?? null,
         cta: p.cta,
         readingMinutes: p.readingMinutes,
         categoryId: categoryIds.get(p.category)!,
@@ -115,6 +177,31 @@ export async function seedBlog(
         .onConflictDoUpdate({ target: post.slug, set: values })
         .returning({ id: post.id });
       postIds.set(p.slug, row.id);
+    }
+
+    // Etiquetas: clave natural slug. Las filas post_tag solo se agregan: no pisan asignaciones a mano.
+    const tagIds = new Map<string, string>();
+    for (const t of blogTags) {
+      const [row] = await tx
+        .insert(tag)
+        .values(t)
+        .onConflictDoUpdate({ target: tag.slug, set: { name: t.name } })
+        .returning({ id: tag.id });
+      tagIds.set(t.slug, row.id);
+    }
+    for (const p of blogPosts) {
+      for (const slug of p.tags) {
+        const tagId = tagIds.get(slug);
+        if (!tagId) {
+          throw new Error(
+            `El post "${p.slug}" usa la etiqueta "${slug}", que no está en blogTags`,
+          );
+        }
+        await tx
+          .insert(postTag)
+          .values({ postId: postIds.get(p.slug)!, tagId })
+          .onConflictDoNothing();
+      }
     }
 
     // Usuarios demo: 4 con comentario y 20 lectores. Sin fila account, no pueden entrar.
@@ -174,10 +261,12 @@ export async function seedBlog(
       )
       .onConflictDoNothing();
 
-    // Comentarios con id fijo: el comentario no tiene clave natural.
+    // Comentarios con id fijo (UUID válido, como pide z.uuid() en las acciones): el comentario
+    // no tiene clave natural. Los ids viejos "seed-comment-*" se borran; los votos caen por cascade.
+    await tx.delete(comment).where(like(comment.id, "seed-comment-%"));
     for (const c of reviews.comments) {
       const meta = COMMENT_DEMO[c.id];
-      const id = `seed-comment-${c.id}`;
+      const id = `00000000-0000-4000-8000-${c.id.slice(1).padStart(12, "0")}`;
       await tx
         .insert(comment)
         .values({

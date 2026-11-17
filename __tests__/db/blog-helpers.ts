@@ -5,18 +5,22 @@ import {
   category,
   comment,
   commentVote,
+  media,
   post,
   postRating,
+  tag,
   user,
 } from "@/db/schema";
 
-// Orden de hijos a padres: post y category tienen FK restrict.
+// Orden de hijos a padres: post, category y media tienen FK restrict.
 export async function resetBlog() {
   const db = getDb();
   await db.delete(commentVote);
   await db.delete(comment);
   await db.delete(postRating);
   await db.delete(post);
+  await db.delete(tag); // post_tag cae por cascade
+  await db.delete(media);
   await db.delete(authorProfile);
   await db.delete(category);
   await db.delete(user).where(like(user.email, "%@demo.invalid"));

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { MyComments } from "@/components/account/my-comments";
 import { SignOutButton } from "@/components/account/sign-out-button";
+import { getUserComments } from "@/db/blog-community";
 import { getLoginMethods, requireUser, type LoginMethod } from "@/lib/auth/dal";
 import { formatDate } from "@/lib/format-date";
 
@@ -16,6 +18,25 @@ const METHOD_LABEL: Record<LoginMethod, string> = {
   github: "GitHub",
   microsoft: "Microsoft",
 };
+
+async function UserComments() {
+  const user = await requireUser("/cuenta/perfil");
+  const { items, nextCursor } = await getUserComments(user.id);
+  return <MyComments initialItems={items} initialCursor={nextCursor} />;
+}
+
+function CommentsSkeleton() {
+  return (
+    <div aria-hidden="true" className="flex flex-col gap-4">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="h-20 rounded-xl bg-white/5 motion-safe:animate-pulse"
+        />
+      ))}
+    </div>
+  );
+}
 
 async function Profile() {
   const user = await requireUser("/cuenta/perfil");
@@ -72,6 +93,18 @@ async function Profile() {
           </Link>
         )}
       </div>
+
+      <section aria-labelledby="mis-comentarios" className="mt-16">
+        <h2
+          id="mis-comentarios"
+          className="m-0 mb-6 font-display text-[28px] font-bold tracking-[-0.02em]"
+        >
+          Mis comentarios
+        </h2>
+        <Suspense fallback={<CommentsSkeleton />}>
+          <UserComments />
+        </Suspense>
+      </section>
     </>
   );
 }

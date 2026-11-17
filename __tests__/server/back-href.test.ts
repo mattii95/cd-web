@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import { resolveAfterLogin, resolveBackHref } from "@/lib/back-href";
 
 describe("resolveBackHref", () => {
-  it("acepta el slug de un artículo que existe", () => {
+  it("acepta cualquier /blog/{slug} con formato válido", () => {
     expect(resolveBackHref("/blog/senales-sistema-a-medida")).toBe(
       "/blog/senales-sistema-a-medida",
+    );
+    expect(resolveBackHref("/blog/cualquier-slug")).toBe(
+      "/blog/cualquier-slug",
     );
   });
 
@@ -12,8 +15,9 @@ describe("resolveBackHref", () => {
     ["null", null],
     ["URL absoluta", "https://otro.com"],
     ["URL sin protocolo", "//otro.com"],
-    ["artículo que no existe", "/blog/no-existe"],
-    ["path traversal", "/blog/../cuenta"],
+    ["path traversal", "/blog/../x"],
+    ["mayúsculas", "/blog/Mayus"],
+    ["subruta", "/blog/a/b"],
   ])("devuelve /blog para %s", (_caso, volver) => {
     expect(resolveBackHref(volver)).toBe("/blog");
   });
@@ -22,6 +26,7 @@ describe("resolveBackHref", () => {
 describe("resolveAfterLogin", () => {
   it.each([
     "/blog/senales-sistema-a-medida",
+    "/blog/cualquier-slug",
     "/cuenta/perfil",
     "/admin",
   ])("acepta %s", (volver) => {
@@ -32,7 +37,7 @@ describe("resolveAfterLogin", () => {
     ["null", null],
     ["URL absoluta", "https://otro.com"],
     ["URL sin protocolo", "//otro.com"],
-    ["artículo que no existe", "/blog/no-existe"],
+    ["mayúsculas", "/blog/Mayus"],
     ["subruta de admin", "/admin/usuarios"],
   ])("devuelve /cuenta/perfil para %s", (_caso, volver) => {
     expect(resolveAfterLogin(volver)).toBe("/cuenta/perfil");

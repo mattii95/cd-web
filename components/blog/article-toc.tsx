@@ -1,12 +1,6 @@
 import type { BlogBlock } from "@/lib/blog-posts";
 
-export function ArticleToc({
-  body,
-  hasReviews,
-}: {
-  body: BlogBlock[];
-  hasReviews: boolean;
-}) {
+export function ArticleToc({ body }: { body: BlogBlock[] }) {
   const headings = body.filter((b) => b.type === "h2");
   return (
     <div className="rounded-[18px] border border-paper-border bg-white p-[22px]">
@@ -26,17 +20,15 @@ export function ArticleToc({
             {h.text}
           </a>
         ))}
-        {hasReviews && (
-          <a
-            href="#valoraciones"
-            className="flex gap-2.5 py-2 text-sm leading-[1.45] text-[#2b3449] no-underline hover:text-accent"
-          >
-            <span aria-hidden="true" className="font-mono text-xs text-accent">
-              ★
-            </span>
-            Valoraciones y comentarios
-          </a>
-        )}
+        <a
+          href="#valoraciones"
+          className="flex gap-2.5 py-2 text-sm leading-[1.45] text-[#2b3449] no-underline hover:text-accent"
+        >
+          <span aria-hidden="true" className="font-mono text-xs text-accent">
+            ★
+          </span>
+          Valoraciones y comentarios
+        </a>
       </nav>
     </div>
   );
