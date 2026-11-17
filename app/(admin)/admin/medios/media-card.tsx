@@ -3,13 +3,13 @@
 import Image from "next/image";
 import { useActionState, useEffect, useState } from "react";
 import type { FormState } from "@/actions/cuenta";
-import { FormMessage } from "@/components/auth/form-message";
+import { notify } from "@/components/admin/toast";
 import {
   deleteMediaAction,
   updateMediaAltAction,
 } from "@/actions/admin/medios";
 import type { CardItem } from "./card-item";
-import { Copy, Pencil, Trash } from "@/components/icons";
+import { Copy, Pencil, Spinner, Trash } from "@/components/icons";
 import { btn, iconBtnCopy, iconBtnDelete, iconBtnEdit } from "./styles";
 
 type Item = Omit<CardItem, "date">;
@@ -62,9 +62,10 @@ function AltEditor({
   onDone: () => void;
   onSaved: (alt: string) => void;
 }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(
+  const [, action, pending] = useActionState<FormState, FormData>(
     async (prev, data) => {
       const next = await updateMediaAltAction(prev, data);
+      notify(next);
       if (next.status === "success") {
         onSaved(String(data.get("alt")).trim());
         onDone();
@@ -86,9 +87,9 @@ function AltEditor({
         autoFocus
         className="min-h-11 w-full rounded-lg border border-cms-control bg-cms-panel px-3 text-[14px] text-cms-ink"
       />
-      {state.status === "error" && <FormMessage state={state} />}
       <div className="flex gap-2">
         <button type="submit" disabled={pending} className={btn}>
+          {pending && <Spinner />}
           {pending ? "Guardando…" : "Guardar"}
         </button>
         <button type="button" onClick={onDone} className={btn}>
@@ -107,9 +108,10 @@ function DeleteControl({
   onDeleted: () => void;
 }) {
   const [confirming, setConfirming] = useState(false);
-  const [state, action, pending] = useActionState<FormState, FormData>(
+  const [, action, pending] = useActionState<FormState, FormData>(
     async (prev, data) => {
       const next = await deleteMediaAction(prev, data);
+      notify(next);
       if (next.status === "success") onDeleted();
       return next;
     },
@@ -124,6 +126,7 @@ function DeleteControl({
           <input type="hidden" name="id" value={item.id} />
           <span className="text-[13px] text-cms-text">¿Borrar?</span>
           <button type="submit" disabled={pending} className={btn}>
+            {pending && <Spinner />}
             {pending ? "Borrando…" : "Sí"}
           </button>
           <button
@@ -145,11 +148,6 @@ function DeleteControl({
         >
           <Trash />
         </button>
-      )}
-      {state.status === "error" && (
-        <div className="basis-full">
-          <FormMessage state={state} />
-        </div>
       )}
     </>
   );

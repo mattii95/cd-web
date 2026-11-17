@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { FormMessage } from "@/components/auth/form-message";
+import { Spinner } from "@/components/icons";
+import { notify } from "@/components/admin/toast";
 import { loadMoreMediaAction } from "@/actions/admin/medios";
 import type { CardItem } from "./card-item";
 import { MediaCard } from "./media-card";
@@ -13,27 +14,34 @@ type Props = {
   initialTotal: number;
 };
 
-export function MediaGrid({ initialItems, initialCursor, initialTotal }: Props) {
+const loadError = {
+  status: "error",
+  message: "No pudimos cargar más imágenes.",
+} as const;
+
+export function MediaGrid({
+  initialItems,
+  initialCursor,
+  initialTotal,
+}: Props) {
   const [items, setItems] = useState(initialItems);
   const [cursor, setCursor] = useState(initialCursor);
   const [total, setTotal] = useState(initialTotal);
   const [loading, setLoading] = useState(false);
-  const [failed, setFailed] = useState(false);
 
   async function loadMore() {
     if (!cursor || loading) return;
     setLoading(true);
-    setFailed(false);
     try {
       const result = await loadMoreMediaAction(cursor);
       if (result.status === "success") {
         setItems((prev) => [...prev, ...result.items]);
         setCursor(result.nextCursor);
       } else {
-        setFailed(true);
+        notify(loadError);
       }
     } catch {
-      setFailed(true);
+      notify(loadError);
     } finally {
       setLoading(false);
     }
@@ -72,14 +80,6 @@ export function MediaGrid({ initialItems, initialCursor, initialTotal }: Props) 
       </ul>
       {cursor && (
         <div className="flex flex-col items-center gap-3">
-          {failed && (
-            <FormMessage
-              state={{
-                status: "error",
-                message: "No pudimos cargar más imágenes.",
-              }}
-            />
-          )}
           <button
             type="button"
             className={btn}
@@ -87,6 +87,7 @@ export function MediaGrid({ initialItems, initialCursor, initialTotal }: Props) 
             aria-busy={loading}
             onClick={loadMore}
           >
+            {loading && <Spinner />}
             {loading ? "Cargando…" : "Cargar más"}
           </button>
         </div>

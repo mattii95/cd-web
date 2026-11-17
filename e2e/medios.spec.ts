@@ -106,7 +106,7 @@ test("editar el alt persiste al recargar y no acepta uno vacío", async ({ page 
   await card.getByRole("button", { name: "Editar alt" }).click();
   await card.getByLabel("Texto alternativo").fill("   ");
   await card.getByRole("button", { name: "Guardar" }).click();
-  await expect(card.getByRole("alert")).toBeVisible();
+  await expect(page.getByText("El texto alternativo no puede estar vacío.")).toBeVisible();
 
   await card.getByLabel("Texto alternativo").fill("Alt nuevo");
   await card.getByRole("button", { name: "Guardar" }).click();

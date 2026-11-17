@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 import type { FormState } from "@/actions/cuenta";
-import { FormMessage } from "@/components/auth/form-message";
+import { Spinner } from "@/components/icons";
+import { notify } from "@/components/admin/toast";
 import { uploadMediaAction } from "@/actions/admin/medios";
 
 const field =
@@ -13,8 +14,14 @@ const hint = "text-[13px] text-cms-muted";
 
 // La validación nativa corre en el navegador y Zod la repite en la Server Action.
 export function UploadForm() {
-  const [state, action, pending] = useActionState<FormState, FormData>(
-    uploadMediaAction,
+  // Se avisa dentro de la action y no en un efecto: al volver a la página, React re-ejecuta los
+  // efectos de la vista oculta y repetiría el toast del último resultado.
+  const [, action, pending] = useActionState<FormState, FormData>(
+    async (prev, data) => {
+      const next = await uploadMediaAction(prev, data);
+      notify(next);
+      return next;
+    },
     { status: "idle" },
   );
   return (
@@ -61,13 +68,11 @@ export function UploadForm() {
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="min-h-12 cursor-pointer rounded-full border-0 bg-accent px-6 text-base font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-wait disabled:opacity-70 md:mt-7 md:self-start"
+        className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full border-0 bg-accent px-6 text-base font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-wait disabled:opacity-70 md:mt-7 md:self-start"
       >
+        {pending && <Spinner />}
         {pending ? "Subiendo…" : "Subir imagen"}
       </button>
-      <div className="md:col-span-3 empty:hidden">
-        <FormMessage state={state} />
-      </div>
     </form>
   );
 }

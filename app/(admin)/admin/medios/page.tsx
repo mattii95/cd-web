@@ -37,7 +37,9 @@ export default function MediosPage() {
         title="Medios"
         description="Subí y organizá las imágenes del blog."
       />
-      <Suspense fallback={<p className="m-0 text-cms-text">Cargando medios…</p>}>
+      <Suspense
+        fallback={<p className="m-0 text-cms-text">Cargando medios…</p>}
+      >
         <Library />
       </Suspense>
     </>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminTopbar } from "@/components/admin/admin-topbar";
+import { AdminToaster } from "@/components/admin/toast";
 
 export const metadata: Metadata = {
   title: { default: "Panel", template: "%s · Panel" },
@@ -22,6 +23,7 @@ export default function AdminLayout({ children }: LayoutProps<"/">) {
         <main id="contenido" className="mt-7 flex flex-col gap-7">
           {children}
         </main>
+        <AdminToaster />
       </div>
     </div>
   );

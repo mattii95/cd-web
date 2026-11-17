@@ -1,6 +1,6 @@
 # SPEC 16 — Estructura del CMS: shell del panel de administración
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 07, SPEC 10
 > **Fecha:** 2026-11-17
 > **Objetivo:** Que el panel `/admin` tenga su propio layout claro del canvas "CMS Courroux Digital" (barra lateral, barra superior con la cuenta e inicio con accesos directos), con Usuarios y Medios migrados adentro, Artículos como página vacía y todas las Server Actions en `actions/`, separadas de los componentes.
@@ -208,38 +208,38 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
 - [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado.
-- [ ] `npm run test:e2e` pasa, incluidos `auth.spec.ts` y `medios.spec.ts` ajustados.
-- [ ] No existe `app/(site)/admin/`.
-- [ ] Existen `actions/admin/medios/index.ts`, `actions/cuenta/index.ts`, `actions/blog/index.ts` y `actions/blog/comunidad/index.ts`, y cada uno empieza con `"use server"`.
-- [ ] `grep -rl '"use server"' app components lib db` no devuelve ningún archivo.
-- [ ] No hay archivos `actions.ts` ni `*-actions.ts` dentro de `app/`.
-- [ ] `actions/` no tiene archivos `.tsx`.
-- [ ] Ningún archivo importa de `@/app/cuenta/actions`, `@/app/(site)/blog/actions`, `@/app/(site)/blog/community-actions` ni `@/app/(site)/admin/medios/actions`, y ningún `vi.mock` apunta a esas rutas.
-- [ ] Login, registro, recuperar contraseña, cerrar sesión, cargar más artículos, valorar, comentar y subir imágenes funcionan igual que antes (E2E existentes).
-- [ ] `/admin`, `/admin/articulos`, `/admin/medios` y `/admin/usuarios` no muestran el header ni el footer del sitio.
-- [ ] Sin sesión, las cuatro rutas redirigen a `/cuenta/login?volver=%2Fadmin`.
-- [ ] Con un lector, las cuatro rutas responden 404.
-- [ ] Las cuatro rutas tienen `<meta name="robots" content="noindex, nofollow">` y su título termina en "· Panel".
-- [ ] `AdminNav` en `/admin` marca "Inicio" con `aria-current="page"` y ningún otro ítem.
-- [ ] `AdminNav` en `/admin/medios` marca "Medios" y no marca "Inicio".
-- [ ] La barra lateral tiene, en orden, Inicio, Artículos, Medios, Usuarios y "Ver el blog", y no tiene Categorías, SEO ni Ajustes.
-- [ ] A 1280 px la barra lateral se ve y no hay botón "Abrir menú".
-- [ ] A 390 px la barra lateral no se ve, "Abrir menú" la abre, `Escape` la cierra y el foco vuelve al botón.
-- [ ] `AdminDrawer`: con el panel abierto, `Tab` desde el último elemento vuelve al primero.
-- [ ] `AdminDrawer`: elegir un ítem cierra el panel.
-- [ ] A 390 px ninguna de las cuatro rutas tiene scroll horizontal de página.
-- [ ] El menú de cuenta muestra el nombre del admin y "Administrador", y abre "Mi perfil", "Ver el sitio" y "Cerrar sesión".
-- [ ] "Cerrar sesión" desde el menú de cuenta termina la sesión y `/admin` vuelve a redirigir al login.
-- [ ] `/admin` muestra "Inicio", "Hola, {primer nombre}" y tres tarjetas que llevan a `/admin/articulos`, `/admin/medios` y `/admin/usuarios`.
-- [ ] `/admin/articulos` muestra "Artículos" y "La gestión de artículos llega en el próximo spec.", y no tiene botón "Nuevo artículo".
-- [ ] `/admin/usuarios` muestra la tabla con las columnas Nombre, Email, Rol, Verificado y Alta y el contador de usuarios.
-- [ ] `/admin/medios` sube, edita el texto alternativo y borra imágenes igual que antes (`medios.spec.ts`).
-- [ ] Después de iniciar sesión con `volver=/admin`, el admin llega al Inicio del panel.
-- [ ] El enlace "Administración" del menú de usuario del sitio sigue llevando a `/admin`.
+- [x] `npm run test:db` pasa con Docker levantado.
+- [x] `npm run test:e2e` pasa, incluidos `auth.spec.ts` y `medios.spec.ts` ajustados.
+- [x] No existe `app/(site)/admin/`.
+- [x] Existen `actions/admin/medios/index.ts`, `actions/cuenta/index.ts`, `actions/blog/index.ts` y `actions/blog/comunidad/index.ts`, y cada uno empieza con `"use server"`.
+- [x] `grep -rl '"use server"' app components lib db` no devuelve ningún archivo.
+- [x] No hay archivos `actions.ts` ni `*-actions.ts` dentro de `app/`.
+- [x] `actions/` no tiene archivos `.tsx`.
+- [x] Ningún archivo importa de `@/app/cuenta/actions`, `@/app/(site)/blog/actions`, `@/app/(site)/blog/community-actions` ni `@/app/(site)/admin/medios/actions`, y ningún `vi.mock` apunta a esas rutas.
+- [x] Login, registro, recuperar contraseña, cerrar sesión, cargar más artículos, valorar, comentar y subir imágenes funcionan igual que antes (E2E existentes).
+- [x] `/admin`, `/admin/articulos`, `/admin/medios` y `/admin/usuarios` no muestran el header ni el footer del sitio.
+- [x] Sin sesión, las cuatro rutas redirigen a `/cuenta/login` con `volver` igual a la ruta pedida (por ejemplo `?volver=%2Fadmin%2Fmedios`).
+- [x] Con un lector, las cuatro rutas responden 404.
+- [x] Las cuatro rutas tienen `<meta name="robots" content="noindex, nofollow">` y su título termina en "· Panel".
+- [x] `AdminNav` en `/admin` marca "Inicio" con `aria-current="page"` y ningún otro ítem.
+- [x] `AdminNav` en `/admin/medios` marca "Medios" y no marca "Inicio".
+- [x] La barra lateral tiene, en orden, Inicio, Artículos, Medios, Usuarios y "Ver el blog", y no tiene Categorías, SEO ni Ajustes.
+- [x] A 1280 px la barra lateral se ve y no hay botón "Abrir menú".
+- [x] A 390 px la barra lateral no se ve, "Abrir menú" la abre, `Escape` la cierra y el foco vuelve al botón.
+- [x] `AdminDrawer`: con el panel abierto, `Tab` desde el último elemento vuelve al primero.
+- [x] `AdminDrawer`: elegir un ítem cierra el panel.
+- [x] A 390 px ninguna de las cuatro rutas tiene scroll horizontal de página.
+- [x] El menú de cuenta muestra el nombre del admin y "Administrador", y abre "Mi perfil", "Ver el sitio" y "Cerrar sesión".
+- [x] "Cerrar sesión" desde el menú de cuenta termina la sesión y `/admin` vuelve a redirigir al login.
+- [x] `/admin` muestra "Inicio", "Hola, {primer nombre}" y tres tarjetas que llevan a `/admin/articulos`, `/admin/medios` y `/admin/usuarios`.
+- [x] `/admin/articulos` muestra "Artículos" y "La gestión de artículos llega en el próximo spec.", y no tiene botón "Nuevo artículo".
+- [x] `/admin/usuarios` muestra la tabla con las columnas Nombre, Email, Rol, Verificado y Alta y el contador de usuarios.
+- [x] `/admin/medios` sube, edita el texto alternativo y borra imágenes igual que antes (`medios.spec.ts`).
+- [x] Después de iniciar sesión con `volver=/admin`, el admin llega al Inicio del panel.
+- [x] El enlace "Administración" del menú de usuario del sitio sigue llevando a `/admin`.
 - [ ] El texto del panel cumple 4.5:1 de contraste sobre su fondo (revisado con `/frontend-design`).
 
 ## Decisiones

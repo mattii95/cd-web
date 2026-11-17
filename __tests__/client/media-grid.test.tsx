@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CardItem } from "@/app/(admin)/admin/medios/card-item";
 import { MediaGrid } from "@/app/(admin)/admin/medios/media-grid";
+import { AdminToaster } from "@/components/admin/toast";
 
 const { loadMoreMediaAction } = vi.hoisted(() => ({
   loadMoreMediaAction: vi.fn(),
@@ -33,7 +34,11 @@ describe("MediaGrid", () => {
 
   it("sin nextCursor no muestra Cargar más y cuenta el total real", () => {
     render(
-      <MediaGrid initialItems={cards(1, 3)} initialCursor={null} initialTotal={3} />,
+      <MediaGrid
+        initialItems={cards(1, 3)}
+        initialCursor={null}
+        initialTotal={3}
+      />,
     );
     expect(screen.getAllByRole("listitem")).toHaveLength(3);
     expect(screen.getByText("3 imágenes")).toBeInTheDocument();
@@ -42,14 +47,22 @@ describe("MediaGrid", () => {
 
   it("usa el singular con una sola imagen", () => {
     render(
-      <MediaGrid initialItems={cards(1, 1)} initialCursor={null} initialTotal={1} />,
+      <MediaGrid
+        initialItems={cards(1, 1)}
+        initialCursor={null}
+        initialTotal={1}
+      />,
     );
     expect(screen.getByText("1 imagen")).toBeInTheDocument();
   });
 
   it("el contador muestra el total, no las cargadas", () => {
     render(
-      <MediaGrid initialItems={cards(1, 2)} initialCursor="c1" initialTotal={30} />,
+      <MediaGrid
+        initialItems={cards(1, 2)}
+        initialCursor="c1"
+        initialTotal={30}
+      />,
     );
     expect(screen.getByText("30 imágenes")).toBeInTheDocument();
   });
@@ -59,7 +72,11 @@ describe("MediaGrid", () => {
     let resolve!: (v: unknown) => void;
     loadMoreMediaAction.mockReturnValue(new Promise((r) => (resolve = r)));
     render(
-      <MediaGrid initialItems={cards(1, 2)} initialCursor="c1" initialTotal={4} />,
+      <MediaGrid
+        initialItems={cards(1, 2)}
+        initialCursor="c1"
+        initialTotal={4}
+      />,
     );
 
     await user.click(screen.getByRole("button", { name: "Cargar más" }));
@@ -69,7 +86,9 @@ describe("MediaGrid", () => {
     expect(loadMoreMediaAction).toHaveBeenCalledWith("c1");
 
     resolve({ status: "success", items: cards(3, 4), nextCursor: null });
-    await waitFor(() => expect(screen.getAllByRole("listitem")).toHaveLength(4));
+    await waitFor(() =>
+      expect(screen.getAllByRole("listitem")).toHaveLength(4),
+    );
     expect(screen.queryByRole("button", { name: /Carg/ })).toBeNull();
   });
 
@@ -81,10 +100,16 @@ describe("MediaGrid", () => {
       nextCursor: "c2",
     });
     render(
-      <MediaGrid initialItems={cards(1, 2)} initialCursor="c1" initialTotal={6} />,
+      <MediaGrid
+        initialItems={cards(1, 2)}
+        initialCursor="c1"
+        initialTotal={6}
+      />,
     );
     await user.click(screen.getByRole("button", { name: "Cargar más" }));
-    await waitFor(() => expect(screen.getAllByRole("listitem")).toHaveLength(4));
+    await waitFor(() =>
+      expect(screen.getAllByRole("listitem")).toHaveLength(4),
+    );
     expect(screen.getByRole("button", { name: "Cargar más" })).toBeEnabled();
   });
 
@@ -95,12 +120,19 @@ describe("MediaGrid", () => {
       message: "No pudimos cargar más imágenes.",
     });
     render(
-      <MediaGrid initialItems={cards(1, 2)} initialCursor="c1" initialTotal={4} />,
+      <>
+        <MediaGrid
+          initialItems={cards(1, 2)}
+          initialCursor="c1"
+          initialTotal={4}
+        />
+        <AdminToaster />
+      </>,
     );
     await user.click(screen.getByRole("button", { name: "Cargar más" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "No pudimos cargar más imágenes.",
-    );
+    expect(
+      await screen.findByText("No pudimos cargar más imágenes."),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cargar más" })).toBeEnabled();
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
   });

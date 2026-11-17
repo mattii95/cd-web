@@ -186,3 +186,7 @@ export const Pencil = (p: IconProps) => (
 export const Trash = (p: IconProps) => (
   <Icon size={18} strokeWidth={2} {...p}><path d="M4 7h16M10 11v6M14 11v6" /><path d="M6 7l1 13h10l1-13M9 7V4h6v3" /></Icon>
 );
+// Indicador de "en proceso": gira salvo que la persona pida menos movimiento.
+export const Spinner = (p: IconProps) => (
+  <Icon size={16} strokeWidth={2.4} className="motion-safe:animate-spin" {...p}><path d="M12 3a9 9 0 109 9" /></Icon>
+);
