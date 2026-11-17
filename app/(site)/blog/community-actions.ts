@@ -7,10 +7,12 @@ import {
   createComment,
   deleteOwnComment,
   deleteReply,
+  getUserComments,
   saveReply,
   toggleVote,
   upsertRating,
 } from "@/db/blog-community";
+import type { UserComment } from "@/db/blog-community";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth/dal";
 import { isUserRateLimited } from "@/lib/auth/rate-limit";
 import type { BlogRating } from "@/lib/blog-posts";
@@ -137,5 +139,23 @@ export async function deleteReplyAction(
     if (!deleted) return fail(message);
     updateTag(commentsTag(deleted.postId));
     return { status: "success" };
+  });
+}
+
+// Siempre el usuario de la sesión: nunca recibe un userId.
+export async function loadMoreUserCommentsAction(
+  cursor: string,
+): Promise<
+  { status: "success"; items: UserComment[]; nextCursor: string | null } | Fail
+> {
+  const message = "No pudimos cargar más comentarios.";
+  return run(message, async (user) => {
+    const c = z.string().min(1).max(200).safeParse(cursor);
+    if (!c.success) return fail(message);
+    // Un cursor inválido (InvalidCursorError) cae en el catch de run.
+    const { items, nextCursor } = await getUserComments(user.id, {
+      cursor: c.data,
+    });
+    return { status: "success", items, nextCursor };
   });
 }

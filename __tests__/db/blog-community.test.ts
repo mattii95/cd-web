@@ -4,11 +4,13 @@ import {
   createComment,
   deleteOwnComment,
   deleteReply,
+  getUserComments,
   getViewerState,
   saveReply,
   toggleVote,
   upsertRating,
 } from "@/db/blog-community";
+import { InvalidCursorError } from "@/lib/pagination";
 import { closeDb, getDb } from "@/db/client";
 import {
   category,
@@ -316,6 +318,100 @@ describe("escrituras de la comunidad", () => {
       const { pending } = await getViewerState(p.id, "ana");
       expect(pending).toHaveLength(20);
       expect(pending[0].text).toBe("c21");
+    });
+  });
+
+  describe("getUserComments", () => {
+    it("devuelve los tres estados y varios posts, del más reciente al más viejo, y ninguno ajeno", async () => {
+      const { p, borrador, insertarComentario } = await crearEscenario();
+      const a = await insertarComentario("ana", "pendiente");
+      const b = await insertarComentario("ana", "aprobado");
+      const c = await insertarComentario("ana", "oculto", borrador.id);
+      await insertarComentario("beto");
+      await getDb()
+        .update(comment)
+        .set({ createdAt: new Date("2026-11-01T10:00:00Z") })
+        .where(eq(comment.id, a.id));
+      await getDb()
+        .update(comment)
+        .set({ createdAt: new Date("2026-11-02T10:00:00Z") })
+        .where(eq(comment.id, b.id));
+      await getDb()
+        .update(comment)
+        .set({ createdAt: new Date("2026-11-03T10:00:00Z") })
+        .where(eq(comment.id, c.id));
+
+      const { items, nextCursor } = await getUserComments("ana");
+      expect(nextCursor).toBeNull();
+      expect(items.map((i) => [i.id, i.status])).toEqual([
+        [c.id, "oculto"],
+        [b.id, "aprobado"],
+        [a.id, "pendiente"],
+      ]);
+      expect(items[1].post).toEqual({
+        slug: p.slug,
+        title: p.title,
+        published: true,
+      });
+    });
+
+    it("marca post.published: false en un comentario de un post borrador", async () => {
+      const { borrador, insertarComentario } = await crearEscenario();
+      await insertarComentario("ana", "aprobado", borrador.id);
+      const { items } = await getUserComments("ana");
+      expect(items[0].post.published).toBe(false);
+    });
+
+    it("incluye la respuesta del autor", async () => {
+      const { insertarComentario } = await crearEscenario();
+      const c = await insertarComentario("ana");
+      const saved = await saveReply(c.id, "autor", "gracias");
+      const { items } = await getUserComments("ana");
+      expect(items[0].reply).toEqual({
+        text: "gracias",
+        repliedAt: saved!.repliedAt,
+      });
+    });
+
+    it("recorrer con limit 2 y cursor devuelve cada comentario una sola vez", async () => {
+      const { p } = await crearEscenario();
+      await getDb()
+        .insert(comment)
+        .values(
+          Array.from({ length: 5 }, (_, i) => ({
+            postId: p.id,
+            userId: "ana",
+            text: `c${i}`,
+            createdAt: new Date(Date.UTC(2026, 10, 1, 0, i)),
+          })),
+        );
+      const vistos: string[] = [];
+      let cursor: string | null = null;
+      let paginas = 0;
+      do {
+        const page: Awaited<ReturnType<typeof getUserComments>> =
+          await getUserComments("ana", { limit: 2, cursor });
+        vistos.push(...page.items.map((i) => i.text));
+        cursor = page.nextCursor;
+        paginas++;
+      } while (cursor);
+      expect(vistos).toEqual(["c4", "c3", "c2", "c1", "c0"]);
+      expect(paginas).toBe(3);
+    });
+
+    it("sin comentarios devuelve una página vacía", async () => {
+      await crearEscenario();
+      expect(await getUserComments("beto")).toEqual({
+        items: [],
+        nextCursor: null,
+      });
+    });
+
+    it("con un cursor inválido lanza InvalidCursorError", async () => {
+      await crearEscenario();
+      await expect(
+        getUserComments("ana", { cursor: "basura" }),
+      ).rejects.toThrow(InvalidCursorError);
     });
   });
 });

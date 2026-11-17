@@ -34,6 +34,7 @@ import {
   createCommentAction,
   deleteCommentAction,
   deleteReplyAction,
+  loadMoreUserCommentsAction,
   rateAction,
   saveReplyAction,
   toggleVoteAction,
@@ -87,6 +88,7 @@ describe("acciones de la comunidad", () => {
       toggleVoteAction(c.id),
       saveReplyAction(c.id, "gracias"),
       deleteReplyAction(c.id),
+      loadMoreUserCommentsAction("x"),
     ]);
     for (const r of resultados) expect(r).toEqual(SIN_SESION);
     expect(await getDb().select().from(postRating)).toHaveLength(0);
@@ -235,6 +237,40 @@ describe("acciones de la comunidad", () => {
         status: "error",
         message: "El texto tiene que tener entre 2 y 2000 caracteres.",
       });
+    });
+  });
+
+  describe("loadMoreUserCommentsAction", () => {
+    it("con un cursor inválido devuelve error y no lanza", async () => {
+      await crearEscenario();
+      sesion("ana");
+      expect(await loadMoreUserCommentsAction("basura")).toEqual({
+        status: "error",
+        message: "No pudimos cargar más comentarios.",
+      });
+    });
+
+    it("devuelve la página siguiente del usuario de la sesión", async () => {
+      const { p } = await crearEscenario();
+      await getDb()
+        .insert(comment)
+        .values(
+          Array.from({ length: 3 }, (_, i) => ({
+            postId: p.id,
+            userId: "beto",
+            text: `b${i}`,
+            createdAt: new Date(Date.UTC(2026, 10, 1, 0, i)),
+          })),
+        );
+      const { getUserComments } = await import("@/db/blog-community");
+      const first = await getUserComments("beto", { limit: 1 });
+      sesion("beto");
+      const res = await loadMoreUserCommentsAction(first.nextCursor!);
+      expect(res.status).toBe("success");
+      if (res.status === "success") {
+        expect(res.items.map((i) => i.text)).toEqual(["b1", "b0"]);
+        expect(res.nextCursor).toBeNull();
+      }
     });
   });
 });

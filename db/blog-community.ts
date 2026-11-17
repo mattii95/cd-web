@@ -1,6 +1,13 @@
 import "server-only";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { BlogRating } from "@/lib/blog-posts";
+import {
+  decodeCursor,
+  encodeCursor,
+  type Page,
+  type PageParams,
+  resolveLimit,
+} from "@/lib/pagination";
 import type { PublicComment } from "./blog";
 import { getDb } from "./client";
 import { comment, commentVote, post, postRating, user } from "./schema";
@@ -12,6 +19,73 @@ export type ViewerState = {
   pending: PublicComment[]; // sus comentarios pendientes, createdAt descendente, máximo 20
   isPostAuthor: boolean; // post.author_id = userId
 };
+
+export type UserComment = {
+  id: string;
+  text: string;
+  status: "pendiente" | "aprobado" | "oculto";
+  createdAt: Date;
+  post: { slug: string; title: string; published: boolean };
+  reply: { text: string; repliedAt: Date } | null;
+};
+
+// Todos los comentarios del usuario, en cualquier estado y post. Sin caché.
+export async function getUserComments(
+  userId: string,
+  params: PageParams = {},
+): Promise<Page<UserComment>> {
+  const limit = resolveLimit(params.limit, 20);
+  const cursor = params.cursor ? decodeCursor(params.cursor) : null;
+  const rows = await getDb()
+    .select({
+      id: comment.id,
+      text: comment.text,
+      status: comment.status,
+      createdAt: comment.createdAt,
+      createdAtText: sql<string>`${comment.createdAt}::text`, // cursor: conserva los microsegundos
+      replyText: comment.replyText,
+      repliedAt: comment.repliedAt,
+      slug: post.slug,
+      title: post.title,
+      postStatus: post.status,
+    })
+    .from(comment)
+    .innerJoin(post, eq(post.id, comment.postId))
+    .where(
+      and(
+        eq(comment.userId, userId),
+        cursor
+          ? sql`(${comment.createdAt}, ${comment.id}) < (${cursor.t}::timestamp, ${cursor.id})`
+          : undefined,
+      ),
+    )
+    .orderBy(desc(comment.createdAt), desc(comment.id))
+    .limit(limit + 1);
+
+  const page = rows.slice(0, limit);
+  const last = page[page.length - 1];
+  return {
+    items: page.map((r) => ({
+      id: r.id,
+      text: r.text,
+      status: r.status,
+      createdAt: r.createdAt,
+      post: {
+        slug: r.slug,
+        title: r.title,
+        published: r.postStatus === "publicado",
+      },
+      reply:
+        r.replyText && r.repliedAt
+          ? { text: r.replyText, repliedAt: r.repliedAt }
+          : null,
+    })),
+    nextCursor:
+      rows.length > limit
+        ? encodeCursor({ t: last.createdAtText, id: last.id })
+        : null,
+  };
+}
 
 // Lo propio del lector en un post. Sin caché: depende de quién mira.
 export async function getViewerState(
