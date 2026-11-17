@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import { useActionState, useEffect, useState } from "react";
-import type { FormState } from "@/app/cuenta/actions";
+import type { FormState } from "@/actions/cuenta";
 import { FormMessage } from "@/components/auth/form-message";
-import { deleteMediaAction, updateMediaAltAction } from "./actions";
+import { deleteMediaAction, updateMediaAltAction } from "@/actions/admin/medios";
 import type { CardItem } from "./card-item";
 import { btn } from "./styles";
 

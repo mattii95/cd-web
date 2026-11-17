@@ -5,7 +5,7 @@ import { LoginForm } from "@/components/auth/login-form";
 
 const { signInAction } = vi.hoisted(() => ({ signInAction: vi.fn() }));
 
-vi.mock("@/app/cuenta/actions", () => ({ signInAction }));
+vi.mock("@/actions/cuenta", () => ({ signInAction }));
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams("volver=/admin"),
 }));

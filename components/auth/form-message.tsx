@@ -1,4 +1,4 @@
-import type { FormState } from "@/app/cuenta/actions";
+import type { FormState } from "@/actions/cuenta";
 
 export function FormMessage({ state }: { state: FormState }) {
   if (state.status === "idle") return null;

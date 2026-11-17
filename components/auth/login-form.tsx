@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AuthForm } from "./auth-form";
 import { inputClass, labelClass } from "./field-styles";
-import { signInAction } from "@/app/cuenta/actions";
+import { signInAction } from "@/actions/cuenta";
 import { LoginContext } from "./login-context";
 import { PasswordInput } from "./password-input";
 

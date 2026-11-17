@@ -38,7 +38,7 @@ import {
   rateAction,
   saveReplyAction,
   toggleVoteAction,
-} from "@/app/(site)/blog/community-actions";
+} from "@/actions/blog/comunidad";
 
 const SIN_SESION = {
   status: "error",

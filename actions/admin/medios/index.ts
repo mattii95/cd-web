@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import type { FormState } from "@/app/cuenta/actions";
+import type { FormState } from "@/actions/cuenta";
 import {
   createMedia,
   deleteMedia,
@@ -12,7 +12,7 @@ import {
   updateMediaAlt,
 } from "@/db/media";
 import { requireAdmin } from "@/lib/auth/dal";
-import { type CardItem, toCardItem } from "./card-item";
+import { type CardItem, toCardItem } from "@/app/(site)/admin/medios/card-item";
 
 const error = (message: string): FormState => ({ status: "error", message });
 

@@ -10,7 +10,7 @@ import type { PublicComment, RatingSummary } from "@/db/blog";
 import type { ViewerState } from "@/db/blog-community";
 
 const loadMoreCommentsAction = vi.fn();
-vi.mock("@/app/(site)/blog/actions", () => ({
+vi.mock("@/actions/blog", () => ({
   loadMoreCommentsAction: (...args: unknown[]) =>
     loadMoreCommentsAction(...args),
 }));
@@ -21,7 +21,7 @@ const createCommentAction = vi.fn();
 const deleteCommentAction = vi.fn();
 const saveReplyAction = vi.fn();
 const deleteReplyAction = vi.fn();
-vi.mock("@/app/(site)/blog/community-actions", () => ({
+vi.mock("@/actions/blog/comunidad", () => ({
   rateAction: (...args: unknown[]) => rateAction(...args),
   toggleVoteAction: (...args: unknown[]) => toggleVoteAction(...args),
   createCommentAction: (...args: unknown[]) => createCommentAction(...args),

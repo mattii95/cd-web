@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import { signOutAction } from "@/app/cuenta/actions";
+import { signOutAction } from "@/actions/cuenta";
 import { UserAvatar } from "./user-avatar";
 
 const itemClass =

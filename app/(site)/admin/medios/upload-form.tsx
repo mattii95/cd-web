@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import type { FormState } from "@/app/cuenta/actions";
+import type { FormState } from "@/actions/cuenta";
 import { FormMessage } from "@/components/auth/form-message";
-import { uploadMediaAction } from "./actions";
+import { uploadMediaAction } from "@/actions/admin/medios";
 
 const field =
   "fx-input min-h-[48px] w-full rounded-xl border border-border-strong bg-surface-3 px-3.5 py-3 text-[15px] text-white";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FormMessage } from "@/components/auth/form-message";
-import { loadMoreMediaAction } from "./actions";
+import { loadMoreMediaAction } from "@/actions/admin/medios";
 import type { CardItem } from "./card-item";
 import { MediaCard } from "./media-card";
 import { btn } from "./styles";

@@ -8,7 +8,7 @@ const { loadMoreMediaAction } = vi.hoisted(() => ({
   loadMoreMediaAction: vi.fn(),
 }));
 
-vi.mock("@/app/(site)/admin/medios/actions", () => ({
+vi.mock("@/actions/admin/medios", () => ({
   loadMoreMediaAction,
   updateMediaAltAction: vi.fn(),
   deleteMediaAction: vi.fn(),

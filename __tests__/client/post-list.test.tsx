@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { BlogCategoryRow, PostSummary, TagRow } from "@/db/blog";
 
 const loadMorePostsAction = vi.fn();
-vi.mock("@/app/(site)/blog/actions", () => ({
+vi.mock("@/actions/blog", () => ({
   loadMorePostsAction: (...args: unknown[]) => loadMorePostsAction(...args),
 }));
 

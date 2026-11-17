@@ -10,7 +10,7 @@ import type { UserComment } from "@/db/blog-community";
 
 const deleteCommentAction = vi.fn();
 const loadMoreUserCommentsAction = vi.fn();
-vi.mock("@/app/(site)/blog/community-actions", () => ({
+vi.mock("@/actions/blog/comunidad", () => ({
   deleteCommentAction: (...args: unknown[]) => deleteCommentAction(...args),
   loadMoreUserCommentsAction: (...args: unknown[]) =>
     loadMoreUserCommentsAction(...args),

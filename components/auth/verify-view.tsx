@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { resendVerificationAction } from "@/app/cuenta/actions";
+import { resendVerificationAction } from "@/actions/cuenta";
 import { AuthForm } from "./auth-form";
 import { AuthNotice } from "./auth-notice";
 import { inputClass, labelClass } from "./field-styles";

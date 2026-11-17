@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { resetPasswordAction } from "@/app/cuenta/actions";
+import { resetPasswordAction } from "@/actions/cuenta";
 import { AuthForm } from "./auth-form";
 import { AuthNotice } from "./auth-notice";
 import { PasswordInput } from "./password-input";

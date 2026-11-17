@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { type ReactNode, useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { signInSocialAction } from "@/app/cuenta/actions";
+import { signInSocialAction } from "@/actions/cuenta";
 import type { SocialProvider } from "@/lib/auth/providers";
 import { FormMessage } from "./form-message";
 

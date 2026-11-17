@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { loadMoreCommentsAction } from "@/app/(site)/blog/actions";
+import { loadMoreCommentsAction } from "@/actions/blog";
 import {
   createCommentAction,
   deleteCommentAction,
@@ -10,7 +10,7 @@ import {
   rateAction,
   saveReplyAction,
   toggleVoteAction,
-} from "@/app/(site)/blog/community-actions";
+} from "@/actions/blog/comunidad";
 import type { PostAuthor, PublicComment, RatingSummary } from "@/db/blog";
 import type { ViewerState } from "@/db/blog-community";
 import {

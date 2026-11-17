@@ -19,7 +19,7 @@ import {
 // Fuera de Next, "use cache" no hace nada y cacheLife/cacheTag no existen: se anulan.
 vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }));
 
-import { loadMorePostsAction } from "@/app/(site)/blog/actions";
+import { loadMorePostsAction } from "@/actions/blog";
 
 describe("loadMorePostsAction", () => {
   beforeEach(resetBlog);

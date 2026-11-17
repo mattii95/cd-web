@@ -5,7 +5,7 @@ import { useState } from "react";
 import {
   deleteCommentAction,
   loadMoreUserCommentsAction,
-} from "@/app/(site)/blog/community-actions";
+} from "@/actions/blog/comunidad";
 import type { UserComment } from "@/db/blog-community";
 import { LoadMore } from "@/components/blog/load-more";
 import { formatPostDate } from "@/lib/blog-posts";

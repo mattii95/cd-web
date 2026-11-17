@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { loadMorePostsAction } from "@/app/(site)/blog/actions";
+import { loadMorePostsAction } from "@/actions/blog";
 import type { BlogCategoryRow, PostSummary, TagRow } from "@/db/blog";
 import { FeaturedPost } from "./featured-post";
 import { LoadMore } from "./load-more";

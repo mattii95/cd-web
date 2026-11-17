@@ -5,7 +5,7 @@ import { SocialButtons } from "@/components/auth/social-buttons";
 
 const { signInSocialAction } = vi.hoisted(() => ({ signInSocialAction: vi.fn() }));
 
-vi.mock("@/app/cuenta/actions", () => ({ signInSocialAction }));
+vi.mock("@/actions/cuenta", () => ({ signInSocialAction }));
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams("volver=/blog/senales-sistema-a-medida"),
 }));
