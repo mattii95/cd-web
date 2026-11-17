@@ -10,10 +10,12 @@ vi.mock("@/app/(site)/blog/actions", () => ({
 }));
 
 const rateAction = vi.fn();
+const toggleVoteAction = vi.fn();
 const createCommentAction = vi.fn();
 const deleteCommentAction = vi.fn();
 vi.mock("@/app/(site)/blog/community-actions", () => ({
   rateAction: (...args: unknown[]) => rateAction(...args),
+  toggleVoteAction: (...args: unknown[]) => toggleVoteAction(...args),
   createCommentAction: (...args: unknown[]) => createCommentAction(...args),
   deleteCommentAction: (...args: unknown[]) => deleteCommentAction(...args),
 }));
@@ -75,6 +77,7 @@ const items = () => screen.queryAllByRole("listitem").length;
 beforeEach(() => {
   loadMoreCommentsAction.mockReset();
   rateAction.mockReset();
+  toggleVoteAction.mockReset();
   createCommentAction.mockReset();
   deleteCommentAction.mockReset();
 });
@@ -134,16 +137,6 @@ describe("ReviewsSection · comentarios", () => {
     expect(screen.getByText("Gracias")).toBeInTheDocument();
     expect(screen.getByText("17 nov 2026")).toBeInTheDocument();
     expect(screen.getByText("Autor")).toBeInTheDocument();
-  });
-
-  it("Útil arranca en usefulCount y suma 1 solo en el cliente", () => {
-    setup({ initialComments: [comment(1, { usefulCount: 12 })] });
-    const btn = screen.getByRole("button", { name: "Útil · 12" });
-    fireEvent.click(btn);
-    expect(
-      screen.getByRole("button", { name: "Útil · 13" }),
-    ).toBeInTheDocument();
-    expect(loadMoreCommentsAction).not.toHaveBeenCalled();
   });
 });
 
@@ -400,5 +393,93 @@ describe("ReviewsSection · borrar", () => {
     const status = await screen.findByText("No pudimos borrar el comentario.");
     expect(status.getAttribute("role")).toBe("status");
     expect(items()).toBe(1);
+  });
+});
+
+describe("ReviewsSection · Útil", () => {
+  it("sin sesión es un enlace a login con volver y no hay Responder", () => {
+    setup({ initialComments: [comment(1, { usefulCount: 12 })] });
+    const link = screen.getByRole("link", { name: "Útil · 12" });
+    expect(link.getAttribute("href")).toBe(
+      "/cuenta/login?volver=/blog/un-post",
+    );
+    expect(screen.queryByRole("button", { name: "Útil · 12" })).toBeNull();
+    expect(screen.queryByText("Responder")).toBeNull();
+  });
+
+  it("con sesión cambia al instante y después toma el conteo de la acción", async () => {
+    let resolver!: (v: unknown) => void;
+    toggleVoteAction.mockReturnValue(new Promise((r) => (resolver = r)));
+    setup({
+      viewer: viewerOf(),
+      initialComments: [comment(1, { usefulCount: 12 })],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Útil · 12" }));
+    const pressed = screen.getByRole("button", { name: "Útil · 13" });
+    expect(pressed.getAttribute("aria-pressed")).toBe("true");
+    resolver({ status: "success", voted: true, usefulCount: 20 });
+    await screen.findByRole("button", { name: "Útil · 20" });
+    expect(toggleVoteAction).toHaveBeenCalledWith("c-1");
+  });
+
+  it("arranca marcado según viewer.votedCommentIds y un segundo clic quita el voto", async () => {
+    toggleVoteAction.mockResolvedValue({
+      status: "success",
+      voted: false,
+      usefulCount: 11,
+    });
+    setup({
+      viewer: viewerOf({ votedCommentIds: ["c-1"] }),
+      initialComments: [comment(1, { usefulCount: 12 })],
+    });
+    const btn = screen.getByRole("button", { name: "Útil · 12" });
+    expect(btn.getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(btn);
+    const off = await screen.findByRole("button", { name: "Útil · 11" });
+    expect(off.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("si la acción falla vuelve atrás y muestra el error en un status", async () => {
+    toggleVoteAction.mockResolvedValue({
+      status: "error",
+      message: "No pudimos registrar tu voto.",
+    });
+    setup({
+      viewer: viewerOf(),
+      initialComments: [comment(1, { usefulCount: 12 })],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Útil · 12" }));
+    const status = await screen.findByText("No pudimos registrar tu voto.");
+    expect(status.getAttribute("role")).toBe("status");
+    const btn = screen.getByRole("button", { name: "Útil · 12" });
+    expect(btn.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("en comentarios propios muestra Útil · N como texto, no como botón", () => {
+    setup({
+      viewer: viewerOf({ ownCommentIds: ["c-1"] }),
+      initialComments: [comment(1, { usefulCount: 3 })],
+    });
+    expect(screen.getByText("Útil · 3")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Útil · 3" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Útil · 3" })).toBeNull();
+  });
+
+  it("los comentarios de Ver más usan el mismo viewer", async () => {
+    loadMoreCommentsAction.mockResolvedValue({
+      status: "success",
+      items: [comment(2)],
+      nextCursor: null,
+    });
+    setup({
+      viewer: viewerOf({ votedCommentIds: ["c-2"] }),
+      initialComments: [comment(1)],
+      initialCursor: "cur",
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver más comentarios" }),
+    );
+    const btn = await screen.findByRole("button", { name: "Útil · 2" });
+    expect(btn.getAttribute("aria-pressed")).toBe("true");
   });
 });

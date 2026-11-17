@@ -7,6 +7,7 @@ import {
   createCommentAction,
   deleteCommentAction,
   rateAction,
+  toggleVoteAction,
 } from "@/app/(site)/blog/community-actions";
 import type { PostAuthor, PublicComment, RatingSummary } from "@/db/blog";
 import type { ViewerState } from "@/db/blog-community";
@@ -21,6 +22,11 @@ import { PersonAvatar } from "./person-avatar";
 const avatarColors = ["#1a66f5", "#050b1c", "#1450c8", "#3d5a99"];
 const ratings: BlogRating[] = [5, 4, 3, 2, 1];
 
+const utilClass = (pressed: boolean) =>
+  `inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border-0 px-3 py-2 text-[13px] font-semibold no-underline ${
+    pressed ? "bg-accent-tint text-[#1450c8]" : "bg-transparent text-text-faint"
+  }`;
+
 function Stars({ n, className }: { n: number; className: string }) {
   return (
     <span role="img" aria-label={`${n} de 5 estrellas`} className={className}>
@@ -30,7 +36,6 @@ function Stars({ n, className }: { n: number; className: string }) {
   );
 }
 
-// Solo el estado sin sesión (spec 03): "Responder" y "Útil" son visuales; "Ingresar" y "Crear cuenta" van a /cuenta (spec 04).
 export function ReviewsSection({
   postId,
   slug,
@@ -52,7 +57,10 @@ export function ReviewsSection({
   const [cursor, setCursor] = useState(initialCursor);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const [voted, setVoted] = useState(
+    () => new Set(viewer?.votedCommentIds ?? []),
+  );
+  const [counts, setCounts] = useState<Record<string, number>>({}); // pisa usefulCount tras votar
   const [rating, setRating] = useState(viewer?.rating ?? null);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -65,7 +73,35 @@ export function ReviewsSection({
   const { average, total, distribution } = summary;
   const maxCount = Math.max(...Object.values(distribution), 1);
 
-  const likesOf = (c: PublicComment) => c.usefulCount + (liked[c.id] ? 1 : 0);
+  const likesOf = (c: PublicComment) => counts[c.id] ?? c.usefulCount;
+  const setVote = (id: string, on: boolean) =>
+    setVoted((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+
+  async function vote(c: PublicComment) {
+    const was = voted.has(c.id);
+    const before = likesOf(c);
+    setVote(c.id, !was);
+    setCounts((prev) => ({ ...prev, [c.id]: before + (was ? -1 : 1) }));
+    say(c.id, "");
+    try {
+      const result = await toggleVoteAction(c.id);
+      if (result.status === "success") {
+        setVote(c.id, result.voted);
+        setCounts((prev) => ({ ...prev, [c.id]: result.usefulCount }));
+        return;
+      }
+      say(c.id, result.message);
+    } catch {
+      say(c.id, "No pudimos registrar tu voto.");
+    }
+    setVote(c.id, was);
+    setCounts((prev) => ({ ...prev, [c.id]: before }));
+  }
 
   async function loadMore() {
     if (!cursor || loading) return;
@@ -333,7 +369,7 @@ export function ReviewsSection({
       ) : (
         <ul className="m-0 flex list-none flex-col gap-3.5 p-0">
           {rows.map(({ c, inReview }, i) => {
-            const isLiked = !!liked[c.id];
+            const isVoted = voted.has(c.id);
             const own = inReview || ownIds.includes(c.id);
             return (
               <li
@@ -367,26 +403,27 @@ export function ReviewsSection({
                   <div className="-ml-2.5 flex flex-wrap items-center gap-1">
                     {!inReview && (
                       <>
-                        <button
-                          type="button"
-                          aria-pressed={isLiked}
-                          onClick={() =>
-                            setLiked({ ...liked, [c.id]: !isLiked })
-                          }
-                          className={`inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border-0 px-3 py-2 text-[13px] font-semibold ${
-                            isLiked
-                              ? "bg-accent-tint text-[#1450c8]"
-                              : "bg-transparent text-text-faint"
-                          }`}
-                        >
-                          Útil · {likesOf(c)}
-                        </button>
-                        <button
-                          type="button"
-                          className="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border-0 bg-transparent px-3 py-2 text-[13px] font-semibold text-text-faint"
-                        >
-                          Responder
-                        </button>
+                        {!viewer ? (
+                          <Link
+                            href={`/cuenta/login?volver=/blog/${slug}`}
+                            className={utilClass(false)}
+                          >
+                            Útil · {likesOf(c)}
+                          </Link>
+                        ) : own ? (
+                          <span className="inline-flex min-h-10 items-center px-3 py-2 text-[13px] font-semibold text-text-faint">
+                            Útil · {likesOf(c)}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            aria-pressed={isVoted}
+                            onClick={() => vote(c)}
+                            className={utilClass(isVoted)}
+                          >
+                            Útil · {likesOf(c)}
+                          </button>
+                        )}
                       </>
                     )}
                     {own &&
