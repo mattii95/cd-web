@@ -7,6 +7,7 @@ import {
   articlesHref,
 } from "@/lib/admin/article-params";
 import { formatDate } from "@/lib/format-date";
+import { RowMenu } from "./row-menu";
 
 // En móvil cada fila se apila y cada celda muestra su columna con data-label.
 const cell =
@@ -82,7 +83,7 @@ export function ArticlesTable({ query, items }: { query: AdminPostQuery; items: 
             <td data-label="Lectura" className={`${cell} text-cms-text`}>{p.readingMinutes} min</td>
             <td data-label="Actualizado" className={`${cell} text-cms-muted`}>{formatDate(p.updatedAt)}</td>
             <td data-label="Acciones" className={cell}>
-              {/* El menú de fila llega en el paso 6. */}
+              <RowMenu id={p.id} slug={p.slug} title={p.title} status={p.status} />
             </td>
           </tr>
         ))}

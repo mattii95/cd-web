@@ -19,7 +19,7 @@ async function Articles({ searchParams }: Pick<PageProps<"/admin/articles">, "se
   const [list, categories] = await Promise.all([listAdminPosts(query), getCategories()]);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-cms-line bg-cms-panel shadow-[0_8px_24px_rgba(11,16,32,0.08)]">
+    <section className="rounded-2xl border border-cms-line bg-cms-panel shadow-[0_8px_24px_rgba(11,16,32,0.08)]">
       <StatusTabs query={query} counts={list.counts} />
       <ArticleFilters query={query} categories={categories} />
       {list.items.length === 0 ? (
