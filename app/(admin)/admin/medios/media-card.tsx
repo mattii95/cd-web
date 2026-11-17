@@ -68,7 +68,7 @@ function AltEditor({
         required
         maxLength={300}
         autoFocus
-        className="fx-input min-h-10 w-full rounded-lg border border-border-strong bg-surface-3 px-3 text-[14px] text-white"
+        className="min-h-11 w-full rounded-lg border border-cms-control bg-cms-panel px-3 text-[14px] text-cms-ink"
       />
       {state.status === "error" && <FormMessage state={state} />}
       <div className="flex gap-2">
@@ -106,7 +106,7 @@ function DeleteControl({
       {confirming ? (
         <form action={action} className="flex items-center gap-2">
           <input type="hidden" name="id" value={item.id} />
-          <span className="text-[13px] text-text">¿Borrar?</span>
+          <span className="text-[13px] text-cms-text">¿Borrar?</span>
           <button type="submit" disabled={pending} className={btn}>
             {pending ? "Borrando…" : "Sí"}
           </button>
@@ -150,14 +150,14 @@ export function MediaCard({
 }) {
   const [editing, setEditing] = useState(false);
   return (
-    <li className="flex flex-col overflow-hidden rounded-[18px] border border-border-muted bg-surface-2">
+    <li className="flex flex-col overflow-hidden rounded-2xl border border-cms-line bg-cms-panel shadow-[0_8px_24px_rgba(11,16,32,0.08)]">
       <Image
         src={item.src}
         width={item.width}
         height={item.height}
         alt={item.alt}
         sizes="(min-width: 1024px) 280px, (min-width: 640px) 33vw, 50vw"
-        className="aspect-video w-full bg-surface-3 object-cover"
+        className="aspect-video w-full bg-cms-head object-cover"
       />
       <div className="flex flex-1 flex-col gap-2 p-4">
         {editing ? (
@@ -167,17 +167,17 @@ export function MediaCard({
             onSaved={onAltSaved}
           />
         ) : (
-          <p className="m-0 text-[15px] leading-snug font-semibold text-text-strong [overflow-wrap:anywhere]">
+          <p className="m-0 text-[15px] leading-snug font-semibold text-cms-ink [overflow-wrap:anywhere]">
             {item.alt}
           </p>
         )}
-        <p className="m-0 text-[13px] text-text-subtle">
+        <p className="m-0 text-[13px] text-cms-muted">
           {item.width} × {item.height} px, {Math.max(1, Math.round(item.bytes / 1024))} KB
           <br />
           {date}
         </p>
         <p
-          className={`m-0 pt-1 text-[13px] ${item.titles.length ? "text-accent-soft" : "text-text-subtle"}`}
+          className={`m-0 pt-1 text-[13px] ${item.titles.length ? "text-cms-link" : "text-cms-muted"}`}
         >
           {item.titles.length ? `En uso en: ${item.titles.join(", ")}` : "Sin usar"}
         </p>

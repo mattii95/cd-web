@@ -41,7 +41,7 @@ export function MediaGrid({ initialItems, initialCursor, initialTotal }: Props) 
 
   if (items.length === 0 && !cursor) {
     return (
-      <p className="m-0 mt-10 text-base text-text-muted">
+      <p className="m-0 text-base text-cms-text">
         Todavía no hay imágenes. Subí la primera con el formulario.
       </p>
     );
@@ -49,10 +49,10 @@ export function MediaGrid({ initialItems, initialCursor, initialTotal }: Props) 
 
   return (
     <>
-      <p className="m-0 mt-10 text-base text-text-muted">
+      <p className="m-0 text-base text-cms-text">
         {total === 1 ? "1 imagen" : `${total} imágenes`}
       </p>
-      <ul className="m-0 mt-5 grid list-none grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 p-0">
+      <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 p-0">
         {items.map(({ date, ...item }) => (
           <MediaCard
             key={item.id}
@@ -71,7 +71,7 @@ export function MediaGrid({ initialItems, initialCursor, initialTotal }: Props) 
         ))}
       </ul>
       {cursor && (
-        <div className="mt-8 flex flex-col items-center gap-3">
+        <div className="flex flex-col items-center gap-3">
           {failed && (
             <FormMessage
               state={{
