@@ -1,19 +1,21 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink } from "@/components/icons";
+import { site } from "@/lib/site";
 import { AdminNav } from "./admin-nav";
 
-// El color del texto y del trazo central sale de currentColor: blanco en la barra, tinta en la superior.
+// El texto toma su color de className: blanco en la barra, tinta en la superior.
 export function AdminLogo({ className = "text-white" }: { className?: string }) {
   return (
     <Link
       href="/admin"
       className={`flex min-h-11 items-center gap-3 px-2 no-underline ${className}`}
     >
-      <svg aria-hidden="true" width="30" height="30" viewBox="0 0 30 30" fill="none">
-        <path d="M15 2 26 8.5v13L15 28 4 21.5v-13L15 2Z" stroke="var(--color-accent)" strokeWidth="2.4" strokeLinejoin="round" />
-        <path d="M15 9v12" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-      </svg>
-      <span className="font-display text-lg font-semibold">Courroux Digital</span>
+      {/* El logo del sitio tiene la "D" blanca: sobre el fondo claro de la barra superior va en una ficha oscura */}
+      <span className="flex size-10 flex-none items-center justify-center rounded-[10px] bg-cms-nav">
+        <Image src="/cd-sin-fondo.png" alt="" width={32} height={32} className="block size-8" />
+      </span>
+      <span className="font-display text-lg font-bold">{site.name}</span>
     </Link>
   );
 }
