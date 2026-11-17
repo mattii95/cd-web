@@ -1,41 +1,78 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import {
-  blogCategories,
-  type BlogCategoryTag,
-  getUsedTags,
-  mockToSummary,
-  type BlogPost,
-  type BlogTagSlug,
-} from "@/lib/blog-posts";
+import { loadMorePostsAction } from "@/app/(site)/blog/actions";
+import type { BlogCategoryRow, PostSummary, TagRow } from "@/db/blog";
 import { FeaturedPost } from "./featured-post";
+import { LoadMore } from "./load-more";
 import { PostCard } from "./post-card";
 
-type Filter = "todos" | BlogCategoryTag;
+// Los filtros viven en la URL: cada opción es un enlace que conserva el otro filtro.
+function filterHref(categoria?: string, etiqueta?: string) {
+  const params = new URLSearchParams();
+  if (categoria) params.set("categoria", categoria);
+  if (etiqueta) params.set("etiqueta", etiqueta);
+  const qs = params.toString();
+  return qs ? `/blog?${qs}` : "/blog";
+}
 
-const filters: { value: Filter; label: string }[] = [
-  { value: "todos", label: "Todos" },
-  ...blogCategories.map((c) => ({ value: c.tag, label: c.filterLabel })),
-];
-
-// posts viene ordenado por fecha: el primero es el destacado.
+// La página lo monta con key = categoria|etiqueta: al cambiar un filtro se reinicia lo cargado.
 export function PostList({
-  posts,
-  featuredDate,
+  initialPosts,
+  initialCursor,
+  categories,
+  tags,
+  categoria,
+  etiqueta,
 }: {
-  posts: BlogPost[];
-  featuredDate: string;
+  initialPosts: PostSummary[]; // primera página; el primero es el destacado
+  initialCursor: string | null;
+  categories: BlogCategoryRow[];
+  tags: TagRow[];
+  categoria?: string; // ya validados contra la base
+  etiqueta?: string;
 }) {
-  const [filter, setFilter] = useState<Filter>("todos");
-  const [tag, setTag] = useState<"todas" | BlogTagSlug>("todas");
-  const [featured, ...rest] = posts;
-  const usedTags = getUsedTags(posts);
-  const matches = (p: BlogPost) =>
-    (filter === "todos" || p.category === filter) &&
-    (tag === "todas" || p.tags.includes(tag));
-  const visible = rest.filter(matches);
-  const showFeatured = !!featured && matches(featured);
+  const [more, setMore] = useState<PostSummary[]>([]);
+  const [cursor, setCursor] = useState(initialCursor);
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [featured, ...first] = initialPosts;
+  const rest = [...first, ...more];
+
+  async function loadMore() {
+    if (!cursor || loading) return;
+    setLoading(true);
+    setFailed(false);
+    try {
+      const result = await loadMorePostsAction(cursor, {
+        category: categoria,
+        tag: etiqueta,
+      });
+      if (result.status === "success") {
+        setMore((prev) => [...prev, ...result.items]);
+        setCursor(result.nextCursor);
+      } else {
+        setFailed(true);
+      }
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const categoryFilters = [
+    { slug: undefined, label: "Todos" },
+    ...categories.map((c) => ({
+      slug: c.slug as string,
+      label: c.filterLabel,
+    })),
+  ];
+  const tagFilters = [
+    { slug: undefined, name: "Todas", count: null },
+    ...tags.map((t) => ({ ...t, slug: t.slug as string | undefined })),
+  ];
 
   return (
     <section className="bg-paper px-6 pt-[72px] pb-24 text-surface">
@@ -46,22 +83,22 @@ export function PostList({
             aria-label="Filtrar por categoría"
             className="flex flex-wrap gap-1.5 self-start rounded-full border border-paper-border bg-white p-1.5"
           >
-            {filters.map((f) => {
-              const active = f.value === filter;
+            {categoryFilters.map((f) => {
+              const active = f.slug === categoria;
               return (
-                <button
-                  key={f.value}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setFilter(f.value)}
-                  className={`min-h-11 cursor-pointer rounded-full border-0 px-[18px] py-2.5 text-sm font-semibold ${
+                <Link
+                  key={f.slug ?? "todos"}
+                  href={filterHref(f.slug, etiqueta)}
+                  scroll={false}
+                  aria-current={active ? "true" : undefined}
+                  className={`inline-flex min-h-11 items-center rounded-full px-[18px] py-2.5 text-sm font-semibold no-underline ${
                     active
                       ? "bg-accent text-white shadow-[0_0_20px_rgba(26,102,245,0.5)]"
                       : "bg-transparent text-[#2b3449]"
                   }`}
                 >
                   {f.label}
-                </button>
+                </Link>
               );
             })}
           </div>
@@ -74,18 +111,15 @@ export function PostList({
             <span className="mr-1 text-sm font-medium text-text-faint">
               Etiquetas
             </span>
-            {[
-              { slug: "todas" as const, name: "Todas", count: null },
-              ...usedTags,
-            ].map((t) => {
-              const active = t.slug === tag;
+            {tagFilters.map((t) => {
+              const active = t.slug === etiqueta;
               return (
-                <button
-                  key={t.slug}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setTag(t.slug)}
-                  className={`inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-medium ${
+                <Link
+                  key={t.slug ?? "todas"}
+                  href={filterHref(categoria, t.slug)}
+                  scroll={false}
+                  aria-current={active ? "true" : undefined}
+                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-medium no-underline ${
                     active
                       ? "border-accent bg-accent text-white"
                       : "border-paper-border bg-white text-[#2b3449]"
@@ -99,22 +133,38 @@ export function PostList({
                       {t.count}
                     </span>
                   )}
-                </button>
+                </Link>
               );
             })}
           </div>
         </div>
 
-        {showFeatured && <FeaturedPost post={featured} date={featuredDate} />}
+        {featured && <FeaturedPost post={featured} />}
 
-        {showFeatured || visible.length > 0 ? (
-          <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(min(100%,340px),1fr))] gap-6 p-0">
-            {visible.map((post, i) => (
-              <li key={post.slug} className={`fx-reveal r${(i % 2) + 1} flex`}>
-                <PostCard post={mockToSummary(post)} />
-              </li>
-            ))}
-          </ul>
+        {featured ? (
+          <>
+            {rest.length > 0 && (
+              <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(min(100%,340px),1fr))] gap-6 p-0">
+                {rest.map((post, i) => (
+                  <li
+                    key={post.id}
+                    className={`fx-reveal r${(i % 2) + 1} flex`}
+                  >
+                    <PostCard post={post} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            {cursor && (
+              <LoadMore
+                label="Cargar más"
+                errorMessage="No pudimos cargar más artículos."
+                loading={loading}
+                failed={failed}
+                onClick={loadMore}
+              />
+            )}
+          </>
         ) : (
           <p className="m-0 text-base text-text-faint">
             No hay artículos con esa combinación.

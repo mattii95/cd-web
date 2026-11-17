@@ -93,14 +93,15 @@ export function getRelatedPosts(post: BlogPost, n: number) {
 }
 
 // Fecha fija en UTC: no depende de la hora actual, así el prerender no se rompe.
-export const formatPostDate = (iso: string) =>
+// TODO(SPEC 13, paso 9): solo Date; acepta string mientras el artículo lee el mock.
+export const formatPostDate = (date: Date | string) =>
   new Intl.DateTimeFormat("es-AR", {
     day: "numeric",
     month: "short",
     year: "numeric",
     timeZone: "UTC",
   })
-    .format(new Date(iso))
+    .format(new Date(date))
     .replace(/\./g, "")
     .replace(/ de /g, " ");
 

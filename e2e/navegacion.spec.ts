@@ -7,7 +7,8 @@ test("home → blog → artículo → login → vuelve al artículo", async ({ p
   await page.locator('a[href="/blog"]').filter({ visible: true }).first().click();
   await expect(page).toHaveURL(/\/blog$/);
 
-  await page.locator(`a[href="/blog/${slug}"]`).first().click();
+  // Con streaming, el contenido real llega oculto hasta que reemplaza al skeleton.
+  await page.locator(`a[href="/blog/${slug}"]`).filter({ visible: true }).first().click();
   await expect(page).toHaveURL(`/blog/${slug}`);
 
   // El header también tiene un "Ingresar": se acota a la sección de comentarios.
