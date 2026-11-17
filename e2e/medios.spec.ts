@@ -1,5 +1,12 @@
 import { expect, test } from "./fixtures";
-import { clearRateLimit, createVerifiedUser, login, sql } from "./helpers";
+import {
+  clearRateLimit,
+  clearSeedMedia,
+  createVerifiedUser,
+  login,
+  seedMedia,
+  sql,
+} from "./helpers";
 
 // Mismas razones que auth.spec: un solo usuario a la vez y los límites de intentos son por IP.
 test.describe.configure({ mode: "serial" });
@@ -15,6 +22,7 @@ test.beforeEach(async ({ page, context }) => {
   // Los tests parten de una biblioteca sin la imagen de prueba (la deduplicación la detectaría).
   await sql("delete from post where slug = $1", [POST]);
   await sql("delete from media where original_name = 'imagen.png'");
+  await clearSeedMedia();
 
   otras404 = [];
   esperadas404 = 0;
@@ -35,6 +43,7 @@ test.beforeEach(async ({ page, context }) => {
 });
 
 test.afterEach(async ({ consoleErrors }) => {
+  await clearSeedMedia();
   expect(otras404, "404 inesperados").toEqual([]);
   if (esperadas404) {
     for (let i = consoleErrors.length - 1; i >= 0; i--) {
@@ -161,4 +170,62 @@ test("/admin tiene un enlace a Medios", async ({ page }) => {
   await page.getByRole("link", { name: "Medios" }).click();
   await expect(page).toHaveURL(/\/admin\/medios$/);
   await expect(page.getByRole("heading", { name: "Medios" })).toBeVisible();
+});
+
+test.describe("paginación con 30 imágenes", () => {
+  test.beforeEach(async ({ page }) => {
+    await seedMedia(30);
+    await page.reload();
+    await expect(cards(page)).toHaveCount(24);
+    await expect(page.getByText("30 imágenes", { exact: true })).toBeVisible();
+  });
+
+  const cargarMas = async (page: import("@playwright/test").Page) => {
+    await page.getByRole("button", { name: "Cargar más" }).click();
+    await expect(cards(page)).toHaveCount(30);
+    await expect(page.getByRole("button", { name: "Cargar más" })).toHaveCount(0);
+  };
+
+  test("Cargar más deja 30 tarjetas y el botón desaparece", async ({ page }) => {
+    await cargarMas(page);
+    await expect(page.getByText("30 imágenes", { exact: true })).toBeVisible();
+  });
+
+  test("borrar una imagen de la segunda tanda la saca y conserva las demás", async ({ page }) => {
+    await cargarMas(page);
+    const card = cards(page).filter({ hasText: "Semilla 30" });
+    await card.getByRole("button", { name: "Borrar" }).click();
+    await card.getByRole("button", { name: "Sí" }).click();
+    await expect(cards(page)).toHaveCount(29);
+    await expect(page.getByText("29 imágenes", { exact: true })).toBeVisible();
+    await expect(cards(page).filter({ hasText: "Semilla 30" })).toHaveCount(0);
+    await expect(cards(page).filter({ hasText: "Semilla 01" })).toHaveCount(1);
+  });
+
+  test("subir una imagen nueva vuelve a la primera página", async ({ page }) => {
+    await cargarMas(page);
+    await subir(page, "Imagen nueva");
+    await expect(page.getByText("Imagen subida.")).toBeVisible();
+    await expect(cards(page)).toHaveCount(24);
+    await expect(cards(page).first()).toContainText("Imagen nueva");
+    await expect(page.getByText("31 imágenes", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Cargar más" })).toBeVisible();
+  });
+
+  test("editar el alt de la segunda tanda lo muestra sin recargar y persiste", async ({ page }) => {
+    await cargarMas(page);
+    const card = cards(page).nth(29); // "Semilla 30": al editar, el alt pasa a un input y deja de ser texto
+    await expect(card).toContainText("Semilla 30");
+    await card.getByRole("button", { name: "Editar alt" }).click();
+    await card.getByLabel("Texto alternativo").fill("Alt de la segunda tanda");
+    await card.getByRole("button", { name: "Guardar" }).click();
+    await expect(cards(page).filter({ hasText: "Alt de la segunda tanda" })).toHaveCount(1);
+    await expect(cards(page)).toHaveCount(30);
+
+    await page.reload();
+    await expect(cards(page)).toHaveCount(24);
+    await page.getByRole("button", { name: "Cargar más" }).click();
+    await expect(cards(page)).toHaveCount(30);
+    await expect(cards(page).filter({ hasText: "Alt de la segunda tanda" })).toHaveCount(1);
+  });
 });

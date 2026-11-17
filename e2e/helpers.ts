@@ -1,4 +1,6 @@
 import { expect, type Page } from "@playwright/test";
+import { copyFile, mkdir, rm } from "node:fs/promises";
+import path from "node:path";
 import { Client } from "pg";
 
 try {
@@ -66,4 +68,35 @@ export async function mailCount(to: string, subject: string) {
   const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${to}"`)}`);
   const { messages } = (await res.json()) as { messages: Message[] };
   return messages.filter((m) => m.Subject === subject).length;
+}
+
+const mediaDir = () =>
+  path.resolve(process.cwd(), process.env.MEDIA_DIR || "storage/media");
+
+// Inserta n imágenes con SQL (más rápido que subirlas por la UI), de "Semilla 01" la más nueva
+// en adelante, con created_at separado por un segundo y una hora antes de ahora para que
+// una imagen subida después quede primera. Copia el WebP de fixture a MEDIA_DIR para cada fila.
+export async function seedMedia(n: number) {
+  const rows = await sql<{ id: string }>(
+    `insert into media (id, sha256, alt, width, height, bytes, original_name, created_at)
+     select gen_random_uuid()::text, 'seed-' || gen_random_uuid()::text,
+            'Semilla ' || lpad(i::text, 2, '0'), 64, 48, 1000,
+            'seed-' || i || '.webp',
+            now() - interval '1 hour' - (i * interval '1 second')
+     from generate_series(1, $1::int) i
+     returning id`,
+    [n],
+  );
+  await mkdir(mediaDir(), { recursive: true });
+  for (const { id } of rows) {
+    await copyFile("e2e/fixtures/imagen.webp", path.join(mediaDir(), `${id}.webp`));
+  }
+  return rows.map((r) => r.id);
+}
+
+export async function clearSeedMedia() {
+  const rows = await sql<{ id: string }>(
+    "delete from media where original_name like 'seed-%' returning id",
+  );
+  for (const { id } of rows) await rm(path.join(mediaDir(), `${id}.webp`), { force: true });
 }
