@@ -254,10 +254,10 @@ test("perfil y admin: sin sesión, con cookie inventada, lector y admin", async 
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "Inicio" })).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
-  await page.goto("/admin/usuarios");
+  await page.goto("/admin/users");
   await expect(page.getByRole("cell", { name: email })).toBeVisible();
   await expect(page.getByRole("cell", { name, exact: true }).first()).toBeVisible();
-  const html = await (await page.request.get("/admin/usuarios")).text();
+  const html = await (await page.request.get("/admin/users")).text();
   expect(html).not.toMatch(/hash|session_token|"password"/i);
 });
 
@@ -268,7 +268,7 @@ test("las páginas nuevas no tienen scroll horizontal a 375px", async ({ page })
   await login(page, email);
   await expect(page).toHaveURL(/\/cuenta\/perfil$/);
 
-  for (const ruta of ["/cuenta/perfil", "/admin", "/admin/articulos", "/admin/medios", "/admin/usuarios", "/cuenta/verificar", "/cuenta/nueva-contrasena?token=x"]) {
+  for (const ruta of ["/cuenta/perfil", "/admin", "/admin/articles", "/admin/media", "/admin/users", "/cuenta/verificar", "/cuenta/nueva-contrasena?token=x"]) {
     await page.goto(ruta);
     await page.waitForLoadState("networkidle");
     const overflow = await page.evaluate(

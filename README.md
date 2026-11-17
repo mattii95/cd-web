@@ -60,7 +60,7 @@ Post tags (`tag`, `post_tag`) are also loaded only by this seed, from `blogTags`
 
 ## Blog images
 
-Admins upload images at `/admin/medios`. Each upload is re-encoded to WebP (1920 px wide at most, no EXIF or GPS data) with `sharp`, and the file is saved to `MEDIA_DIR` as `<id>.webp`. The database keeps one row per image in `media`. Posts store the image `id`, and `/media/<id>` serves the file.
+Admins upload images at `/admin/media`. Each upload is re-encoded to WebP (1920 px wide at most, no EXIF or GPS data) with `sharp`, and the file is saved to `MEDIA_DIR` as `<id>.webp`. The database keeps one row per image in `media`. Posts store the image `id`, and `/media/<id>` serves the file.
 
 - `MEDIA_DIR`: folder for the files. Default `storage/media` (relative to the repo root, ignored by git). Use `test-results/media` in `.env.test.local` and in CI.
 - **The folder must be persistent.** Mount it as a volume in production. Back it up together with the database: a row without its file answers 404 and logs `console.error`.

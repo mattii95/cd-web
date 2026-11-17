@@ -3,7 +3,7 @@ import { Article, Home, Photos, Users } from "@/components/icons";
 
 export type AdminNavItem = {
   label: string;
-  href: "/admin" | "/admin/articulos" | "/admin/medios" | "/admin/usuarios";
+  href: "/admin" | "/admin/articles" | "/admin/media" | "/admin/users";
   icon: (props: { className?: string }) => ReactNode;
   exact?: boolean; // true solo en Inicio
 };
@@ -14,13 +14,13 @@ export const adminNav: AdminNavGroup[] = [
   {
     label: "Contenido del blog",
     items: [
-      { label: "Artículos", href: "/admin/articulos", icon: Article },
-      { label: "Medios", href: "/admin/medios", icon: Photos },
+      { label: "Artículos", href: "/admin/articles", icon: Article },
+      { label: "Medios", href: "/admin/media", icon: Photos },
     ],
   },
   {
     label: "Administración",
-    items: [{ label: "Usuarios", href: "/admin/usuarios", icon: Users }],
+    items: [{ label: "Usuarios", href: "/admin/users", icon: Users }],
   },
 ];
 

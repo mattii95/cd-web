@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import type { FormState } from "@/actions/cuenta";
 import { Spinner } from "@/components/icons";
 import { notify } from "@/components/admin/toast";
-import { uploadMediaAction } from "@/actions/admin/medios";
+import { uploadMediaAction } from "@/actions/admin/media";
 
 const field =
   "min-h-12 w-full rounded-xl border border-cms-control bg-cms-panel px-3.5 py-3 text-[15px] text-cms-ink placeholder:text-cms-muted";

@@ -1,18 +1,19 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { CardItem } from "@/app/(admin)/admin/medios/card-item";
-import { MediaGrid } from "@/app/(admin)/admin/medios/media-grid";
+import type { CardItem } from "@/app/(admin)/admin/media/card-item";
+import { MediaGrid } from "@/app/(admin)/admin/media/media-grid";
 import { AdminToaster } from "@/components/admin/toast";
 
-const { loadMoreMediaAction } = vi.hoisted(() => ({
+const { loadMoreMediaAction, deleteMediaAction } = vi.hoisted(() => ({
   loadMoreMediaAction: vi.fn(),
+  deleteMediaAction: vi.fn(),
 }));
 
-vi.mock("@/actions/admin/medios", () => ({
+vi.mock("@/actions/admin/media", () => ({
   loadMoreMediaAction,
   updateMediaAltAction: vi.fn(),
-  deleteMediaAction: vi.fn(),
+  deleteMediaAction,
 }));
 
 const card = (n: number): CardItem => ({
@@ -30,7 +31,10 @@ const cards = (from: number, to: number) =>
   Array.from({ length: to - from + 1 }, (_, i) => card(from + i));
 
 describe("MediaGrid", () => {
-  beforeEach(() => loadMoreMediaAction.mockReset());
+  beforeEach(() => {
+    loadMoreMediaAction.mockReset();
+    deleteMediaAction.mockReset();
+  });
 
   it("sin nextCursor no muestra Cargar más y cuenta el total real", () => {
     render(
@@ -135,5 +139,28 @@ describe("MediaGrid", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cargar más" })).toBeEnabled();
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("el ícono Borrar abre el modal; Cancelar no borra y Borrar sí", async () => {
+    const user = userEvent.setup();
+    deleteMediaAction.mockResolvedValue({ status: "success", message: "Imagen borrada." });
+    render(
+      <MediaGrid initialItems={cards(1, 2)} initialCursor={null} initialTotal={2} />,
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    await user.click(screen.getAllByRole("button", { name: "Borrar" })[0]);
+    const dialog = screen.getByRole("dialog", { name: "¿Borrar la imagen?" });
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    expect(deleteMediaAction).not.toHaveBeenCalled();
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+
+    await user.click(screen.getAllByRole("button", { name: "Borrar" })[0]);
+    await user.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "Borrar" }),
+    );
+    await waitFor(() => expect(deleteMediaAction).toHaveBeenCalledTimes(1));
+    expect(deleteMediaAction.mock.calls[0][1].get("id")).toBe("id-1");
+    await waitFor(() => expect(screen.getAllByRole("listitem")).toHaveLength(1));
   });
 });

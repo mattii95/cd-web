@@ -38,7 +38,7 @@ describe("resolveAfterLogin", () => {
     ["URL absoluta", "https://otro.com"],
     ["URL sin protocolo", "//otro.com"],
     ["mayúsculas", "/blog/Mayus"],
-    ["subruta de admin", "/admin/usuarios"],
+    ["subruta de admin", "/admin/users"],
   ])("devuelve /cuenta/perfil para %s", (_caso, volver) => {
     expect(resolveAfterLogin(volver)).toBe("/cuenta/perfil");
   });
