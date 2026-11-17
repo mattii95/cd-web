@@ -1,6 +1,6 @@
 # SPEC 14 — Comunidad del blog: valorar, comentar, votar y responder
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 07, SPEC 09, SPEC 12, SPEC 13
 > **Fecha:** 2026-11-17
 > **Objetivo:** Que un lector con sesión pueda valorar, comentar, votar "Útil" y revisar o borrar sus comentarios desde su perfil, y que el autor del post pueda responder, todo guardado en la base.
