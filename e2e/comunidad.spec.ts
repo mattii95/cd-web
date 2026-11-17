@@ -1,10 +1,10 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import { E2E_AUTHOR } from "./global-setup";
 import {
   PASSWORD,
   clearRateLimit,
   createVerifiedUser,
-  login,
   sql,
   uniqueEmail,
 } from "./helpers";
@@ -43,24 +43,31 @@ test.afterEach(async ({ consoleErrors }) => {
   }
 });
 
-async function entrar(
-  page: import("@playwright/test").Page,
-  volver: string,
-  name: string,
-) {
-  const { email } = await createVerifiedUser(uniqueEmail(USER_PREFIX), name);
-  await login(page, email, PASSWORD, volver);
-  await expect(page).toHaveURL(new RegExp(volver.replace(/[/#]/g, "\\$&")));
-  // Los campos son controlados: si se tipea antes de hidratar, React los vacía.
+// Como el helper `login`, pero espera a que el formulario hidrate: si se envía antes,
+// el submit nativo pierde `volver` y termina en /cuenta/perfil.
+async function ingresar(page: Page, email: string, volver: string) {
+  await page.goto(`/cuenta/login?volver=${encodeURIComponent(volver)}`);
   await page.waitForLoadState("networkidle");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
+  await page.getByRole("button", { name: "Ingresar" }).click();
+  await expect(page).toHaveURL(new RegExp(volver.replace(/[/#]/g, "\\$&")));
+  // Los campos del artículo también son controlados.
+  await page.waitForLoadState("networkidle");
+}
+
+async function entrar(page: Page, volver: string, name: string) {
+  const { email } = await createVerifiedUser(uniqueEmail(USER_PREFIX), name);
+  await ingresar(page, email, volver);
   return email;
 }
 
-const comentario = (page: import("@playwright/test").Page, texto: string) =>
+const comentario = (page: Page, texto: string) =>
   page.getByRole("listitem").filter({ hasText: texto });
 
 test("un lector valora, comenta, vota Útil y borra su comentario", async ({
   page,
+  browser,
 }) => {
   const email = await entrar(page, `/blog/${SLUG}`, "Beto Comunidad");
   const main = page.getByRole("main");
@@ -98,6 +105,15 @@ test("un lector valora, comenta, vota Útil y borra su comentario", async ({
   await expect(comentario(page, texto).getByText("En revisión")).toBeVisible();
   await page.reload();
   await expect(comentario(page, texto).getByText("En revisión")).toBeVisible();
+  // Quien no tiene sesión no ve el comentario pendiente.
+  const anonimo = await browser.newContext();
+  const anon = await anonimo.newPage();
+  await anon.goto(`/blog/${SLUG}`);
+  await expect(
+    anon.getByRole("heading", { name: "Valoraciones y comentarios" }),
+  ).toBeVisible();
+  await expect(anon.getByText(texto)).toHaveCount(0);
+  await anonimo.close();
 
   // Útil en el comentario de Lucía: toggle con aria-pressed, que sobrevive a la recarga.
   const lucia = comentario(page, "Lucía Fernández");
@@ -108,11 +124,19 @@ test("un lector valora, comenta, vota Útil y borra su comentario", async ({
   await expect(
     lucia.getByRole("button", { name: `Útil · ${base + 1}` }),
   ).toHaveAttribute("aria-pressed", "true");
+  // El cambio de la UI es optimista: se espera el voto en la base antes de recargar.
+  const votos = () =>
+    sql<{ n: string }>(
+      `select count(*)::text n from comment_vote where user_id = (select id from "user" where email = $1)`,
+      [email],
+    ).then(([r]) => Number(r.n));
+  await expect.poll(votos).toBe(1);
   await page.reload();
   await expect(util).toHaveAttribute("aria-pressed", "true");
   // Se quita el voto: el borrado de abajo refresca la caché y no debe dejar el voto contado.
   await util.click();
   await expect(util).toHaveAttribute("aria-pressed", "false");
+  await expect.poll(votos).toBe(0);
   await expect(util).toHaveText(`Útil · ${base}`);
 
   // Borrar con confirmación inline.
@@ -192,9 +216,7 @@ test("el autor del post responde, edita y borra la respuesta", async ({
     [id, E2E_AUTHOR, texto],
   );
 
-  await login(page, email, PASSWORD, `/blog/${slug}`);
-  await expect(page).toHaveURL(new RegExp(slug));
-  await page.waitForLoadState("networkidle");
+  await ingresar(page, email, `/blog/${slug}`);
   const item = comentario(page, texto);
   const area = item.getByRole("textbox", { name: "Escribí una respuesta" });
 
@@ -215,4 +237,60 @@ test("el autor del post responde, edita y borra la respuesta", async ({
   await item.getByRole("button", { name: "Sí, borrar" }).click();
   await expect(item.getByText("Respuesta editada")).toHaveCount(0);
   await expect(item.getByRole("button", { name: "Responder" })).toBeVisible();
+});
+
+test("Mis comentarios pagina de a 20 y borrar uno publicado lo saca del artículo", async ({
+  page,
+}) => {
+  const email = await entrar(page, "/cuenta/perfil", "Carla Comunidad");
+  const slug = `${PREFIX}perfil`;
+  const [{ id }] = await sql<{ id: string }>(
+    `insert into post (id, slug, title, excerpt, body, cta, reading_minutes, category_id, author_id, status, published_at)
+     values (gen_random_uuid()::text, $1, $1, 'extracto', '[{"type":"p","text":"texto"}]'::jsonb, 'cta', 3,
+             (select id from category where slug = 'sistemas'), (select id from "user" where email = $2),
+             'publicado', make_timestamp(2026, 11, 12, 12, 0, 0))
+     returning id`,
+    [slug, E2E_AUTHOR],
+  );
+  await sql(
+    `insert into comment (id, post_id, user_id, text, status, created_at)
+     select gen_random_uuid()::text, $1, (select id from "user" where email = $2),
+            'Comentario perfil ' || lpad(i::text, 2, '0'), 'aprobado',
+            make_timestamp(2026, 11, 16, 12, 0, 0) - (i * interval '1 minute')
+     from generate_series(1, 25) i`,
+    [id, email],
+  );
+  // Se visita el artículo antes para que quede en la caché pública.
+  await page.goto(`/blog/${slug}`);
+  await expect(
+    page.getByText("Comentario perfil 01", { exact: true }),
+  ).toBeVisible();
+
+  await page.goto("/cuenta/perfil");
+  await page.waitForLoadState("networkidle");
+  const main = page.getByRole("main");
+  const filas = main.getByText(/^Comentario perfil \d\d$/);
+  await expect(filas).toHaveCount(20);
+  await main.getByRole("button", { name: "Ver más comentarios" }).click();
+  await expect(filas).toHaveCount(25);
+  await expect(
+    main.getByRole("button", { name: "Ver más comentarios" }),
+  ).toHaveCount(0);
+
+  const item = comentario(page, "Comentario perfil 01");
+  await expect(item.getByText("Publicado")).toBeVisible();
+  await item.getByRole("button", { name: "Borrar" }).click();
+  await item.getByRole("button", { name: "Sí, borrar" }).click();
+  await expect(filas).toHaveCount(24);
+
+  await page.goto(`/blog/${slug}`);
+  await expect(
+    page.getByRole("heading", { name: "Valoraciones y comentarios" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Comentario perfil 01", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Comentario perfil 02", { exact: true }),
+  ).toBeVisible();
 });

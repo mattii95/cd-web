@@ -256,57 +256,57 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado, incluidos los tests de SPEC 07 a 13.
-- [ ] `npm run test:e2e` pasa, incluidos `blog.spec.ts` y `auth.spec.ts`.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado, incluidos los tests de SPEC 07 a 13.
+- [x] `npm run test:e2e` pasa, incluidos `blog.spec.ts` y `auth.spec.ts`.
 - [ ] Los jobs `checks`, `db` y `e2e` del CI pasan en un PR a `main`.
-- [ ] No hay migraciones nuevas: `npm run db:generate` no crea archivos.
-- [ ] `upsertRating` dos veces con el mismo usuario y post deja una sola fila con el último valor.
-- [ ] `upsertRating` sobre un post `borrador` devuelve `false` y no inserta.
-- [ ] `createComment` guarda el comentario `pendiente`, con el texto sin espacios al principio ni al final.
-- [ ] `deleteOwnComment` de un comentario ajeno devuelve `null` y no borra.
-- [ ] `deleteOwnComment` borra también los votos de ese comentario.
-- [ ] `toggleVote` dos veces deja el comentario sin el voto y devuelve `usefulCount` igual al inicial.
-- [ ] `toggleVote` sobre un comentario propio o `pendiente` devuelve `null`.
-- [ ] `saveReply` de un usuario que no es el autor del post devuelve `null` y no escribe.
-- [ ] `saveReply` sobre un comentario con respuesta la reemplaza y actualiza `replied_at`.
-- [ ] `deleteReply` deja `reply_text` y `replied_at` en `null`.
-- [ ] `getViewerState` devuelve la valoración, los votos, los aprobados propios y los pendientes propios del usuario, y nada de otros usuarios ni de otros posts.
-- [ ] `getViewerState` devuelve `isPostAuthor: true` solo para el autor del post.
-- [ ] Toda acción sin sesión devuelve `{ status: "error", message: "Iniciá sesión para continuar." }` y no escribe.
-- [ ] `createCommentAction` con `" a "` o con 2001 caracteres devuelve el error de largo.
-- [ ] El sexto `createCommentAction` del mismo usuario en 10 minutos devuelve el error de límite y no inserta.
-- [ ] `rateAction(postId, 6)` y `rateAction("basura", 5)` devuelven error y no lanzan.
-- [ ] `rateAction`, `deleteCommentAction`, `saveReplyAction` y `deleteReplyAction` llaman a `updateTag("comments:<postId>")`.
-- [ ] `createCommentAction` y `toggleVoteAction` no llaman a `updateTag`.
-- [ ] Sin sesión, el artículo muestra "Iniciá sesión para comentar y puntuar", "Útil" lleva a `/cuenta/login?volver=/blog/<slug>` y no hay "Responder".
-- [ ] Con sesión, el artículo muestra "Tu valoración" con la valoración guardada marcada.
-- [ ] Elegir 4 estrellas en `senales-sistema-a-medida` con un usuario nuevo cambia el total a 25 al recargar.
-- [ ] "Publicar" está deshabilitado con el `textarea` vacío o con un solo carácter.
-- [ ] Publicar un comentario lo muestra arriba con "En revisión", y sigue ahí al recargar.
-- [ ] Otro usuario, o alguien sin sesión, no ve ese comentario pendiente.
-- [ ] "Borrar" pide confirmación inline, y "Sí, borrar" quita el comentario, que no vuelve al recargar.
-- [ ] Votar "Útil" en el comentario de Lucía cambia "Útil · 12" a "Útil · 13" con `aria-pressed="true"`, y al recargar sigue marcado.
-- [ ] En sus propios comentarios aprobados, el lector ve "Útil · N" como texto y no como botón.
-- [ ] El autor del post ve "Responder" en los aprobados sin respuesta, y publicar una respuesta la muestra con el badge "Autor".
-- [ ] Un lector que no es el autor del post no ve "Responder", "Editar" ni "Borrar" en las respuestas.
-- [ ] `ReviewsSection`: si una acción devuelve error, se muestra su mensaje en un `role="status"` y el control vuelve a su estado anterior.
-- [ ] `deleteOwnComment` borra un comentario propio `oculto`.
-- [ ] `getUserComments` devuelve los comentarios del usuario en los tres estados y en varios posts, ordenados por `createdAt` descendente, y ninguno de otro usuario.
-- [ ] Recorrer `getUserComments(userId, { limit: 2 })` con cursor devuelve cada comentario una sola vez.
-- [ ] `getUserComments` marca `post.published: false` en un comentario de un post `borrador`.
-- [ ] `loadMoreUserCommentsAction` sin sesión devuelve "Iniciá sesión para continuar.", y con un cursor inválido devuelve error y no lanza.
-- [ ] `/cuenta/perfil` muestra "Mis comentarios" con los badges "En revisión", "Publicado" y "Oculto" según el estado de cada comentario.
-- [ ] En "Mis comentarios", el título de un post publicado enlaza a `/blog/<slug>#valoraciones`, y el de un post `borrador` no es un enlace.
-- [ ] Un comentario con respuesta muestra "Respuesta del autor" con el texto y la fecha de la respuesta.
-- [ ] Con 25 comentarios, "Mis comentarios" muestra 20 y "Ver más comentarios", y al hacer clic muestra 25 y el botón desaparece.
-- [ ] Borrar desde "Mis comentarios" pide confirmación inline, quita el comentario de la lista y, si estaba publicado, deja de verse en el artículo al recargar.
-- [ ] Un usuario sin comentarios ve "Todavía no comentaste ningún artículo." y el enlace "Ir al blog".
-- [ ] `e2e/comunidad.spec.ts`: un usuario verificado valora, comenta, ve "En revisión", vota "Útil" y borra su comentario.
-- [ ] `e2e/comunidad.spec.ts`: un usuario verificado comenta, ve el comentario "En revisión" en `/cuenta/perfil` y lo borra desde ahí.
-- [ ] `e2e/comunidad.spec.ts`: un usuario verificado, autor de un post publicado y de un comentario aprobado creados por SQL en el test, responde, edita y borra la respuesta.
+- [x] No hay migraciones nuevas: `npm run db:generate` no crea archivos.
+- [x] `upsertRating` dos veces con el mismo usuario y post deja una sola fila con el último valor.
+- [x] `upsertRating` sobre un post `borrador` devuelve `false` y no inserta.
+- [x] `createComment` guarda el comentario `pendiente`, con el texto sin espacios al principio ni al final.
+- [x] `deleteOwnComment` de un comentario ajeno devuelve `null` y no borra.
+- [x] `deleteOwnComment` borra también los votos de ese comentario.
+- [x] `toggleVote` dos veces deja el comentario sin el voto y devuelve `usefulCount` igual al inicial.
+- [x] `toggleVote` sobre un comentario propio o `pendiente` devuelve `null`.
+- [x] `saveReply` de un usuario que no es el autor del post devuelve `null` y no escribe.
+- [x] `saveReply` sobre un comentario con respuesta la reemplaza y actualiza `replied_at`.
+- [x] `deleteReply` deja `reply_text` y `replied_at` en `null`.
+- [x] `getViewerState` devuelve la valoración, los votos, los aprobados propios y los pendientes propios del usuario, y nada de otros usuarios ni de otros posts.
+- [x] `getViewerState` devuelve `isPostAuthor: true` solo para el autor del post.
+- [x] Toda acción sin sesión devuelve `{ status: "error", message: "Iniciá sesión para continuar." }` y no escribe.
+- [x] `createCommentAction` con `" a "` o con 2001 caracteres devuelve el error de largo.
+- [x] El sexto `createCommentAction` del mismo usuario en 10 minutos devuelve el error de límite y no inserta.
+- [x] `rateAction(postId, 6)` y `rateAction("basura", 5)` devuelven error y no lanzan.
+- [x] `rateAction`, `deleteCommentAction`, `saveReplyAction` y `deleteReplyAction` llaman a `updateTag("comments:<postId>")`.
+- [x] `createCommentAction` y `toggleVoteAction` no llaman a `updateTag`.
+- [x] Sin sesión, el artículo muestra "Iniciá sesión para comentar y puntuar", "Útil" lleva a `/cuenta/login?volver=/blog/<slug>` y no hay "Responder".
+- [x] Con sesión, el artículo muestra "Tu valoración" con la valoración guardada marcada.
+- [x] Elegir 4 estrellas en `senales-sistema-a-medida` con un usuario nuevo cambia el total a 25 al recargar.
+- [x] "Publicar" está deshabilitado con el `textarea` vacío o con un solo carácter.
+- [x] Publicar un comentario lo muestra arriba con "En revisión", y sigue ahí al recargar.
+- [x] Otro usuario, o alguien sin sesión, no ve ese comentario pendiente.
+- [x] "Borrar" pide confirmación inline, y "Sí, borrar" quita el comentario, que no vuelve al recargar.
+- [x] Votar "Útil" en el comentario de Lucía cambia "Útil · 12" a "Útil · 13" con `aria-pressed="true"`, y al recargar sigue marcado.
+- [x] En sus propios comentarios aprobados, el lector ve "Útil · N" como texto y no como botón.
+- [x] El autor del post ve "Responder" en los aprobados sin respuesta, y publicar una respuesta la muestra con el badge "Autor".
+- [x] Un lector que no es el autor del post no ve "Responder", "Editar" ni "Borrar" en las respuestas.
+- [x] `ReviewsSection`: si una acción devuelve error, se muestra su mensaje en un `role="status"` y el control vuelve a su estado anterior.
+- [x] `deleteOwnComment` borra un comentario propio `oculto`.
+- [x] `getUserComments` devuelve los comentarios del usuario en los tres estados y en varios posts, ordenados por `createdAt` descendente, y ninguno de otro usuario.
+- [x] Recorrer `getUserComments(userId, { limit: 2 })` con cursor devuelve cada comentario una sola vez.
+- [x] `getUserComments` marca `post.published: false` en un comentario de un post `borrador`.
+- [x] `loadMoreUserCommentsAction` sin sesión devuelve "Iniciá sesión para continuar.", y con un cursor inválido devuelve error y no lanza.
+- [x] `/cuenta/perfil` muestra "Mis comentarios" con los badges "En revisión", "Publicado" y "Oculto" según el estado de cada comentario.
+- [x] En "Mis comentarios", el título de un post publicado enlaza a `/blog/<slug>#valoraciones`, y el de un post `borrador` no es un enlace.
+- [x] Un comentario con respuesta muestra "Respuesta del autor" con el texto y la fecha de la respuesta.
+- [x] Con 25 comentarios, "Mis comentarios" muestra 20 y "Ver más comentarios", y al hacer clic muestra 25 y el botón desaparece.
+- [x] Borrar desde "Mis comentarios" pide confirmación inline, quita el comentario de la lista y, si estaba publicado, deja de verse en el artículo al recargar.
+- [x] Un usuario sin comentarios ve "Todavía no comentaste ningún artículo." y el enlace "Ir al blog".
+- [x] `e2e/comunidad.spec.ts`: un usuario verificado valora, comenta, ve "En revisión", vota "Útil" y borra su comentario.
+- [x] `e2e/comunidad.spec.ts`: un usuario verificado comenta, ve el comentario "En revisión" en `/cuenta/perfil` y lo borra desde ahí.
+- [x] `e2e/comunidad.spec.ts`: un usuario verificado, autor de un post publicado y de un comentario aprobado creados por SQL en el test, responde, edita y borra la respuesta.
 
 ## Decisiones
 
