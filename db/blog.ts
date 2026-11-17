@@ -8,6 +8,13 @@ import type {
   BlogTag,
   BlogTagSlug,
 } from "@/lib/blog-posts";
+import {
+  decodeCursor,
+  encodeCursor,
+  type Page,
+  type PageParams,
+  resolveLimit,
+} from "@/lib/pagination";
 import type { ServiceSlug } from "@/lib/services";
 import { blogBodySchema, type StoredBlogBlock } from "./blog-body";
 import { getDb } from "./client";
@@ -86,6 +93,7 @@ function selectPublished() {
   return getDb()
     .select({
       post,
+      publishedAtText: sql<string>`${post.publishedAt}::text`, // cursor: conserva los microsegundos
       category,
       cover: media,
       authorName: user.name,
@@ -176,12 +184,35 @@ async function resolveBody(
   });
 }
 
-export async function getPublishedPosts(): Promise<PostSummary[]> {
+export async function getPublishedPosts(
+  params: PageParams = {},
+): Promise<Page<PostSummary>> {
+  const limit = resolveLimit(params.limit, 12);
+  const cursor = params.cursor ? decodeCursor(params.cursor) : null;
   const rows = await selectPublished()
-    .where(eq(post.status, "publicado"))
-    .orderBy(desc(post.publishedAt));
-  const tagsByPost = await getTagsByPost(rows.map((r) => r.post.id));
-  return rows.map((r) => toSummary(r, tagsByPost.get(r.post.id) ?? []));
+    .where(
+      and(
+        eq(post.status, "publicado"),
+        cursor
+          ? sql`(${post.publishedAt}, ${post.id}) < (${cursor.t}::timestamp, ${cursor.id})`
+          : undefined,
+      ),
+    )
+    .orderBy(desc(post.publishedAt), desc(post.id))
+    .limit(limit + 1);
+
+  const page = rows.slice(0, limit);
+  const last = page[page.length - 1];
+  const nextCursor =
+    rows.length > limit
+      ? encodeCursor({ t: last.publishedAtText, id: last.post.id })
+      : null;
+
+  const tagsByPost = await getTagsByPost(page.map((r) => r.post.id));
+  return {
+    items: page.map((r) => toSummary(r, tagsByPost.get(r.post.id) ?? [])),
+    nextCursor,
+  };
 }
 
 // Etiquetas con al menos un post publicado, por cantidad descendente y slug ascendente.
@@ -251,7 +282,10 @@ export async function getRatingSummary(postId: string): Promise<RatingSummary> {
 
 export async function getApprovedComments(
   postId: string,
-): Promise<PublicComment[]> {
+  params: PageParams = {},
+): Promise<Page<PublicComment>> {
+  const limit = resolveLimit(params.limit, 20);
+  const cursor = params.cursor ? decodeCursor(params.cursor) : null;
   const rows = await getDb()
     .select({
       id: comment.id,
@@ -261,6 +295,7 @@ export async function getApprovedComments(
       text: comment.text,
       usefulCount: sql<number>`(select count(*)::int from ${commentVote} where ${commentVote.commentId} = ${comment.id})`,
       createdAt: comment.createdAt,
+      createdAtText: sql<string>`${comment.createdAt}::text`, // cursor: conserva los microsegundos
       replyText: comment.replyText,
       repliedAt: comment.repliedAt,
     })
@@ -273,20 +308,39 @@ export async function getApprovedComments(
         eq(postRating.userId, comment.userId),
       ),
     )
-    .where(and(eq(comment.postId, postId), eq(comment.status, "aprobado")))
-    .orderBy(desc(comment.createdAt));
+    .where(
+      and(
+        eq(comment.postId, postId),
+        eq(comment.status, "aprobado"),
+        cursor
+          ? sql`(${comment.createdAt}, ${comment.id}) < (${cursor.t}::timestamp, ${cursor.id})`
+          : undefined,
+      ),
+    )
+    .orderBy(desc(comment.createdAt), desc(comment.id))
+    .limit(limit + 1);
 
-  return rows.map((r) => ({
-    id: r.id,
-    authorName: r.authorName,
-    authorImage: r.authorImage,
-    rating: r.rating as BlogRating | null,
-    text: r.text,
-    usefulCount: r.usefulCount,
-    createdAt: r.createdAt,
-    reply:
-      r.replyText && r.repliedAt
-        ? { text: r.replyText, repliedAt: r.repliedAt }
-        : null,
-  }));
+  const page = rows.slice(0, limit);
+  const last = page[page.length - 1];
+  const nextCursor =
+    rows.length > limit
+      ? encodeCursor({ t: last.createdAtText, id: last.id })
+      : null;
+
+  return {
+    items: page.map((r) => ({
+      id: r.id,
+      authorName: r.authorName,
+      authorImage: r.authorImage,
+      rating: r.rating as BlogRating | null,
+      text: r.text,
+      usefulCount: r.usefulCount,
+      createdAt: r.createdAt,
+      reply:
+        r.replyText && r.repliedAt
+          ? { text: r.replyText, repliedAt: r.repliedAt }
+          : null,
+    })),
+    nextCursor,
+  };
 }

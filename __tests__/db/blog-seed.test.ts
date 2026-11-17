@@ -88,7 +88,7 @@ describe("seedBlog", () => {
       "saas",
       "ia",
     ]);
-    const posts = await getPublishedPosts();
+    const { items: posts } = await getPublishedPosts();
     expect(posts.map((p) => p.slug)).toEqual(blogPosts.map((p) => p.slug));
     expect(posts[0].author).toMatchObject({
       name: "autor",
@@ -99,14 +99,14 @@ describe("seedBlog", () => {
   it("carga valoraciones, comentarios, votos y respuestas del mock", async () => {
     const db = getDb();
     await seedBlog(db, { authorEmail: AUTOR });
-    const p = (await getPublishedPosts()).find((x) => x.slug === SLUG)!;
+    const p = (await getPublishedPosts({ limit: 100 })).items.find((x) => x.slug === SLUG)!;
 
     const summary = await getRatingSummary(p.id);
     expect(summary.total).toBe(24);
     expect(summary.distribution).toEqual({ 1: 0, 2: 1, 3: 1, 4: 4, 5: 18 });
     expect(summary.average.toFixed(1)).toBe("4.6");
 
-    const comments = await getApprovedComments(p.id);
+    const { items: comments } = await getApprovedComments(p.id);
     expect(comments.map((c) => c.authorName)).toEqual([
       "Lucía Fernández",
       "Martín Gómez",

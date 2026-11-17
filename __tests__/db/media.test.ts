@@ -1,11 +1,13 @@
 import { mkdtemp, readdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import { Pool } from "pg";
 import sharp from "sharp";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { closeDb, getDb } from "@/db/client";
 import {
+  countMedia,
   createMedia,
   deleteMedia,
   getMediaUsage,
@@ -14,6 +16,7 @@ import {
   MediaInUseError,
   updateMediaAlt,
 } from "@/db/media";
+import { InvalidCursorError } from "@/lib/pagination";
 import { authorProfile, category, media, post, user } from "@/db/schema";
 import {
   nuevaCategoria,
@@ -147,7 +150,7 @@ describe("listMedia y updateMediaAlt", () => {
     const a = await subir("red");
     const b = await subir("blue");
     await crearPost({ coverMediaId: a.item.id, title: "Con portada" });
-    const list = await listMedia();
+    const { items: list } = await listMedia();
     expect(list.map((m) => m.id)).toEqual([b.item.id, a.item.id]);
     expect(list[0].usage).toEqual([]);
     expect(list[1].usage.map((u) => u.title)).toEqual(["Con portada"]);
@@ -156,8 +159,154 @@ describe("listMedia y updateMediaAlt", () => {
   it("cambia el alt y rechaza uno vacío", async () => {
     const { item } = await subir("red");
     await updateMediaAlt(item.id, "Nuevo alt");
-    expect((await listMedia())[0].alt).toBe("Nuevo alt");
+    expect((await listMedia()).items[0].alt).toBe("Nuevo alt");
     await expect(updateMediaAlt(item.id, "  ")).rejects.toThrow();
+  });
+});
+
+// Inserta n filas de media con created_at separado por un segundo (la 0 es la más nueva).
+async function sembrar(n: number, mismaFecha = false) {
+  const db = getDb();
+  const ids: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const id = crypto.randomUUID();
+    ids.push(id);
+    await db.insert(media).values({
+      id,
+      sha256: `sha-${id}`,
+      alt: `Alt ${i}`,
+      width: 10,
+      height: 10,
+      bytes: 10,
+      originalName: `${i}.webp`,
+      createdAt: sql`'2026-01-01 10:00:00'::timestamp + ${mismaFecha ? 0 : i} * interval '1 second'` as never,
+    });
+  }
+  return ids;
+}
+
+async function recorrer(limit: number) {
+  const vistos: string[] = [];
+  let cursor: string | null = null;
+  do {
+    const page: Awaited<ReturnType<typeof listMedia>> = await listMedia({ limit, cursor });
+    vistos.push(...page.items.map((m) => m.id));
+    cursor = page.nextCursor;
+  } while (cursor);
+  return vistos;
+}
+
+describe("listMedia paginada", () => {
+  it("con 30 imágenes devuelve 24 y nextCursor, y luego las 6 restantes", async () => {
+    await sembrar(30);
+    const p1 = await listMedia();
+    expect(p1.items).toHaveLength(24);
+    expect(p1.nextCursor).not.toBeNull();
+    const p2 = await listMedia({ cursor: p1.nextCursor });
+    expect(p2.items).toHaveLength(6);
+    expect(p2.nextCursor).toBeNull();
+    expect(new Set([...p1.items, ...p2.items].map((m) => m.id)).size).toBe(30);
+  });
+
+  it("con el mismo created_at desempata por id descendente sin repetir", async () => {
+    const ids = await sembrar(5, true);
+    const vistos = await recorrer(2);
+    expect(vistos).toHaveLength(5);
+    expect(new Set(vistos)).toEqual(new Set(ids));
+    const rows = await getDb().execute<{ id: string }>(
+      sql`select id from media order by created_at desc, id desc`,
+    );
+    expect(vistos).toEqual(rows.rows.map((r) => r.id));
+  });
+
+  it("con fechas que difieren en microsegundos no salta ni repite", async () => {
+    const db = getDb();
+    const ids: string[] = [];
+    for (let i = 0; i < 5; i++) {
+      const id = crypto.randomUUID();
+      ids.push(id);
+      await db.insert(media).values({
+        id,
+        sha256: `sha-${id}`,
+        alt: "a",
+        width: 1,
+        height: 1,
+        bytes: 1,
+        originalName: "x.webp",
+        createdAt: sql`'2026-01-01 10:00:00.000100'::timestamp + ${i} * interval '1 microsecond'` as never,
+      });
+    }
+    const vistos = await recorrer(2);
+    expect(vistos).toEqual([...ids].reverse());
+  });
+
+  it("subir una imagen después de pedir la primera página no repite en la segunda", async () => {
+    await sembrar(5);
+    const p1 = await listMedia({ limit: 2 });
+    await subir("red");
+    const p2 = await listMedia({ limit: 2, cursor: p1.nextCursor });
+    const ids1 = p1.items.map((m) => m.id);
+    expect(p2.items.some((m) => ids1.includes(m.id))).toBe(false);
+  });
+
+  it("resuelve el uso con un número fijo de consultas", async () => {
+    await sembrar(2);
+    const spy = vi.spyOn(Pool.prototype, "query");
+    try {
+      await listMedia();
+      const con2 = spy.mock.calls.length;
+      await sembrar(22);
+      spy.mockClear();
+      expect((await listMedia()).items).toHaveLength(24);
+      expect(spy.mock.calls.length).toBe(con2);
+      expect(con2).toBe(3); // imágenes + portadas + cuerpos
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("devuelve el mismo usage que getMediaUsage", async () => {
+    const a = await subir("red");
+    const b = await subir("blue");
+    const c = await subir("green");
+    await crearPost({ coverMediaId: a.item.id, title: "Portada", slug: "portada" });
+    await crearPost({
+      status: "borrador",
+      publishedAt: null,
+      title: "Borrador",
+      slug: "borrador",
+      body: [
+        { type: "image", mediaId: b.item.id },
+        { type: "image", mediaId: b.item.id },
+      ],
+    });
+    await crearPost({
+      title: "Ambos",
+      slug: "ambos",
+      coverMediaId: b.item.id,
+      body: [{ type: "image", mediaId: b.item.id }],
+    });
+    const { items } = await listMedia();
+    expect(items).toHaveLength(3);
+    for (const item of items) {
+      expect(item.usage).toEqual(await getMediaUsage(item.id));
+    }
+    expect(items.find((m) => m.id === c.item.id)?.usage).toEqual([]);
+    expect(items.find((m) => m.id === b.item.id)?.usage).toHaveLength(3);
+  });
+
+  it("con un cursor inválido lanza InvalidCursorError", async () => {
+    await expect(listMedia({ cursor: "basura" })).rejects.toBeInstanceOf(
+      InvalidCursorError,
+    );
+  });
+});
+
+describe("countMedia", () => {
+  it("devuelve el total de filas", async () => {
+    expect(await countMedia()).toBe(0);
+    await sembrar(3);
+    expect(await countMedia()).toBe(3);
   });
 });
 
