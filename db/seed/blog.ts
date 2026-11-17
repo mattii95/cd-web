@@ -2,15 +2,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { eq, inArray } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import {
-  blogAuthor,
-  blogCategories,
-  blogPosts,
-  blogTags,
-  type BlogBlock,
-  type BlogImage,
-  type BlogRating,
-} from "@/lib/blog-posts";
+import type { BlogBlock, BlogImage, BlogRating } from "@/lib/blog-posts";
+import { blogAuthor, blogCategories, blogPosts, blogTags } from "./blog-data";
 import { processImage } from "@/lib/media/process";
 import { readMediaFile, writeMediaFile } from "@/lib/media/storage";
 import { blogBodySchema, type StoredBlogBlock } from "../blog-body";

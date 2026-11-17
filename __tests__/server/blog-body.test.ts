@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { blogBodySchema } from "@/db/blog-body";
-import { blogPosts, type BlogBlock } from "@/lib/blog-posts";
+import { blogPosts } from "@/db/seed/blog-data";
+import type { BlogBlock } from "@/lib/blog-posts";
 
 // El mock usa la forma resuelta (image); la guardada lleva mediaId.
 const toStored = (body: BlogBlock[]) =>
