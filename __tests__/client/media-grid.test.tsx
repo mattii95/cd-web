@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { CardItem } from "@/app/(site)/admin/medios/card-item";
-import { MediaGrid } from "@/app/(site)/admin/medios/media-grid";
+import type { CardItem } from "@/app/(admin)/admin/medios/card-item";
+import { MediaGrid } from "@/app/(admin)/admin/medios/media-grid";
 
 const { loadMoreMediaAction } = vi.hoisted(() => ({
   loadMoreMediaAction: vi.fn(),

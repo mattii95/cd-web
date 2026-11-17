@@ -76,6 +76,10 @@ html {
 .bg-cms-canvas :focus-visible {
   outline-color: var(--color-accent);
 }
+/* La barra lateral y el cajón son oscuros: ahí el foco sigue en accent-light */
+.bg-cms-nav :focus-visible {
+  outline-color: var(--color-accent-light);
+}
 
 body {
   background: var(--background);

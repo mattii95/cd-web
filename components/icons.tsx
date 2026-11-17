@@ -160,3 +160,20 @@ export const Clock = (p: IconProps) => (
     <path d="M12 7v5l3 2" />
   </Icon>
 );
+
+// Panel de administración (trazo del canvas "CMS Courroux Digital")
+export const Home = (p: IconProps) => (
+  <Icon size={18} strokeWidth={2} {...p}><path d="M3 11l9-8 9 8" /><path d="M5 10v10h14V10" /><path d="M10 20v-6h4v6" /></Icon>
+);
+export const Article = (p: IconProps) => (
+  <Icon size={18} strokeWidth={2} {...p}><path d="M6 3h9l4 4v14H6z" /><path d="M9 12h7M9 16h7" /></Icon>
+);
+export const Photos = (p: IconProps) => (
+  <Icon size={18} strokeWidth={2} {...p}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="m3 16 5-5 4 4 3-3 6 6" /></Icon>
+);
+export const Users = (p: IconProps) => (
+  <Icon size={18} strokeWidth={2} {...p}><circle cx="9" cy="8" r="4" /><path d="M2 21a7 7 0 0114 0" /><path d="M16 4.5a4 4 0 010 7M18 14.5A7 7 0 0122 21" /></Icon>
+);
+export const ExternalLink = (p: IconProps) => (
+  <Icon size={18} strokeWidth={2} {...p}><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" /></Icon>
+);

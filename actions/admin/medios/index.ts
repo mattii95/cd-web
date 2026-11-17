@@ -12,7 +12,7 @@ import {
   updateMediaAlt,
 } from "@/db/media";
 import { requireAdmin } from "@/lib/auth/dal";
-import { type CardItem, toCardItem } from "@/app/(site)/admin/medios/card-item";
+import { type CardItem, toCardItem } from "@/app/(admin)/admin/medios/card-item";
 
 const error = (message: string): FormState => ({ status: "error", message });
 
