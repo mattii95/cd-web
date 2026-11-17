@@ -1,6 +1,6 @@
 # SPEC 12 — Paginación de consultas
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 09, SPEC 10, SPEC 11
 > **Fecha:** 2026-11-16
 > **Objetivo:** Paginar con cursor `listMedia`, `getPublishedPosts` y `getApprovedComments`, sacar el N+1 de `listMedia` y sumar "Cargar más" en `/admin/medios` sin cambiar su diseño.
@@ -148,39 +148,39 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado, incluidos los tests de SPEC 07 a 11.
-- [ ] `npm run test:e2e` pasa, incluidos los casos de `medios.spec.ts` de SPEC 10.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado, incluidos los tests de SPEC 07 a 11.
+- [x] `npm run test:e2e` pasa, incluidos los casos de `medios.spec.ts` de SPEC 10.
 - [ ] Los jobs `checks`, `db` y `e2e` del CI pasan en un PR a `main`.
-- [ ] No hay migraciones nuevas: `npm run db:generate` no crea archivos.
-- [ ] `decodeCursor(encodeCursor(x))` devuelve `x`.
-- [ ] `decodeCursor` lanza `InvalidCursorError` con `"abc"`, con un JSON sin `id`, con un `id` que no es UUID y con un `t` que no es fecha.
-- [ ] `resolveLimit(undefined, 24)` devuelve 24, `resolveLimit(0, 24)` devuelve 1 y `resolveLimit(500, 24)` devuelve 100.
-- [ ] Con 30 imágenes, `listMedia()` devuelve 24 y un `nextCursor`, y `listMedia({ cursor })` devuelve las 6 restantes y `nextCursor: null`.
-- [ ] Recorrer `listMedia` con `limit: 2` sobre 5 imágenes con el mismo `created_at` devuelve las 5 una sola vez cada una, en orden de `id` descendente.
-- [ ] Recorrer `listMedia` con `limit: 2` sobre imágenes cuyo `created_at` difiere en microsegundos no salta ni repite ninguna.
-- [ ] Subir una imagen después de pedir la primera página no hace que la segunda página repita una imagen.
-- [ ] `listMedia()` resuelve el uso de una página de 24 imágenes con un número fijo de consultas, el mismo que con 2 imágenes (test que cuenta las consultas, como el de etiquetas de SPEC 11).
-- [ ] `listMedia()` devuelve en cada imagen el mismo `usage` que `getMediaUsage(id)`, con portadas y cuerpos de posts `borrador` y `publicado`.
-- [ ] Los tests existentes de `getMediaUsage` y `deleteMedia` pasan sin cambios.
-- [ ] `countMedia()` devuelve el total de filas de `media`.
-- [ ] Con 14 posts publicados y 2 borradores, `getPublishedPosts()` devuelve 12 y la segunda página devuelve 2, sin borradores.
-- [ ] `getPublishedPosts` desempata por `id` dos posts con el mismo `published_at`.
-- [ ] `getPublishedPosts()` sigue resolviendo las etiquetas con una sola consulta adicional por página.
-- [ ] `getApprovedComments(postId, { limit: 2 })` recorre todos los comentarios aprobados del post sin pendientes ni ocultos, y trae rating, votos y respuesta como antes.
-- [ ] Cualquiera de las tres funciones con un cursor inválido lanza `InvalidCursorError`.
+- [x] No hay migraciones nuevas: `npm run db:generate` no crea archivos.
+- [x] `decodeCursor(encodeCursor(x))` devuelve `x`.
+- [x] `decodeCursor` lanza `InvalidCursorError` con `"abc"`, con un JSON sin `id`, con un `id` que no es UUID y con un `t` que no es fecha.
+- [x] `resolveLimit(undefined, 24)` devuelve 24, `resolveLimit(0, 24)` devuelve 1 y `resolveLimit(500, 24)` devuelve 100.
+- [x] Con 30 imágenes, `listMedia()` devuelve 24 y un `nextCursor`, y `listMedia({ cursor })` devuelve las 6 restantes y `nextCursor: null`.
+- [x] Recorrer `listMedia` con `limit: 2` sobre 5 imágenes con el mismo `created_at` devuelve las 5 una sola vez cada una, en orden de `id` descendente.
+- [x] Recorrer `listMedia` con `limit: 2` sobre imágenes cuyo `created_at` difiere en microsegundos no salta ni repite ninguna.
+- [x] Subir una imagen después de pedir la primera página no hace que la segunda página repita una imagen.
+- [x] `listMedia()` resuelve el uso de una página de 24 imágenes con un número fijo de consultas, el mismo que con 2 imágenes (test que cuenta las consultas, como el de etiquetas de SPEC 11).
+- [x] `listMedia()` devuelve en cada imagen el mismo `usage` que `getMediaUsage(id)`, con portadas y cuerpos de posts `borrador` y `publicado`.
+- [x] Los tests existentes de `getMediaUsage` y `deleteMedia` pasan sin cambios.
+- [x] `countMedia()` devuelve el total de filas de `media`.
+- [x] Con 14 posts publicados y 2 borradores, `getPublishedPosts()` devuelve 12 y la segunda página devuelve 2, sin borradores.
+- [x] `getPublishedPosts` desempata por `id` dos posts con el mismo `published_at`.
+- [x] `getPublishedPosts()` sigue resolviendo las etiquetas con una sola consulta adicional por página.
+- [x] `getApprovedComments(postId, { limit: 2 })` recorre todos los comentarios aprobados del post sin pendientes ni ocultos, y trae rating, votos y respuesta como antes.
+- [x] Cualquiera de las tres funciones con un cursor inválido lanza `InvalidCursorError`.
 - [ ] `/admin/medios` con 3 imágenes se ve igual que antes de este spec y no muestra "Cargar más".
-- [ ] `/admin/medios` con 30 imágenes muestra 24 tarjetas, el texto "30 imágenes" y el botón "Cargar más".
-- [ ] `MediaGrid`: al hacer clic en "Cargar más" el botón queda `disabled` con "Cargando…", después se suman las tarjetas, y el botón desaparece si `nextCursor` es `null`.
-- [ ] `MediaGrid`: si la acción devuelve error, se muestra "No pudimos cargar más imágenes." y el botón vuelve a estar habilitado.
+- [x] `/admin/medios` con 30 imágenes muestra 24 tarjetas, el texto "30 imágenes" y el botón "Cargar más".
+- [x] `MediaGrid`: al hacer clic en "Cargar más" el botón queda `disabled` con "Cargando…", después se suman las tarjetas, y el botón desaparece si `nextCursor` es `null`.
+- [x] `MediaGrid`: si la acción devuelve error, se muestra "No pudimos cargar más imágenes." y el botón vuelve a estar habilitado.
 - [ ] Llamar a `loadMoreMediaAction` sin sesión de admin no devuelve imágenes.
 - [ ] `loadMoreMediaAction("basura")` devuelve `{ status: "error" }` y no lanza.
-- [ ] E2E: con 30 imágenes, "Cargar más" deja 30 tarjetas y el botón desaparece.
-- [ ] E2E: después de cargar las 30, borrar una de la segunda tanda la saca de la grilla, el contador dice "29 imágenes" y siguen visibles las otras 29.
-- [ ] E2E: después de cargar las 30, subir una imagen nueva vuelve a 24 tarjetas con la nueva primera y el contador dice "31 imágenes".
-- [ ] E2E: editar el alt de una imagen de la segunda tanda lo muestra sin recargar, y después de recargar y cargar más sigue el alt nuevo.
+- [x] E2E: con 30 imágenes, "Cargar más" deja 30 tarjetas y el botón desaparece.
+- [x] E2E: después de cargar las 30, borrar una de la segunda tanda la saca de la grilla, el contador dice "29 imágenes" y siguen visibles las otras 29.
+- [x] E2E: después de cargar las 30, subir una imagen nueva vuelve a 24 tarjetas con la nueva primera y el contador dice "31 imágenes".
+- [x] E2E: editar el alt de una imagen de la segunda tanda lo muestra sin recargar, y después de recargar y cargar más sigue el alt nuevo.
 
 ## Decisiones
 
