@@ -2,7 +2,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/db/client";
 import { rateLimit } from "@/db/schema";
-import { hit } from "@/lib/auth/rate-limit";
+import { hit, isUserRateLimited } from "@/lib/auth/rate-limit";
 
 describe("hit", () => {
   beforeEach(async () => {
@@ -27,5 +27,11 @@ describe("hit", () => {
       .set({ lastRequest: Date.now() - 61_000 })
       .where(eq(rateLimit.key, "ip|sign-up"));
     expect(await hit("ip|sign-up", 3, 60)).toBe(false);
+  });
+
+  it("isUserRateLimited corta el sexto comentario del mismo usuario y no el de otro", async () => {
+    for (let i = 0; i < 5; i++) expect(await isUserRateLimited("comment", "ana")).toBe(false);
+    expect(await isUserRateLimited("comment", "ana")).toBe(true);
+    expect(await isUserRateLimited("comment", "beto")).toBe(false);
   });
 });
