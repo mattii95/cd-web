@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import type { FormState } from "@/actions/cuenta";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { notify } from "@/components/admin/toast";
 import {
   deleteMediaAction,
@@ -107,48 +108,43 @@ function DeleteControl({
   item: Item;
   onDeleted: () => void;
 }) {
-  const [confirming, setConfirming] = useState(false);
-  const [, action, pending] = useActionState<FormState, FormData>(
-    async (prev, data) => {
-      const next = await deleteMediaAction(prev, data);
-      notify(next);
-      if (next.status === "success") onDeleted();
-      return next;
-    },
-    idle,
-  );
+  const [open, setOpen] = useState(false);
+  const [pending, start] = useTransition();
   const inUse = item.titles.length > 0;
+
+  const confirm = () =>
+    start(async () => {
+      const data = new FormData();
+      data.set("id", item.id);
+      const next = await deleteMediaAction(idle, data);
+      notify(next);
+      setOpen(false);
+      if (next.status === "success") onDeleted();
+    });
 
   return (
     <>
-      {confirming ? (
-        <form action={action} className="flex items-center gap-2">
-          <input type="hidden" name="id" value={item.id} />
-          <span className="text-[13px] text-cms-text">¿Borrar?</span>
-          <button type="submit" disabled={pending} className={btn}>
-            {pending && <Spinner />}
-            {pending ? "Borrando…" : "Sí"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirming(false)}
-            className={btn}
-          >
-            No
-          </button>
-        </form>
-      ) : (
-        <button
-          type="button"
-          disabled={inUse}
-          onClick={() => setConfirming(true)}
-          aria-label={inUse ? "En uso" : "Borrar"}
-          title={inUse ? "En uso: no se puede borrar" : "Borrar"}
-          className={iconBtnDelete}
-        >
-          <Trash />
-        </button>
-      )}
+      <button
+        type="button"
+        disabled={inUse}
+        onClick={() => setOpen(true)}
+        aria-label={inUse ? "En uso" : "Borrar"}
+        title={inUse ? "En uso: no se puede borrar" : "Borrar"}
+        className={iconBtnDelete}
+      >
+        <Trash />
+      </button>
+      <ConfirmDialog
+        open={open}
+        title="¿Borrar la imagen?"
+        description="Se borra el archivo y no se puede deshacer."
+        confirmLabel="Borrar"
+        pendingLabel="Borrando…"
+        tone="danger"
+        pending={pending}
+        onConfirm={confirm}
+        onCancel={() => setOpen(false)}
+      />
     </>
   );
 }
