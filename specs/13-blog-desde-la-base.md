@@ -1,6 +1,6 @@
 # SPEC 13 — Blog desde la base
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 03, SPEC 09, SPEC 10, SPEC 11, SPEC 12
 > **Fecha:** 2026-11-16
 > **Objetivo:** Que `/blog`, `/blog/[slug]` y la vista previa de la home lean de la base con lecturas cacheadas, y que la app deje de importar los datos mock de `lib/blog-posts.ts`.
