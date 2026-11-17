@@ -135,6 +135,34 @@ test("el artículo se arma con datos de la base", async ({ page }) => {
   ).toHaveCount(0);
 });
 
+test("el artículo se comparte con su URL canónica y la portada en og:image", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto(`/blog/${SLUG}#s2`);
+  const url = `https://courrouxdigital.com/blog/${SLUG}`;
+  const main = page.getByRole("main");
+  for (const red of ["WhatsApp", "LinkedIn", "X", "Facebook", "Telegram", "email"]) {
+    await expect(
+      main.getByRole("link", { name: `Compartir por ${red}` }),
+    ).toHaveAttribute("href", new RegExp(encodeURIComponent(url).replace(/[.]/g, "\\.")));
+  }
+  await main.getByRole("button", { name: "Copiar link" }).click();
+  await expect(main.getByText("Link copiado")).toBeVisible();
+  // Sin el hash: se copia la URL canónica, no la de la barra.
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(url);
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", url);
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    "content",
+    /\/media\/|\/blog\//,
+  );
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    "content",
+    "summary_large_image",
+  );
+});
+
 test("un artículo sin valoraciones ni comentarios muestra los estados vacíos", async ({
   page,
 }) => {

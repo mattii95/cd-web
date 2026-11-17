@@ -8,7 +8,7 @@ import { RelatedPosts } from "@/components/blog/related-posts";
 import { ArticleBody } from "@/components/blog/article-body";
 import { ArticleSkeleton } from "@/components/blog/article-skeleton";
 import { ReviewsSection } from "@/components/blog/reviews-section";
-import { ShareButton } from "@/components/blog/share-button";
+import { ShareButtons } from "@/components/blog/share-button";
 import { ArticleToc } from "@/components/blog/article-toc";
 import { ArticleHero } from "@/components/blog/article-hero";
 import {
@@ -19,6 +19,7 @@ import {
 import { getViewerState } from "@/db/blog-community";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { formatPostDate } from "@/lib/blog-posts";
+import { site } from "@/lib/site";
 
 // Un slug inexistente responde 200 con noindex: notFound() ocurre durante el streaming.
 export async function generateMetadata({
@@ -26,15 +27,35 @@ export async function generateMetadata({
 }: PageProps<"/blog/[slug]">): Promise<Metadata> {
   const post = await cachedPostBySlug((await params).slug);
   if (!post) return {};
+  const path = `/blog/${post.slug}`;
+  // openGraph reemplaza al del layout entero: se repiten siteName, locale y la imagen por defecto.
+  const image = post.cover
+    ? {
+        url: post.cover.src,
+        width: post.cover.width,
+        height: post.cover.height,
+        alt: post.cover.alt,
+      }
+    : { url: "/cd-sin-fondo.png", width: 1080, height: 1080, alt: site.name };
   return {
     title: post.title,
     description: post.excerpt,
-    alternates: { canonical: `/blog/${post.slug}` },
+    alternates: { canonical: path },
     openGraph: {
       type: "article",
+      url: path,
+      siteName: site.name,
+      locale: "es_AR",
       title: post.title,
       description: post.excerpt,
       publishedTime: post.publishedAt.toISOString(),
+      images: [image],
+    },
+    twitter: {
+      card: post.cover ? "summary_large_image" : "summary",
+      title: post.title,
+      description: post.excerpt,
+      images: [image],
     },
   };
 }
@@ -68,7 +89,10 @@ async function Article({
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-start gap-14">
           <aside className="flex max-w-[300px] flex-[1_1_240px] flex-col gap-6 lg:sticky lg:top-6">
             <ArticleToc body={post.body} />
-            <ShareButton title={post.title} />
+            <ShareButtons
+              title={post.title}
+              url={new URL(`/blog/${post.slug}`, site.url).href}
+            />
           </aside>
           <div className="min-w-0 flex-[999_1_560px]">
             <div className="flex max-w-[760px] flex-col gap-6">
