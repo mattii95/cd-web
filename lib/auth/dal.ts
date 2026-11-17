@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { connection } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { account } from "@/db/schema";
@@ -20,10 +21,13 @@ export type CurrentUser = {
 
 // Lee la sesión una sola vez por request. Si la base falla, devuelve null.
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
-  // Fuera del try: en el prerender headers() posterga la página. Si lo tragara el catch
+  // Fuera del try: connection() posterga la página al request. Si lo tragara el catch
   // (p. ej. porque getAuth() falla sin variables en el build), el redirect a login
-  // quedaría horneado en el HTML estático.
+  // quedaría horneado en el HTML estático. Con partialPrefetching, headers() se resuelve
+  // en el App Shell y ya no posterga; connection() hace falta porque better-auth usa
+  // `new Date()` para validar la expiración de la sesión.
   const requestHeaders = await headers();
+  await connection();
   try {
     const session = await getAuth().api.getSession({ headers: requestHeaders });
     if (!session) return null;
