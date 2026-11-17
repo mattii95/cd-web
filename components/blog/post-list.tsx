@@ -5,6 +5,7 @@ import {
   blogCategories,
   type BlogCategoryTag,
   getUsedTags,
+  mockToSummary,
   type BlogPost,
   type BlogTagSlug,
 } from "@/lib/blog-posts";
@@ -110,7 +111,7 @@ export function PostList({
           <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(min(100%,340px),1fr))] gap-6 p-0">
             {visible.map((post, i) => (
               <li key={post.slug} className={`fx-reveal r${(i % 2) + 1} flex`}>
-                <PostCard post={post} />
+                <PostCard post={mockToSummary(post)} />
               </li>
             ))}
           </ul>

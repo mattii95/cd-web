@@ -1,11 +1,11 @@
 // Tipos y formateadores del blog. Los datos mock viven en db/seed/blog-data.ts.
 // TODO(SPEC 13, paso 9): quitar el reexport temporal de abajo.
+import type { PostSummary } from "@/db/blog";
 import {
   blogAuthor,
   blogCategories,
   blogPosts,
   blogTags,
-  type BlogCategory,
   type BlogPost,
   type BlogReviews,
 } from "@/db/seed/blog-data";
@@ -103,3 +103,31 @@ export const formatPostDate = (iso: string) =>
     .format(new Date(iso))
     .replace(/\./g, "")
     .replace(/ de /g, " ");
+
+// TODO(SPEC 13, pasos 6 y 7): temporal, para que PostCard reciba PostSummary mientras
+// /blog y el artículo siguen leyendo el mock. Se quita junto con el mock.
+export function mockToSummary(post: BlogPost): PostSummary {
+  const c = getCategory(post.category);
+  return {
+    id: post.slug,
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    readingMinutes: post.readingMinutes,
+    publishedAt: new Date(post.publishedAt),
+    category: {
+      slug: c.tag,
+      label: c.label,
+      filterLabel: c.filterLabel,
+      serviceSlug: c.service,
+    },
+    author: {
+      name: blogAuthor.name,
+      image: null,
+      jobTitle: blogAuthor.role,
+      bio: blogAuthor.bio,
+    },
+    cover: post.cover ?? null,
+    tags: post.tags.map((s) => getTag(s)!),
+  };
+}

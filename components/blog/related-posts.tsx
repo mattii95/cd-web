@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { ArrowRight } from "@/components/icons";
-import { getRelatedPosts, type BlogPost } from "@/lib/blog-posts";
+import {
+  getRelatedPosts,
+  mockToSummary,
+  type BlogPost,
+} from "@/lib/blog-posts";
 import { PostCard } from "./post-card";
 
 export function RelatedPosts({ post }: { post: BlogPost }) {
@@ -22,7 +26,7 @@ export function RelatedPosts({ post }: { post: BlogPost }) {
         <ul className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-6 p-0">
           {getRelatedPosts(post, 3).map((p, i) => (
             <li key={p.slug} className={`fx-reveal r${(i % 2) + 1} flex`}>
-              <PostCard post={p} />
+              <PostCard post={mockToSummary(p)} />
             </li>
           ))}
         </ul>
