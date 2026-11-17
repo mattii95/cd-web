@@ -41,7 +41,7 @@ test.beforeEach(async ({ page, context }) => {
   await sql("update \"user\" set role = 'admin' where email = $1", [email]);
   await login(page, email);
   await expect(page).toHaveURL(/\/cuenta\/perfil$/);
-  await page.goto("/admin/medios");
+  await page.goto("/admin/media");
   await page.waitForLoadState("networkidle");
 });
 
@@ -174,7 +174,7 @@ test("la barra lateral del panel lleva a Medios", async ({ page }) => {
     .getByRole("navigation", { name: "Navegación del panel" })
     .getByRole("link", { name: "Medios" })
     .click();
-  await expect(page).toHaveURL(/\/admin\/medios$/);
+  await expect(page).toHaveURL(/\/admin\/media$/);
   await expect(page.getByRole("heading", { name: "Medios" })).toBeVisible();
 });
 

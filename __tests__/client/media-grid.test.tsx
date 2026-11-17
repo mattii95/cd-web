@@ -1,15 +1,15 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { CardItem } from "@/app/(admin)/admin/medios/card-item";
-import { MediaGrid } from "@/app/(admin)/admin/medios/media-grid";
+import type { CardItem } from "@/app/(admin)/admin/media/card-item";
+import { MediaGrid } from "@/app/(admin)/admin/media/media-grid";
 import { AdminToaster } from "@/components/admin/toast";
 
 const { loadMoreMediaAction } = vi.hoisted(() => ({
   loadMoreMediaAction: vi.fn(),
 }));
 
-vi.mock("@/actions/admin/medios", () => ({
+vi.mock("@/actions/admin/media", () => ({
   loadMoreMediaAction,
   updateMediaAltAction: vi.fn(),
   deleteMediaAction: vi.fn(),

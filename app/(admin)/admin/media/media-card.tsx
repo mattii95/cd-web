@@ -7,7 +7,7 @@ import { notify } from "@/components/admin/toast";
 import {
   deleteMediaAction,
   updateMediaAltAction,
-} from "@/actions/admin/medios";
+} from "@/actions/admin/media";
 import type { CardItem } from "./card-item";
 import { Copy, Pencil, Spinner, Trash } from "@/components/icons";
 import { btn, iconBtnCopy, iconBtnDelete, iconBtnEdit } from "./styles";

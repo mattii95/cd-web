@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Spinner } from "@/components/icons";
 import { notify } from "@/components/admin/toast";
-import { loadMoreMediaAction } from "@/actions/admin/medios";
+import { loadMoreMediaAction } from "@/actions/admin/media";
 import type { CardItem } from "./card-item";
 import { MediaCard } from "./media-card";
 import { btn } from "./styles";

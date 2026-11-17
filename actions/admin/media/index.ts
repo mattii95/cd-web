@@ -12,7 +12,7 @@ import {
   updateMediaAlt,
 } from "@/db/media";
 import { requireAdmin } from "@/lib/auth/dal";
-import { type CardItem, toCardItem } from "@/app/(admin)/admin/medios/card-item";
+import { type CardItem, toCardItem } from "@/app/(admin)/admin/media/card-item";
 
 const error = (message: string): FormState => ({ status: "error", message });
 
@@ -39,7 +39,7 @@ export async function uploadMediaAction(
       alt,
       uploadedBy: admin.id,
     });
-    revalidatePath("/admin/medios");
+    revalidatePath("/admin/media");
     return {
       status: "success",
       message: duplicate ? "Esa imagen ya estaba subida." : "Imagen subida.",
