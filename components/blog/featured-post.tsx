@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { PostSummary } from "@/db/blog";
 import { formatPostDate } from "@/lib/blog-posts";
-import { getInitials } from "@/lib/initials";
+import { PersonAvatar } from "./person-avatar";
 import { PostThumb } from "./post-thumb";
 
 export function FeaturedPost({ post }: { post: PostSummary }) {
@@ -32,12 +32,11 @@ export function FeaturedPost({ post }: { post: PostSummary }) {
           {post.excerpt}
         </p>
         <span className="mt-2 flex items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="flex size-9 items-center justify-center rounded-full bg-accent font-mono text-xs font-semibold text-white"
-          >
-            {getInitials(post.author.name)}
-          </span>
+          <PersonAvatar
+            name={post.author.name}
+            image={post.author.image}
+            className="size-9 text-xs"
+          />
           <span className="flex flex-col text-[13px]">
             <strong className="text-sm">{post.author.name}</strong>
             <span className="text-text-faint">

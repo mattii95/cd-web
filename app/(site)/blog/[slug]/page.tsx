@@ -1,26 +1,24 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { ArticleCta } from "@/components/blog/article-cta";
 import { AuthorBox } from "@/components/blog/author-box";
 import { RelatedPosts } from "@/components/blog/related-posts";
 import { ArticleBody } from "@/components/blog/article-body";
+import { ArticleSkeleton } from "@/components/blog/article-skeleton";
 import { ReviewsSection } from "@/components/blog/reviews-section";
 import { ShareButton } from "@/components/blog/share-button";
 import { ArticleToc } from "@/components/blog/article-toc";
 import { ArticleHero } from "@/components/blog/article-hero";
-import { blogPosts, formatPostDate, getPost } from "@/lib/blog-posts";
+import { cachedPostBySlug, cachedRatingSummary } from "@/db/blog-cache";
+import { formatPostDate, getPost } from "@/lib/blog-posts";
 
-// Con Suspense, notFound() respondería 200 en vez de 404. Los 8 slugs se prerenderizan.
-export const instant = false;
-
-export function generateStaticParams() {
-  return blogPosts.map(({ slug }) => ({ slug }));
-}
-
+// Un slug inexistente responde 200 con noindex: notFound() ocurre durante el streaming.
 export async function generateMetadata({
   params,
 }: PageProps<"/blog/[slug]">): Promise<Metadata> {
-  const post = getPost((await params).slug);
+  const post = await cachedPostBySlug((await params).slug);
   if (!post) return {};
   return {
     title: post.title,
@@ -30,37 +28,62 @@ export async function generateMetadata({
       type: "article",
       title: post.title,
       description: post.excerpt,
-      publishedTime: post.publishedAt,
+      publishedTime: post.publishedAt.toISOString(),
     },
   };
 }
 
-export default async function ArticlePage({
+async function Article({
   params,
-}: PageProps<"/blog/[slug]">) {
-  const post = getPost((await params).slug);
+}: {
+  params: PageProps<"/blog/[slug]">["params"];
+}) {
+  const { slug } = await params;
+  await connection();
+  const post = await cachedPostBySlug(slug);
   if (!post) notFound();
+  const rating = await cachedRatingSummary(post.id);
+  // TODO(SPEC 13, paso 8): las valoraciones todavía salen del mock.
+  const mockReviews = getPost(post.slug)?.reviews;
 
   return (
-    <main>
-      <ArticleHero post={post} date={formatPostDate(post.publishedAt)} />
+    <>
+      <ArticleHero
+        post={post}
+        date={formatPostDate(post.publishedAt)}
+        rating={rating}
+      />
       <section className="bg-paper px-6 pt-16 pb-24 text-surface">
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-start gap-14">
           <aside className="flex max-w-[300px] flex-[1_1_240px] flex-col gap-6 lg:sticky lg:top-6">
-            <ArticleToc body={post.body} hasReviews={!!post.reviews} />
+            <ArticleToc body={post.body} hasReviews={!!mockReviews} />
             <ShareButton title={post.title} />
           </aside>
           <div className="min-w-0 flex-[999_1_560px]">
             <div className="flex max-w-[760px] flex-col gap-6">
               <ArticleBody body={post.body} />
-              <AuthorBox />
-              {post.reviews && <ReviewsSection reviews={post.reviews} slug={post.slug} />}
+              <AuthorBox author={post.author} />
+              {mockReviews && (
+                <ReviewsSection reviews={mockReviews} slug={post.slug} />
+              )}
               <ArticleCta post={post} />
             </div>
           </div>
         </div>
       </section>
-      <RelatedPosts post={post} />
+      <Suspense>
+        <RelatedPosts postId={post.id} />
+      </Suspense>
+    </>
+  );
+}
+
+export default function ArticlePage({ params }: PageProps<"/blog/[slug]">) {
+  return (
+    <main>
+      <Suspense fallback={<ArticleSkeleton />}>
+        <Article params={params} />
+      </Suspense>
     </main>
   );
 }
