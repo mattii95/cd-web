@@ -1,9 +1,82 @@
 import "server-only";
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import type { BlogRating } from "@/lib/blog-posts";
 import type { PublicComment } from "./blog";
 import { getDb } from "./client";
 import { comment, commentVote, post, postRating, user } from "./schema";
+
+export type ViewerState = {
+  rating: BlogRating | null; // su post_rating en este post
+  votedCommentIds: string[]; // comentarios de este post que votó
+  ownCommentIds: string[]; // sus comentarios aprobados en este post
+  pending: PublicComment[]; // sus comentarios pendientes, createdAt descendente, máximo 20
+  isPostAuthor: boolean; // post.author_id = userId
+};
+
+// Lo propio del lector en un post. Sin caché: depende de quién mira.
+export async function getViewerState(
+  postId: string,
+  userId: string,
+): Promise<ViewerState> {
+  const db = getDb();
+  const [ratingRow, voted, own, pending, authorRow] = await Promise.all([
+    db
+      .select({ rating: postRating.rating })
+      .from(postRating)
+      .where(and(eq(postRating.postId, postId), eq(postRating.userId, userId))),
+    db
+      .select({ id: commentVote.commentId })
+      .from(commentVote)
+      .innerJoin(comment, eq(comment.id, commentVote.commentId))
+      .where(and(eq(commentVote.userId, userId), eq(comment.postId, postId))),
+    db
+      .select({ id: comment.id })
+      .from(comment)
+      .where(
+        and(
+          eq(comment.postId, postId),
+          eq(comment.userId, userId),
+          eq(comment.status, "aprobado"),
+        ),
+      ),
+    db
+      .select({
+        id: comment.id,
+        text: comment.text,
+        createdAt: comment.createdAt,
+        authorName: user.name,
+        authorImage: user.image,
+      })
+      .from(comment)
+      .innerJoin(user, eq(user.id, comment.userId))
+      .where(
+        and(
+          eq(comment.postId, postId),
+          eq(comment.userId, userId),
+          eq(comment.status, "pendiente"),
+        ),
+      )
+      .orderBy(desc(comment.createdAt), desc(comment.id))
+      .limit(20),
+    db
+      .select({ id: post.id })
+      .from(post)
+      .where(and(eq(post.id, postId), eq(post.authorId, userId))),
+  ]);
+  const rating = (ratingRow[0]?.rating ?? null) as BlogRating | null;
+  return {
+    rating,
+    votedCommentIds: voted.map((r) => r.id),
+    ownCommentIds: own.map((r) => r.id),
+    pending: pending.map((r) => ({
+      ...r,
+      rating,
+      usefulCount: 0, // sin votos: solo se vota lo aprobado
+      reply: null,
+    })),
+    isPostAuthor: authorRow.length > 0,
+  };
+}
 
 // Escrituras de la comunidad. Un permiso que no se cumple devuelve null o false, no lanza.
 

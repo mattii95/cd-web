@@ -1,16 +1,10 @@
-import {
-  afterAll,
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { and, eq } from "drizzle-orm";
 import {
   createComment,
   deleteOwnComment,
   deleteReply,
+  getViewerState,
   saveReply,
   toggleVote,
   upsertRating,
@@ -253,6 +247,75 @@ describe("escrituras de la comunidad", () => {
       const { insertarComentario } = await crearEscenario();
       const c = await insertarComentario("ana");
       expect(await deleteReply(c.id, "autor")).toBeNull();
+    });
+  });
+
+  describe("getViewerState", () => {
+    it("devuelve la valoración, los votos, los aprobados y los pendientes propios, y nada ajeno", async () => {
+      const { p, borrador, insertarComentario } = await crearEscenario();
+      const db = getDb();
+      const propioAprobado = await insertarComentario("ana");
+      const propioPendiente = await insertarComentario("ana", "pendiente");
+      await insertarComentario("ana", "oculto");
+      const ajeno = await insertarComentario("beto");
+      const otroPost = await insertarComentario("ana", "aprobado", borrador.id);
+      await db.insert(commentVote).values([
+        { commentId: ajeno.id, userId: "ana" },
+        { commentId: propioAprobado.id, userId: "beto" },
+        { commentId: otroPost.id, userId: "ana" },
+      ]);
+      await db.insert(postRating).values([
+        { postId: p.id, userId: "ana", rating: 3 },
+        { postId: p.id, userId: "beto", rating: 5 },
+        { postId: borrador.id, userId: "ana", rating: 1 },
+      ]);
+
+      const v = await getViewerState(p.id, "ana");
+      expect(v.rating).toBe(3);
+      expect(v.votedCommentIds).toEqual([ajeno.id]);
+      expect(v.ownCommentIds).toEqual([propioAprobado.id]);
+      expect(v.pending.map((c) => c.id)).toEqual([propioPendiente.id]);
+      expect(v.pending[0]).toMatchObject({
+        authorName: "ana",
+        rating: 3,
+        usefulCount: 0,
+        reply: null,
+      });
+      expect(v.isPostAuthor).toBe(false);
+    });
+
+    it("sin actividad devuelve rating null y listas vacías", async () => {
+      const { p } = await crearEscenario();
+      expect(await getViewerState(p.id, "beto")).toEqual({
+        rating: null,
+        votedCommentIds: [],
+        ownCommentIds: [],
+        pending: [],
+        isPostAuthor: false,
+      });
+    });
+
+    it("isPostAuthor es true solo para el autor del post", async () => {
+      const { p } = await crearEscenario();
+      expect((await getViewerState(p.id, "autor")).isPostAuthor).toBe(true);
+      expect((await getViewerState(p.id, "ana")).isPostAuthor).toBe(false);
+    });
+
+    it("limita los pendientes a 20, el más reciente primero", async () => {
+      const { p } = await crearEscenario();
+      await getDb()
+        .insert(comment)
+        .values(
+          Array.from({ length: 22 }, (_, i) => ({
+            postId: p.id,
+            userId: "ana",
+            text: `c${i}`,
+            createdAt: new Date(Date.UTC(2026, 10, 1, 0, i)),
+          })),
+        );
+      const { pending } = await getViewerState(p.id, "ana");
+      expect(pending).toHaveLength(20);
+      expect(pending[0].text).toBe("c21");
     });
   });
 });
