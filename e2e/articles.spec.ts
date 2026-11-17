@@ -78,6 +78,9 @@ test("Borradores deja ?status=draft, marca la pestaña y solo muestra borradores
   await expect(row(page, 1)).toBeVisible();
   await expect(page.getByText("Publicado", { exact: true })).toHaveCount(0);
   await expect(row(page, 4)).toHaveCount(0);
+  await expect(
+    page.getByRole("navigation", { name: "Navegación del panel" }).getByRole("link", { name: "Artículos" }),
+  ).toHaveAttribute("aria-current", "page");
 });
 
 test("buscar agrega q a la URL y filtra; Limpiar filtros lo quita", async ({ page }) => {

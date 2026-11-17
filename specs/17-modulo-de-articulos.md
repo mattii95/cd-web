@@ -1,6 +1,6 @@
 # SPEC 17 — Módulo de artículos del panel
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 09, SPEC 13, SPEC 16
 > **Fecha:** 2026-11-17
 > **Objetivo:** Que el admin vea todos los artículos en `/admin/articles` en una tabla con pestañas por estado, búsqueda, filtros, orden y paginación numerada, y pueda publicarlos, pasarlos a borrador o eliminarlos, siempre con un modal de confirmación, con todas las rutas del panel en inglés.
@@ -245,82 +245,82 @@ Convenciones:
 
 **General**
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
 - [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado.
-- [ ] `npm run test:e2e` pasa completo.
+- [x] `npm run test:db` pasa con Docker levantado.
+- [x] `npm run test:e2e` pasa completo.
 
 **Rutas**
 
-- [ ] Existen `/admin/articles`, `/admin/media` y `/admin/users`, y la barra lateral y las tarjetas del Inicio llevan a ellas.
-- [ ] `/admin/articulos`, `/admin/medios` y `/admin/usuarios` responden 404 a un admin.
-- [ ] No existen `app/(admin)/admin/articulos/`, `medios/`, `usuarios/` ni `actions/admin/medios/`.
-- [ ] `grep -rn "admin/articulos\|admin/medios\|admin/usuarios" app actions components lib __tests__ e2e` no devuelve nada.
-- [ ] Sin sesión, `/admin/articles`, `/admin/media` y `/admin/users` redirigen a `/cuenta/login` con `volver` igual a la ruta pedida; con un lector, responden 404.
-- [ ] `/admin/media` sube, edita el alt y borra imágenes (`medios.spec.ts`).
-- [ ] `AdminNav` en `/admin/articles?status=draft` marca "Artículos" con `aria-current="page"`.
+- [x] Existen `/admin/articles`, `/admin/media` y `/admin/users`, y la barra lateral y las tarjetas del Inicio llevan a ellas.
+- [x] `/admin/articulos`, `/admin/medios` y `/admin/usuarios` responden 404 a un admin.
+- [x] No existen `app/(admin)/admin/articulos/`, `medios/`, `usuarios/` ni `actions/admin/medios/`.
+- [x] `grep -rn "admin/articulos\|admin/medios\|admin/usuarios" app actions components lib __tests__ e2e` no devuelve nada.
+- [x] Sin sesión, `/admin/articles`, `/admin/media` y `/admin/users` redirigen a `/cuenta/login` con `volver` igual a la ruta pedida; con un lector, responden 404.
+- [x] `/admin/media` sube, edita el alt y borra imágenes (`medios.spec.ts`).
+- [x] `AdminNav` en `/admin/articles?status=draft` marca "Artículos" con `aria-current="page"`.
 
 **Params (`article-params.test.ts`)**
 
-- [ ] `parseArticleParams({})` devuelve `status`, `q`, `category` y `updated` en `null`, `sort: "updated"`, `dir: "desc"`, `page: 1` y `perPage: 25`.
-- [ ] `status=archived`, `sort=author`, `dir=up`, `perPage=30`, `updated=1d`, `page=0` y `page=abc` caen a sus defaults sin lanzar.
-- [ ] `q` con espacios alrededor se recorta, uno de solo espacios da `null` y uno de 150 caracteres queda en 100.
-- [ ] Un param repetido (`?status=draft&status=published`) toma el primero.
-- [ ] `articlesHref(defaults, {})` devuelve `/admin/articles` sin `?`.
-- [ ] `articlesHref` con `page: 3` en la base y un `patch` de `category` devuelve una URL sin `page`.
+- [x] `parseArticleParams({})` devuelve `status`, `q`, `category` y `updated` en `null`, `sort: "updated"`, `dir: "desc"`, `page: 1` y `perPage: 25`.
+- [x] `status=archived`, `sort=author`, `dir=up`, `perPage=30`, `updated=1d`, `page=0` y `page=abc` caen a sus defaults sin lanzar.
+- [x] `q` con espacios alrededor se recorta, uno de solo espacios da `null` y uno de 150 caracteres queda en 100.
+- [x] Un param repetido (`?status=draft&status=published`) toma el primero.
+- [x] `articlesHref(defaults, {})` devuelve `/admin/articles` sin `?`.
+- [x] `articlesHref` con `page: 3` en la base y un `patch` de `category` devuelve una URL sin `page`.
 
 **Consultas (`admin-posts.test.ts`)**
 
-- [ ] Sin filtros devuelve publicados y borradores, ordenados por `updated_at` desc.
-- [ ] `status: "draft"` devuelve solo borradores; `counts` no cambia con el filtro.
-- [ ] `q: "seo"` encuentra por título y por slug sin distinguir mayúsculas; `q: "%"` no devuelve todo.
-- [ ] `category` filtra por slug; uno inexistente devuelve `items: []` y `total: 0`.
-- [ ] `updated: "7d"` excluye un post con `updated_at` de hace 10 días.
-- [ ] `sort: "title", dir: "asc"` ordena alfabético sin importar mayúsculas; dos posts con la misma `reading_minutes` salen en orden estable entre páginas.
-- [ ] Con 30 posts y `perPage: 10`, `page: 2` devuelve los posts 11–20, `total: 30` y `pageCount: 3`; `page: 9` devuelve la página 3.
-- [ ] Sin posts, `pageCount` es 1 y `items` vacío.
-- [ ] `setPostStatus(id, "publicado")` sobre un borrador sin fecha fija `published_at`; sobre uno que ya tenía fecha, la conserva.
-- [ ] `setPostStatus(id, "borrador")` conserva `published_at`.
-- [ ] `setPostStatus` con el mismo estado devuelve `changed: false`; con un id inexistente, `null`.
-- [ ] `deletePost` borra el post, sus etiquetas puente, valoraciones, comentarios y votos; con un id inexistente devuelve `null`.
+- [x] Sin filtros devuelve publicados y borradores, ordenados por `updated_at` desc.
+- [x] `status: "draft"` devuelve solo borradores; `counts` no cambia con el filtro.
+- [x] `q: "seo"` encuentra por título y por slug sin distinguir mayúsculas; `q: "%"` no devuelve todo.
+- [x] `category` filtra por slug; uno inexistente devuelve `items: []` y `total: 0`.
+- [x] `updated: "7d"` excluye un post con `updated_at` de hace 10 días.
+- [x] `sort: "title", dir: "asc"` ordena alfabético sin importar mayúsculas; dos posts con la misma `reading_minutes` salen en orden estable entre páginas.
+- [x] Con 30 posts y `perPage: 10`, `page: 2` devuelve los posts 11–20, `total: 30` y `pageCount: 3`; `page: 9` devuelve la página 3.
+- [x] Sin posts, `pageCount` es 1 y `items` vacío.
+- [x] `setPostStatus(id, "publicado")` sobre un borrador sin fecha fija `published_at`; sobre uno que ya tenía fecha, la conserva.
+- [x] `setPostStatus(id, "borrador")` conserva `published_at`.
+- [x] `setPostStatus` con el mismo estado devuelve `changed: false`; con un id inexistente, `null`.
+- [x] `deletePost` borra el post, sus etiquetas puente, valoraciones, comentarios y votos; con un id inexistente devuelve `null`.
 
 **Actions (`admin-articles-actions.test.ts`)**
 
-- [ ] Las tres llaman a `requireAdmin()` antes de tocar la base.
-- [ ] Con un `id` que no es UUID devuelven error y no tocan la base.
-- [ ] `publishPostAction` sobre un borrador lo publica, devuelve "Artículo publicado." y llama a `updateTag("blog")`, `updateTag("post:{slug}")` y `revalidatePath("/admin/articles")`.
-- [ ] `unpublishPostAction` devuelve "Artículo pasado a borrador." y el post deja de salir en `getPublishedPosts`.
-- [ ] `deletePostAction` devuelve "Artículo eliminado." y el post ya no existe.
-- [ ] Con un id inexistente, las tres devuelven "Ese artículo ya no existe.".
+- [x] Las tres llaman a `requireAdmin()` antes de tocar la base.
+- [x] Con un `id` que no es UUID devuelven error y no tocan la base.
+- [x] `publishPostAction` sobre un borrador lo publica, devuelve "Artículo publicado." y llama a `updateTag("blog")`, `updateTag("post:{slug}")` y `revalidatePath("/admin/articles")`.
+- [x] `unpublishPostAction` devuelve "Artículo pasado a borrador." y el post deja de salir en `getPublishedPosts`.
+- [x] `deletePostAction` devuelve "Artículo eliminado." y el post ya no existe.
+- [x] Con un id inexistente, las tres devuelven "Ese artículo ya no existe.".
 
 **Componentes (`client`)**
 
-- [ ] `ConfirmDialog` abierto tiene el foco en "Cancelar"; `Escape` y "Cancelar" llaman a `onCancel`.
-- [ ] Con `pending`, los dos botones están deshabilitados y el de confirmar muestra el texto de espera.
-- [ ] `RowMenu` de un borrador muestra "Publicar" y "Eliminar", sin "Ver en el blog" ni "Pasar a borrador".
-- [ ] `RowMenu` de un publicado muestra "Ver en el blog" (con `target="_blank"` y `href="/blog/{slug}"`), "Pasar a borrador" y "Eliminar".
-- [ ] Elegir "Eliminar" abre el modal con el título del artículo y no llama a la action hasta confirmar.
-- [ ] `MediaGrid`: el ícono "Borrar" abre el modal; "Cancelar" no llama a `deleteMediaAction` y "Borrar" sí.
+- [x] `ConfirmDialog` abierto tiene el foco en "Cancelar"; `Escape` y "Cancelar" llaman a `onCancel`.
+- [x] Con `pending`, los dos botones están deshabilitados y el de confirmar muestra el texto de espera.
+- [x] `RowMenu` de un borrador muestra "Publicar" y "Eliminar", sin "Ver en el blog" ni "Pasar a borrador".
+- [x] `RowMenu` de un publicado muestra "Ver en el blog" (con `target="_blank"` y `href="/blog/{slug}"`), "Pasar a borrador" y "Eliminar".
+- [x] Elegir "Eliminar" abre el modal con el título del artículo y no llama a la action hasta confirmar.
+- [x] `MediaGrid`: el ícono "Borrar" abre el modal; "Cancelar" no llama a `deleteMediaAction` y "Borrar" sí.
 
 **Página (E2E, `articles.spec.ts`)**
 
-- [ ] `/admin/articles` muestra "Artículos", las pestañas "Todos", "Publicados" y "Borradores" con sus contadores, y no tiene "Nuevo artículo", "Exportar", "Editar" ni checkboxes.
-- [ ] La tabla tiene las columnas Título, Categoría, Estado, Lectura, Actualizado y Acciones.
-- [ ] "Borradores" deja la URL en `?status=draft`, marca la pestaña con `aria-current="page"` y solo muestra filas "Borrador".
-- [ ] Escribir en "Buscar" agrega `q` a la URL y filtra la tabla; "Limpiar filtros" lo quita.
-- [ ] Elegir una categoría agrega `category` y filtra; "Actualizado: Últimos 7 días" agrega `updated=7d`.
-- [ ] Clic en "Título" ordena ascendente (`aria-sort="ascending"`) y un segundo clic, descendente.
-- [ ] Con más artículos que filas, "Siguiente" lleva a `page=2`, "Mostrando 11–20 de N artículos" es correcto con `perPage=10`, y la página actual tiene `aria-current="page"`.
-- [ ] Cambiar "Filas por página" vuelve a la página 1.
-- [ ] Con filtros sin resultados se ve "Ningún artículo coincide con los filtros.".
-- [ ] Recargar con `?status=draft&sort=title&dir=asc&perPage=10` conserva pestaña, orden y filas.
-- [ ] Publicar un borrador desde "Más acciones" pide confirmación, muestra el toast "Artículo publicado." y el artículo se ve en `/blog`.
-- [ ] Pasar a borrador un publicado pide confirmación y el artículo deja de verse en `/blog` y su URL da 404.
-- [ ] Eliminar pide confirmación; "Cancelar" no cambia nada y "Eliminar" saca la fila y baja el contador.
-- [ ] El modal se cierra con `Escape` y el foco vuelve al botón "Más acciones".
-- [ ] A 390 px `/admin/articles` no tiene scroll horizontal de página y las filas se apilan.
-- [ ] El texto de la tabla, los badges, el modal y el botón rojo cumplen 4.5:1 de contraste (revisado con `/frontend-design`).
+- [x] `/admin/articles` muestra "Artículos", las pestañas "Todos", "Publicados" y "Borradores" con sus contadores, y no tiene "Nuevo artículo", "Exportar", "Editar" ni checkboxes.
+- [x] La tabla tiene las columnas Título, Categoría, Estado, Lectura, Actualizado y Acciones.
+- [x] "Borradores" deja la URL en `?status=draft`, marca la pestaña con `aria-current="page"` y solo muestra filas "Borrador".
+- [x] Escribir en "Buscar" agrega `q` a la URL y filtra la tabla; "Limpiar filtros" lo quita.
+- [x] Elegir una categoría agrega `category` y filtra; "Actualizado: Últimos 7 días" agrega `updated=7d`.
+- [x] Clic en "Título" ordena ascendente (`aria-sort="ascending"`) y un segundo clic, descendente.
+- [x] Con más artículos que filas, "Siguiente" lleva a `page=2`, "Mostrando 11–20 de N artículos" es correcto con `perPage=10`, y la página actual tiene `aria-current="page"`.
+- [x] Cambiar "Filas por página" vuelve a la página 1.
+- [x] Con filtros sin resultados se ve "Ningún artículo coincide con los filtros.".
+- [x] Recargar con `?status=draft&sort=title&dir=asc&perPage=10` conserva pestaña, orden y filas.
+- [x] Publicar un borrador desde "Más acciones" pide confirmación, muestra el toast "Artículo publicado." y el artículo se ve en `/blog`.
+- [x] Pasar a borrador un publicado pide confirmación y el artículo deja de verse en `/blog` y su URL da 404.
+- [x] Eliminar pide confirmación; "Cancelar" no cambia nada y "Eliminar" saca la fila y baja el contador.
+- [x] El modal se cierra con `Escape` y el foco vuelve al botón "Más acciones".
+- [x] A 390 px `/admin/articles` no tiene scroll horizontal de página y las filas se apilan.
+- [x] El texto de la tabla, los badges, el modal y el botón rojo cumplen 4.5:1 de contraste (revisado con `/frontend-design`).
 
 ## Decisiones
 

@@ -73,6 +73,14 @@ test("Inicio: saludo y tres accesos directos", async ({ page }) => {
   }
 });
 
+test("las rutas viejas en español responden 404 a un admin", async ({ page, consoleErrors }) => {
+  await entrarComoAdmin(page);
+  for (const ruta of ["/admin/articulos", "/admin/medios", "/admin/usuarios"]) {
+    expect((await page.request.get(ruta)).status()).toBe(404);
+  }
+  consoleErrors.length = 0;
+});
+
 test("Artículos: tabla del listado y sin botón Nuevo artículo", async ({ page }) => {
   await entrarComoAdmin(page);
   await page.goto("/admin/articles");
