@@ -14,7 +14,10 @@ describe("getMailEnv", () => {
     stubValid();
     vi.stubEnv("SMTP_USER", "");
     vi.stubEnv("SMTP_PASS", "");
-    expect(getMailEnv()).toMatchObject({ SMTP_HOST: "localhost", SMTP_PORT: 1025 });
+    expect(getMailEnv()).toMatchObject({
+      SMTP_HOST: "localhost",
+      SMTP_PORT: 1025,
+    });
   });
 
   it("lanza si falta el host", () => {

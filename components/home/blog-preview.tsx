@@ -1,7 +1,40 @@
 import Link from "next/link";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { ArrowRight } from "@/components/icons";
 import { PostCard } from "@/components/blog/post-card";
-import { getRecentPosts } from "@/lib/blog-posts";
+import { PostCardSkeleton } from "@/components/blog/post-card-skeleton";
+import { cachedPublishedPosts } from "@/db/blog-cache";
+
+const listClass =
+  "m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-6 p-0";
+
+async function RecentPosts() {
+  await connection();
+  const { items } = await cachedPublishedPosts({ limit: 3 });
+  if (items.length === 0) return null;
+  return (
+    <ul className={listClass}>
+      {items.map((post, i) => (
+        <li key={post.slug} className={`fx-reveal r${(i % 2) + 1} flex`}>
+          <PostCard post={post} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function RecentPostsSkeleton() {
+  return (
+    <ul className={listClass} aria-label="Cargando artículos" aria-busy="true">
+      {[0, 1, 2].map((i) => (
+        <li key={i} className="flex">
+          <PostCardSkeleton />
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export function BlogPreview() {
   return (
@@ -32,13 +65,9 @@ export function BlogPreview() {
           </Link>
         </div>
 
-        <ul className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-6 p-0">
-          {getRecentPosts(3).map((post, i) => (
-            <li key={post.slug} className={`fx-reveal r${(i % 2) + 1} flex`}>
-              <PostCard post={post} />
-            </li>
-          ))}
-        </ul>
+        <Suspense fallback={<RecentPostsSkeleton />}>
+          <RecentPosts />
+        </Suspense>
       </div>
     </section>
   );

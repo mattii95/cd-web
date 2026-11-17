@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { loadMoreCommentsAction } from "@/app/(site)/blog/actions";
+import type { PostAuthor, PublicComment, RatingSummary } from "@/db/blog";
 import {
-  blogAuthor,
   formatAverage,
-  getRatingSummary,
+  formatPostDate,
   type BlogRating,
-  type BlogReviews,
 } from "@/lib/blog-posts";
-
-type Sort = "recientes" | "valorados" | "gustados";
+import { LoadMore } from "./load-more";
+import { PersonAvatar } from "./person-avatar";
 
 const avatarColors = ["#1a66f5", "#050b1c", "#1450c8", "#3d5a99"];
 const ratings: BlogRating[] = [5, 4, 3, 2, 1];
@@ -24,23 +24,50 @@ function Stars({ n, className }: { n: number; className: string }) {
   );
 }
 
-// Solo el estado sin sesión (spec 03): "Responder" es visual; "Ingresar" y "Crear cuenta" van a /cuenta (spec 04).
-export function ReviewsSection({ reviews, slug }: { reviews: BlogReviews; slug: string }) {
-  const [sort, setSort] = useState<Sort>("recientes");
+// Solo el estado sin sesión (spec 03): "Responder" y "Útil" son visuales; "Ingresar" y "Crear cuenta" van a /cuenta (spec 04).
+export function ReviewsSection({
+  postId,
+  slug,
+  author,
+  summary,
+  initialComments,
+  initialCursor,
+}: {
+  postId: string;
+  slug: string;
+  author: PostAuthor; // firma las respuestas
+  summary: RatingSummary;
+  initialComments: PublicComment[]; // los 20 más recientes
+  initialCursor: string | null;
+}) {
+  const [comments, setComments] = useState(initialComments);
+  const [cursor, setCursor] = useState(initialCursor);
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
-  const { average, total } = getRatingSummary(reviews);
-  const maxCount = Math.max(...Object.values(reviews.distribution), 1);
+  const { average, total, distribution } = summary;
+  const maxCount = Math.max(...Object.values(distribution), 1);
 
-  const likesOf = (c: { id: string; likes: number }) =>
-    c.likes + (liked[c.id] ? 1 : 0);
-  // sort() es estable: a igualdad queda el orden del array (más reciente primero).
-  const comments = [...reviews.comments].sort((a, b) =>
-    sort === "valorados"
-      ? b.rating - a.rating
-      : sort === "gustados"
-        ? likesOf(b) - likesOf(a)
-        : 0,
-  );
+  const likesOf = (c: PublicComment) => c.usefulCount + (liked[c.id] ? 1 : 0);
+
+  async function loadMore() {
+    if (!cursor || loading) return;
+    setLoading(true);
+    setFailed(false);
+    try {
+      const result = await loadMoreCommentsAction(postId, cursor);
+      if (result.status === "success") {
+        setComments((prev) => [...prev, ...result.items]);
+        setCursor(result.nextCursor);
+      } else {
+        setFailed(true);
+      }
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <section
@@ -58,45 +85,55 @@ export function ReviewsSection({ reviews, slug }: { reviews: BlogReviews; slug: 
       </div>
 
       <div className="fx-reveal flex flex-wrap items-center gap-8 rounded-[20px] border border-paper-border bg-white p-7">
-        <div className="flex min-w-[150px] flex-col gap-2">
-          <span className="font-display text-[60px] leading-none font-bold tracking-[-0.03em]">
-            {formatAverage(average)}
-          </span>
-          <span
-            role="img"
-            aria-label={`Promedio ${formatAverage(average)} de 5 estrellas`}
-            className="text-[22px] tracking-[3px]"
-          >
-            <span className="text-accent [text-shadow:0_0_10px_rgba(77,139,255,0.6)]">
-              {"★".repeat(Math.round(average))}
-            </span>
-            <span className="text-[#c9d3e6]">
-              {"★".repeat(5 - Math.round(average))}
-            </span>
-          </span>
-          <span className="text-sm text-text-faint">{total} valoraciones</span>
-        </div>
-        <div className="flex flex-[1_1_280px] flex-col gap-2.5">
-          {ratings.map((n) => (
-            <div
-              key={n}
-              className="grid grid-cols-[34px_minmax(0,1fr)_30px] items-center gap-3 text-sm text-[#2b3449]"
-            >
-              <span className="font-semibold">{n} ★</span>
-              <span className="h-2 overflow-hidden rounded bg-accent-tint">
-                <span
-                  className="block h-full rounded bg-accent shadow-[0_0_10px_rgba(77,139,255,0.7)]"
-                  style={{
-                    width: `${Math.round((reviews.distribution[n] / maxCount) * 100)}%`,
-                  }}
-                />
+        {total === 0 ? (
+          <p className="m-0 text-base text-text-faint">
+            Todavía no hay valoraciones
+          </p>
+        ) : (
+          <>
+            <div className="flex min-w-[150px] flex-col gap-2">
+              <span className="font-display text-[60px] leading-none font-bold tracking-[-0.03em]">
+                {formatAverage(average)}
               </span>
-              <span className="text-right text-text-faint">
-                {reviews.distribution[n]}
+              <span
+                role="img"
+                aria-label={`Promedio ${formatAverage(average)} de 5 estrellas`}
+                className="text-[22px] tracking-[3px]"
+              >
+                <span className="text-accent [text-shadow:0_0_10px_rgba(77,139,255,0.6)]">
+                  {"★".repeat(Math.round(average))}
+                </span>
+                <span className="text-[#c9d3e6]">
+                  {"★".repeat(5 - Math.round(average))}
+                </span>
+              </span>
+              <span className="text-sm text-text-faint">
+                {total} {total === 1 ? "valoración" : "valoraciones"}
               </span>
             </div>
-          ))}
-        </div>
+            <div className="flex flex-[1_1_280px] flex-col gap-2.5">
+              {ratings.map((n) => (
+                <div
+                  key={n}
+                  className="grid grid-cols-[34px_minmax(0,1fr)_30px] items-center gap-3 text-sm text-[#2b3449]"
+                >
+                  <span className="font-semibold">{n} ★</span>
+                  <span className="h-2 overflow-hidden rounded bg-accent-tint">
+                    <span
+                      className="block h-full rounded bg-accent shadow-[0_0_10px_rgba(77,139,255,0.7)]"
+                      style={{
+                        width: `${Math.round((distribution[n] / maxCount) * 100)}%`,
+                      }}
+                    />
+                  </span>
+                  <span className="text-right text-text-faint">
+                    {distribution[n]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="fx-reveal fx-beam relative flex flex-wrap items-center justify-between gap-5 overflow-hidden rounded-[20px] bg-[#050b1c] p-7 text-white">
@@ -128,99 +165,101 @@ export function ReviewsSection({ reviews, slug }: { reviews: BlogReviews; slug: 
         </div>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="m-0 font-display text-[22px] font-semibold">
-          {reviews.comments.length} comentarios
-        </h3>
-        <label className="flex items-center gap-2.5 text-sm text-text-faint">
-          Ordenar por
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as Sort)}
-            className="fx-input min-h-11 rounded-full border border-[#c9d3e6] bg-white px-3.5 py-2.5 text-sm font-semibold text-ink"
-          >
-            <option value="recientes">Más recientes</option>
-            <option value="valorados">Mejor puntuados</option>
-            <option value="gustados">Más votados</option>
-          </select>
-        </label>
-      </div>
+      <h3 className="m-0 mt-2 font-display text-[22px] font-semibold">
+        Comentarios
+      </h3>
 
-      <ul className="m-0 flex list-none flex-col gap-3.5 p-0">
-        {comments.map((c) => {
-          const isLiked = !!liked[c.id];
-          const color =
-            avatarColors[reviews.comments.indexOf(c) % avatarColors.length];
-          return (
-            <li
-              key={c.id}
-              className="flex gap-3.5 rounded-[18px] border border-paper-border bg-white px-[22px] py-5"
-            >
-              <span
-                aria-hidden="true"
-                className="flex size-10 flex-none items-center justify-center rounded-full text-sm font-bold text-white"
-                style={{ background: color }}
+      {comments.length === 0 ? (
+        <p className="m-0 text-base text-text-faint">
+          Todavía no hay comentarios
+        </p>
+      ) : (
+        <ul className="m-0 flex list-none flex-col gap-3.5 p-0">
+          {comments.map((c, i) => {
+            const isLiked = !!liked[c.id];
+            return (
+              <li
+                key={c.id}
+                className="flex gap-3.5 rounded-[18px] border border-paper-border bg-white px-[22px] py-5"
               >
-                {c.initials}
-              </span>
-              <div className="flex min-w-0 flex-1 flex-col gap-2">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                  <strong className="text-[15px]">{c.name}</strong>
-                  <Stars n={c.rating} className="text-sm tracking-[2px]" />
-                  <span className="text-[13px] text-text-faint">{c.time}</span>
-                </div>
-                <p className="m-0 text-[15px] leading-[1.65] text-[#2b3449]">
-                  {c.text}
-                </p>
-                <div className="-ml-2.5 flex flex-wrap gap-1">
-                  <button
-                    type="button"
-                    aria-pressed={isLiked}
-                    onClick={() => setLiked({ ...liked, [c.id]: !isLiked })}
-                    className={`inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border-0 px-3 py-2 text-[13px] font-semibold ${
-                      isLiked
-                        ? "bg-accent-tint text-[#1450c8]"
-                        : "bg-transparent text-text-faint"
-                    }`}
-                  >
-                    Útil · {likesOf(c)}
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border-0 bg-transparent px-3 py-2 text-[13px] font-semibold text-text-faint"
-                  >
-                    Responder
-                  </button>
-                </div>
-                {c.reply && (
-                  <div className="mt-1.5 flex gap-3 rounded-[14px] border border-paper-border bg-paper px-[18px] py-4">
-                    <span
-                      aria-hidden="true"
-                      className="flex size-[34px] flex-none items-center justify-center rounded-full bg-accent font-mono text-xs font-semibold text-white"
-                    >
-                      {blogAuthor.initials}
+                <PersonAvatar
+                  name={c.authorName}
+                  image={c.authorImage}
+                  color={avatarColors[i % avatarColors.length]}
+                  className="size-10 text-sm"
+                />
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                    <strong className="text-[15px]">{c.authorName}</strong>
+                    {c.rating !== null && (
+                      <Stars n={c.rating} className="text-sm tracking-[2px]" />
+                    )}
+                    <span className="text-[13px] text-text-faint">
+                      {formatPostDate(c.createdAt)}
                     </span>
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                        <strong className="text-sm">{blogAuthor.name}</strong>
-                        <span className="rounded-full bg-[#050b1c] px-2 py-0.5 text-[11px] font-semibold text-white">
-                          Autor
-                        </span>
-                        <span className="text-[13px] text-text-faint">
-                          {c.reply.time}
-                        </span>
-                      </div>
-                      <p className="m-0 text-[15px] leading-[1.6] text-[#2b3449]">
-                        {c.reply.text}
-                      </p>
-                    </div>
                   </div>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+                  <p className="m-0 text-[15px] leading-[1.65] text-[#2b3449]">
+                    {c.text}
+                  </p>
+                  <div className="-ml-2.5 flex flex-wrap gap-1">
+                    <button
+                      type="button"
+                      aria-pressed={isLiked}
+                      onClick={() => setLiked({ ...liked, [c.id]: !isLiked })}
+                      className={`inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border-0 px-3 py-2 text-[13px] font-semibold ${
+                        isLiked
+                          ? "bg-accent-tint text-[#1450c8]"
+                          : "bg-transparent text-text-faint"
+                      }`}
+                    >
+                      Útil · {likesOf(c)}
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border-0 bg-transparent px-3 py-2 text-[13px] font-semibold text-text-faint"
+                    >
+                      Responder
+                    </button>
+                  </div>
+                  {c.reply && (
+                    <div className="mt-1.5 flex gap-3 rounded-[14px] border border-paper-border bg-paper px-[18px] py-4">
+                      <PersonAvatar
+                        name={author.name}
+                        image={author.image}
+                        className="size-[34px] text-xs"
+                      />
+                      <div className="flex min-w-0 flex-col gap-1.5">
+                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                          <strong className="text-sm">{author.name}</strong>
+                          <span className="rounded-full bg-[#050b1c] px-2 py-0.5 text-[11px] font-semibold text-white">
+                            Autor
+                          </span>
+                          <span className="text-[13px] text-text-faint">
+                            {formatPostDate(c.reply.repliedAt)}
+                          </span>
+                        </div>
+                        <p className="m-0 text-[15px] leading-[1.6] text-[#2b3449]">
+                          {c.reply.text}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {cursor && (
+        <LoadMore
+          label="Ver más comentarios"
+          errorMessage="No pudimos cargar más comentarios."
+          loading={loading}
+          failed={failed}
+          onClick={loadMore}
+        />
+      )}
     </section>
   );
 }

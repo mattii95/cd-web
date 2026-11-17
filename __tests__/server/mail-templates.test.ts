@@ -5,7 +5,8 @@ import {
   verificationEmail,
 } from "@/lib/mail/templates";
 
-const url = "http://localhost:3000/api/auth/verify-email?token=abc&callbackURL=/x";
+const url =
+  "http://localhost:3000/api/auth/verify-email?token=abc&callbackURL=/x";
 
 describe("plantillas de email", () => {
   it("la verificación incluye el link y el nombre en html y texto", () => {
@@ -24,7 +25,10 @@ describe("plantillas de email", () => {
   });
 
   it("el aviso de cuenta existente lleva el link de login", () => {
-    const mail = existingAccountEmail("Ana", "http://localhost:3000/cuenta/login");
+    const mail = existingAccountEmail(
+      "Ana",
+      "http://localhost:3000/cuenta/login",
+    );
     expect(mail.subject).toBe("Ya tenés una cuenta");
     expect(mail.text).toContain("http://localhost:3000/cuenta/login");
   });

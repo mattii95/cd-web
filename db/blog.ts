@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import type {
   BlogBlock,
   BlogCategoryTag,
@@ -184,8 +184,11 @@ async function resolveBody(
   });
 }
 
+export type PostFilters = { category?: string; tag?: string }; // slugs
+export type PostListParams = PageParams & PostFilters;
+
 export async function getPublishedPosts(
-  params: PageParams = {},
+  params: PostListParams = {},
 ): Promise<Page<PostSummary>> {
   const limit = resolveLimit(params.limit, 12);
   const cursor = params.cursor ? decodeCursor(params.cursor) : null;
@@ -193,6 +196,10 @@ export async function getPublishedPosts(
     .where(
       and(
         eq(post.status, "publicado"),
+        params.category ? eq(category.slug, params.category) : undefined,
+        params.tag
+          ? sql`exists (select 1 from ${postTag} join ${tag} on ${tag.id} = ${postTag.tagId} where ${postTag.postId} = ${post.id} and ${tag.slug} = ${params.tag})`
+          : undefined,
         cursor
           ? sql`(${post.publishedAt}, ${post.id}) < (${cursor.t}::timestamp, ${cursor.id})`
           : undefined,
@@ -213,6 +220,23 @@ export async function getPublishedPosts(
     items: page.map((r) => toSummary(r, tagsByPost.get(r.post.id) ?? [])),
     nextCursor,
   };
+}
+
+// Misma categoría primero, después los más recientes de otras. Sin el propio post.
+export async function getRelatedPosts(
+  postId: string,
+  n = 3,
+): Promise<PostSummary[]> {
+  const rows = await selectPublished()
+    .where(and(eq(post.status, "publicado"), ne(post.id, postId)))
+    .orderBy(
+      sql`(${post.categoryId} = (select ${post.categoryId} from ${post} where ${post.id} = ${postId})) desc`,
+      desc(post.publishedAt),
+      desc(post.id),
+    )
+    .limit(n);
+  const tagsByPost = await getTagsByPost(rows.map((r) => r.post.id));
+  return rows.map((r) => toSummary(r, tagsByPost.get(r.post.id) ?? []));
 }
 
 // Etiquetas con al menos un post publicado, por cantidad descendente y slug ascendente.

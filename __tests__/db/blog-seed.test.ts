@@ -35,7 +35,7 @@ import {
   user,
 } from "@/db/schema";
 import { seedBlog } from "@/db/seed/blog";
-import { blogPosts } from "@/lib/blog-posts";
+import { blogPosts } from "@/db/seed/blog-data";
 import { nuevoUsuario, resetBlog } from "./blog-helpers";
 
 const AUTOR = "autor@demo.invalid";

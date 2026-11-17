@@ -1,12 +1,7 @@
 import Link from "next/link";
-import {
-  blogAuthor,
-  formatAverage,
-  getCategory,
-  getRatingSummary,
-  getTag,
-  type BlogPost,
-} from "@/lib/blog-posts";
+import type { PostDetail, RatingSummary } from "@/db/blog";
+import { formatAverage } from "@/lib/blog-posts";
+import { PersonAvatar } from "./person-avatar";
 import { PostThumb } from "./post-thumb";
 import { TagList } from "./tag-list";
 
@@ -16,12 +11,12 @@ const gridBg =
 export function ArticleHero({
   post,
   date,
+  rating,
 }: {
-  post: BlogPost;
+  post: PostDetail;
   date: string; // ya formateada en el servidor
+  rating: RatingSummary;
 }) {
-  const category = getCategory(post.category);
-  const rating = post.reviews && getRatingSummary(post.reviews);
   return (
     <section className="relative overflow-hidden bg-background text-white">
       <div
@@ -44,7 +39,7 @@ export function ArticleHero({
           >
             Blog
           </Link>{" "}
-          / <span className="text-white">{category.label}</span>
+          / <span className="text-white">{post.category.label}</span>
         </nav>
         <h1 className="fx-rise d2 m-0 max-w-[920px] font-display text-[clamp(36px,4.8vw,62px)] leading-[1.05] font-bold tracking-[-0.03em]">
           {post.title}
@@ -53,21 +48,20 @@ export function ArticleHero({
           {post.excerpt}
         </p>
         <div className="fx-rise d3">
-          <TagList tags={post.tags.map((s) => getTag(s)!)} tone="dark" />
+          <TagList tags={post.tags} tone="dark" />
         </div>
         <div className="fx-rise d4 flex flex-wrap items-center gap-[18px] text-sm text-text-muted">
           <span className="flex items-center gap-3">
-            <span
-              aria-hidden="true"
-              className="flex size-10 items-center justify-center rounded-full bg-accent font-mono text-sm font-semibold text-white"
-            >
-              {blogAuthor.initials}
-            </span>
+            <PersonAvatar
+              name={post.author.name}
+              image={post.author.image}
+              className="size-10 text-sm"
+            />
             <span className="flex flex-col">
               <strong className="text-[15px] text-white">
-                {blogAuthor.name}
+                {post.author.name}
               </strong>
-              <span>{blogAuthor.role}</span>
+              {post.author.jobTitle && <span>{post.author.jobTitle}</span>}
             </span>
           </span>
           <span aria-hidden="true" className="h-7 w-px bg-white/15" />
@@ -75,7 +69,7 @@ export function ArticleHero({
           <span className="rounded-full border border-accent-light/45 px-2.5 py-[5px] font-mono text-xs text-accent-softer">
             {post.readingMinutes} min de lectura
           </span>
-          {post.reviews && rating && (
+          {rating.total > 0 && (
             <a
               href="#valoraciones"
               className="inline-flex items-center gap-1.5 py-2.5 text-sm text-white no-underline"
@@ -88,15 +82,15 @@ export function ArticleHero({
               </span>
               <strong>{formatAverage(rating.average)}</strong>
               <span className="text-text-muted">
-                ({rating.total} valoraciones · {post.reviews.comments.length}{" "}
-                comentarios)
+                ({rating.total}{" "}
+                {rating.total === 1 ? "valoración" : "valoraciones"})
               </span>
             </a>
           )}
         </div>
         <div className="fx-rise d4 mt-6 overflow-hidden rounded-t-3xl border border-b-0 border-white/12">
           <PostThumb
-            category={post.category}
+            category={post.category.slug}
             cover={post.cover}
             variant="banner"
           />

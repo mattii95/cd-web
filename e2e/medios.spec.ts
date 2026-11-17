@@ -14,6 +14,8 @@ test.describe.configure({ mode: "serial" });
 const IMAGEN = "e2e/fixtures/imagen.png";
 const POST = "e2e-medios-post";
 
+// Imágenes que ya cargó el seed del blog (global-setup): no se pueden borrar, están en uso.
+let base: number;
 let otras404: string[];
 let esperadas404: number;
 
@@ -23,6 +25,7 @@ test.beforeEach(async ({ page, context }) => {
   await sql("delete from post where slug = $1", [POST]);
   await sql("delete from media where original_name = 'imagen.png'");
   await clearSeedMedia();
+  [{ n: base }] = await sql<{ n: number }>("select count(*)::int as n from media");
 
   otras404 = [];
   esperadas404 = 0;
@@ -63,7 +66,7 @@ async function subir(page: import("@playwright/test").Page, alt: string) {
 test("subir una imagen la muestra en la grilla y se sirve como WebP", async ({ page }) => {
   await subir(page, "Círculo blanco sobre fondo azul");
   await expect(page.getByText("Imagen subida.")).toBeVisible();
-  await expect(cards(page)).toHaveCount(1);
+  await expect(cards(page)).toHaveCount(base + 1);
   await expect(cards(page).first()).toContainText("Círculo blanco sobre fondo azul");
   await expect(cards(page).first()).toContainText("800 × 600 px");
 
@@ -76,11 +79,11 @@ test("subir una imagen la muestra en la grilla y se sirve como WebP", async ({ p
 test("subir el mismo archivo otra vez avisa y no suma tarjetas", async ({ page }) => {
   await subir(page, "Primera vez");
   await expect(page.getByText("Imagen subida.")).toBeVisible();
-  await expect(cards(page)).toHaveCount(1);
+  await expect(cards(page)).toHaveCount(base + 1);
 
   await subir(page, "Segunda vez");
   await expect(page.getByText("Esa imagen ya estaba subida.")).toBeVisible();
-  await expect(cards(page)).toHaveCount(1);
+  await expect(cards(page)).toHaveCount(base + 1);
 });
 
 test("un archivo .txt muestra el mensaje de formato no soportado", async ({ page }) => {
@@ -92,7 +95,7 @@ test("un archivo .txt muestra el mensaje de formato no soportado", async ({ page
   await page.getByLabel("Texto alternativo").fill("Notas");
   await page.getByRole("button", { name: "Subir imagen" }).click();
   await expect(page.getByText(/Formato no soportado/)).toBeVisible();
-  await expect(cards(page)).toHaveCount(0);
+  await expect(cards(page)).toHaveCount(base);
 });
 
 test("editar el alt persiste al recargar y no acepta uno vacío", async ({ page }) => {
@@ -114,7 +117,7 @@ test("editar el alt persiste al recargar y no acepta uno vacío", async ({ page 
 
 test("una imagen sin usar se borra con Borrar y Sí", async ({ page }) => {
   await subir(page, "Para borrar");
-  const card = cards(page).first();
+  const card = cards(page).filter({ hasText: "Para borrar" });
   await card.getByRole("button", { name: "Borrar" }).click();
   await expect(card.getByText("¿Borrar?")).toBeVisible();
   await card.getByRole("button", { name: "No" }).click();
@@ -122,12 +125,12 @@ test("una imagen sin usar se borra con Borrar y Sí", async ({ page }) => {
 
   await card.getByRole("button", { name: "Borrar" }).click();
   await card.getByRole("button", { name: "Sí" }).click();
-  await expect(cards(page)).toHaveCount(0);
+  await expect(cards(page)).toHaveCount(base);
 });
 
 test("una imagen en uso muestra dónde y no se puede borrar", async ({ page }) => {
   await subir(page, "Portada de prueba");
-  await expect(cards(page)).toHaveCount(1);
+  await expect(cards(page)).toHaveCount(base + 1);
   const [{ id }] = await sql<{ id: string }>(
     "select id from media where original_name = 'imagen.png'",
   );
@@ -144,7 +147,7 @@ test("una imagen en uso muestra dónde y no se puede borrar", async ({ page }) =
   );
   try {
     await page.reload();
-    const card = cards(page).first();
+    const card = cards(page).filter({ hasText: "Portada de prueba" });
     await expect(card).toContainText("En uso en: Post de medios");
     await expect(card.getByRole("button", { name: "En uso" })).toBeDisabled();
   } finally {
@@ -155,7 +158,7 @@ test("una imagen en uso muestra dónde y no se puede borrar", async ({ page }) =
 
 test("Copiar id deja el id en el portapapeles y muestra Copiado", async ({ page }) => {
   await subir(page, "Para copiar");
-  const card = cards(page).first();
+  const card = cards(page).filter({ hasText: "Para copiar" });
   await card.getByRole("button", { name: "Copiar id" }).click();
   await expect(card.getByText("Copiado")).toBeVisible();
 
@@ -177,18 +180,18 @@ test.describe("paginación con 30 imágenes", () => {
     await seedMedia(30);
     await page.reload();
     await expect(cards(page)).toHaveCount(24);
-    await expect(page.getByText("30 imágenes", { exact: true })).toBeVisible();
+    await expect(page.getByText(`${base + 30} imágenes`, { exact: true })).toBeVisible();
   });
 
   const cargarMas = async (page: import("@playwright/test").Page) => {
     await page.getByRole("button", { name: "Cargar más" }).click();
-    await expect(cards(page)).toHaveCount(30);
+    await expect(cards(page)).toHaveCount(base + 30);
     await expect(page.getByRole("button", { name: "Cargar más" })).toHaveCount(0);
   };
 
   test("Cargar más deja 30 tarjetas y el botón desaparece", async ({ page }) => {
     await cargarMas(page);
-    await expect(page.getByText("30 imágenes", { exact: true })).toBeVisible();
+    await expect(page.getByText(`${base + 30} imágenes`, { exact: true })).toBeVisible();
   });
 
   test("borrar una imagen de la segunda tanda la saca y conserva las demás", async ({ page }) => {
@@ -196,8 +199,8 @@ test.describe("paginación con 30 imágenes", () => {
     const card = cards(page).filter({ hasText: "Semilla 30" });
     await card.getByRole("button", { name: "Borrar" }).click();
     await card.getByRole("button", { name: "Sí" }).click();
-    await expect(cards(page)).toHaveCount(29);
-    await expect(page.getByText("29 imágenes", { exact: true })).toBeVisible();
+    await expect(cards(page)).toHaveCount(base + 29);
+    await expect(page.getByText(`${base + 29} imágenes`, { exact: true })).toBeVisible();
     await expect(cards(page).filter({ hasText: "Semilla 30" })).toHaveCount(0);
     await expect(cards(page).filter({ hasText: "Semilla 01" })).toHaveCount(1);
   });
@@ -208,24 +211,24 @@ test.describe("paginación con 30 imágenes", () => {
     await expect(page.getByText("Imagen subida.")).toBeVisible();
     await expect(cards(page)).toHaveCount(24);
     await expect(cards(page).first()).toContainText("Imagen nueva");
-    await expect(page.getByText("31 imágenes", { exact: true })).toBeVisible();
+    await expect(page.getByText(`${base + 31} imágenes`, { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Cargar más" })).toBeVisible();
   });
 
   test("editar el alt de la segunda tanda lo muestra sin recargar y persiste", async ({ page }) => {
     await cargarMas(page);
-    const card = cards(page).nth(29); // "Semilla 30": al editar, el alt pasa a un input y deja de ser texto
+    const card = cards(page).nth(29 + base); // "Semilla 30": al editar, el alt pasa a un input y deja de ser texto
     await expect(card).toContainText("Semilla 30");
     await card.getByRole("button", { name: "Editar alt" }).click();
     await card.getByLabel("Texto alternativo").fill("Alt de la segunda tanda");
     await card.getByRole("button", { name: "Guardar" }).click();
     await expect(cards(page).filter({ hasText: "Alt de la segunda tanda" })).toHaveCount(1);
-    await expect(cards(page)).toHaveCount(30);
+    await expect(cards(page)).toHaveCount(base + 30);
 
     await page.reload();
     await expect(cards(page)).toHaveCount(24);
     await page.getByRole("button", { name: "Cargar más" }).click();
-    await expect(cards(page)).toHaveCount(30);
+    await expect(cards(page)).toHaveCount(base + 30);
     await expect(cards(page).filter({ hasText: "Alt de la segunda tanda" })).toHaveCount(1);
   });
 });

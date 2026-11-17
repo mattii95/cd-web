@@ -22,7 +22,7 @@ export function PostThumb({
   variant = "card",
 }: {
   category: BlogCategoryTag;
-  cover?: BlogImage;
+  cover?: BlogImage | null;
   variant?: "card" | "featured" | "banner";
 }) {
   const Icon = thumbIcons[category];
