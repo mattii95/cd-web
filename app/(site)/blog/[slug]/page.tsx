@@ -16,6 +16,8 @@ import {
   cachedPostBySlug,
   cachedRatingSummary,
 } from "@/db/blog-cache";
+import { getViewerState } from "@/db/blog-community";
+import { getCurrentUser } from "@/lib/auth/dal";
 import { formatPostDate } from "@/lib/blog-posts";
 
 // Un slug inexistente responde 200 con noindex: notFound() ocurre durante el streaming.
@@ -46,9 +48,13 @@ async function Article({
   await connection();
   const post = await cachedPostBySlug(slug);
   if (!post) notFound();
-  const [rating, comments] = await Promise.all([
+  const [rating, comments, viewer] = await Promise.all([
     cachedRatingSummary(post.id),
     cachedApprovedComments(post.id),
+    // Lo propio del lector no se cachea: depende de la sesión.
+    getCurrentUser().then((user) =>
+      user ? getViewerState(post.id, user.id) : null,
+    ),
   ]);
 
   return (
@@ -75,6 +81,7 @@ async function Article({
                 summary={rating}
                 initialComments={comments.items}
                 initialCursor={comments.nextCursor}
+                viewer={viewer}
               />
               <ArticleCta post={post} />
             </div>

@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, like } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { BlogBlock, BlogImage, BlogRating } from "@/lib/blog-posts";
 import { blogAuthor, blogCategories, blogPosts, blogTags } from "./blog-data";
@@ -261,10 +261,12 @@ export async function seedBlog(
       )
       .onConflictDoNothing();
 
-    // Comentarios con id fijo: el comentario no tiene clave natural.
+    // Comentarios con id fijo (UUID válido, como pide z.uuid() en las acciones): el comentario
+    // no tiene clave natural. Los ids viejos "seed-comment-*" se borran; los votos caen por cascade.
+    await tx.delete(comment).where(like(comment.id, "seed-comment-%"));
     for (const c of reviews.comments) {
       const meta = COMMENT_DEMO[c.id];
-      const id = `seed-comment-${c.id}`;
+      const id = `00000000-0000-4000-8000-${c.id.slice(1).padStart(12, "0")}`;
       await tx
         .insert(comment)
         .values({

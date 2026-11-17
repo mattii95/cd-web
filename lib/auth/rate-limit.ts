@@ -12,6 +12,7 @@ const RULES = {
   "request-reset": { max: 3, window: 60 },
   "send-verification": { max: 3, window: 60 },
   "sign-in-social": { max: 10, window: 60 },
+  comment: { max: 5, window: 600 },
 } as const;
 
 export type RateLimitRule = keyof typeof RULES;
@@ -40,4 +41,10 @@ export async function isRateLimited(rule: RateLimitRule): Promise<boolean> {
   const ip = h.get("x-forwarded-for")?.split(",")[0].trim() || h.get("x-real-ip") || "local";
   const { max, window } = RULES[rule];
   return hit(`actions|${ip}|${rule}`, max, window);
+}
+
+// Por usuario, no por IP: sin proxy configurado todos comparten el bucket "local".
+export async function isUserRateLimited(rule: RateLimitRule, userId: string): Promise<boolean> {
+  const { max, window } = RULES[rule];
+  return hit(`actions|user:${userId}|${rule}`, max, window);
 }
