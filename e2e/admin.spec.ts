@@ -73,11 +73,11 @@ test("Inicio: saludo y tres accesos directos", async ({ page }) => {
   }
 });
 
-test("Artículos: estado vacío y sin botón Nuevo artículo", async ({ page }) => {
+test("Artículos: tabla del listado y sin botón Nuevo artículo", async ({ page }) => {
   await entrarComoAdmin(page);
   await page.goto("/admin/articles");
   await expect(page.getByRole("heading", { name: "Artículos" })).toBeVisible();
-  await expect(page.getByText("La gestión de artículos llega en el próximo spec.")).toBeVisible();
+  await expect(page.getByRole("table", { name: "Listado de artículos" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Nuevo artículo" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Nuevo artículo" })).toHaveCount(0);
 });
