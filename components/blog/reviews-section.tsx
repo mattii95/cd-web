@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { loadMoreCommentsAction } from "@/app/(site)/blog/actions";
 import type { PostAuthor, PublicComment, RatingSummary } from "@/db/blog";
+import type { ViewerState } from "@/db/blog-community";
 import {
   formatAverage,
   formatPostDate,
@@ -39,6 +40,7 @@ export function ReviewsSection({
   summary: RatingSummary;
   initialComments: PublicComment[]; // los 20 más recientes
   initialCursor: string | null;
+  viewer: ViewerState | null; // null sin sesión; todavía no se usa (pasos 6 a 8)
 }) {
   const [comments, setComments] = useState(initialComments);
   const [cursor, setCursor] = useState(initialCursor);

@@ -56,6 +56,7 @@ const setup = (
       summary={summary}
       initialComments={[]}
       initialCursor={null}
+      viewer={null}
       {...props}
     />,
   );
