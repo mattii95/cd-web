@@ -5,8 +5,11 @@ const { headers, getSession } = vi.hoisted(() => ({
   getSession: vi.fn(),
 }));
 const getAuth = vi.hoisted(() => vi.fn());
+const connection = vi.hoisted(() => vi.fn());
 
 vi.mock("next/headers", () => ({ headers }));
+// connection() solo funciona dentro de un request de Next; fuera lanza.
+vi.mock("next/server", () => ({ connection }));
 vi.mock("@/lib/auth/auth", () => ({ getAuth }));
 
 import { getCurrentUser } from "@/lib/auth/dal";
@@ -15,6 +18,7 @@ describe("getCurrentUser", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     headers.mockResolvedValue(new Headers());
+    connection.mockResolvedValue(undefined);
     getAuth.mockReturnValue({ api: { getSession } });
   });
 
