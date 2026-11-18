@@ -19,10 +19,12 @@ import {
 import { formatDate } from "@/lib/format-date";
 import { SLUG_MAX, slugify } from "@/lib/slug";
 import { BODY_ID, BodyEditor } from "./body-editor";
+import { TagInput } from "./tag-input";
 
 type Props = {
   post: EditablePost | null; // null en /new
   categories: { id: string; label: string }[];
+  tagOptions: { slug: string; name: string }[]; // todas las etiquetas existentes
 };
 
 type Saved = {
@@ -72,7 +74,7 @@ function FieldError({ field, errors }: { field: string; errors: ArticleFieldErro
   );
 }
 
-export function ArticleEditor({ post, categories }: Props) {
+export function ArticleEditor({ post, categories, tagOptions }: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [busy, setBusy] = useState<ArticleIntent | null>(null);
@@ -87,8 +89,7 @@ export function ArticleEditor({ post, categories }: Props) {
   const [cta, setCta] = useState(post?.cta ?? "");
   const [categoryId, setCategoryId] = useState(post?.categoryId ?? "");
   const [body, setBody] = useState<BlogDoc>(post?.body ?? EMPTY_DOC);
-  // Las etiquetas se editan en el panel con TagInput (siguiente paso); mientras tanto se conservan.
-  const [tags] = useState(post?.tags.map((t) => t.name) ?? []);
+  const [tags, setTags] = useState(post?.tags.map((t) => t.name) ?? []);
   const [saved, setSaved] = useState<Saved>({
     id: post?.id ?? null,
     status: post?.status ?? null,
@@ -398,6 +399,20 @@ export function ArticleEditor({ post, categories }: Props) {
                 La URL no cambia porque el artículo ya se publicó.
               </p>
             )}
+          </section>
+
+          <section className={`${card} flex flex-col gap-3`}>
+            <h2 className="m-0 font-display text-lg font-bold text-cms-ink">Etiquetas</h2>
+            <Field label="Etiquetas del artículo" field="tags" errors={errors}>
+              <TagInput
+                id={fieldId("tags")}
+                value={tags}
+                options={tagOptions}
+                onChange={setTags}
+                invalid={Boolean(errors.tags)}
+                describedBy={errors.tags ? `${fieldId("tags")}-error` : undefined}
+              />
+            </Field>
           </section>
 
           <section className={`${card} flex flex-col gap-3`}>

@@ -52,7 +52,7 @@ const post = (over: Partial<EditablePost> = {}): EditablePost => ({
 
 describe("ArticleEditor", () => {
   it("en /new muestra Guardar borrador y Publicar", () => {
-    render(<ArticleEditor post={null} categories={categories} />);
+    render(<ArticleEditor post={null} categories={categories} tagOptions={[]} />);
     expect(screen.getByRole("heading", { level: 1, name: "Nuevo artículo" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Guardar borrador" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Publicar" })).toBeInTheDocument();
@@ -63,6 +63,7 @@ describe("ArticleEditor", () => {
       <ArticleEditor
         post={post({ status: "publicado", publishedAt: new Date("2026-11-11") })}
         categories={categories}
+        tagOptions={[]}
       />,
     );
     expect(screen.getByRole("button", { name: "Pasar a borrador" })).toBeInTheDocument();
@@ -72,7 +73,7 @@ describe("ArticleEditor", () => {
 
   it("el título llena el slug y editarlo a mano corta el seguimiento", async () => {
     const user = userEvent.setup();
-    render(<ArticleEditor post={null} categories={categories} />);
+    render(<ArticleEditor post={null} categories={categories} tagOptions={[]} />);
     const slug = screen.getByLabelText("Dirección del artículo");
     await user.type(screen.getByLabelText("Título del artículo"), "¿Qué es SaaS?");
     expect(slug).toHaveValue("que-es-saas");
@@ -90,6 +91,7 @@ describe("ArticleEditor", () => {
       <ArticleEditor
         post={post({ status: "publicado", publishedAt: new Date("2026-11-11") })}
         categories={categories}
+        tagOptions={[]}
       />,
     );
     expect(screen.getByLabelText("Dirección del artículo")).toHaveAttribute("readonly");
@@ -98,7 +100,7 @@ describe("ArticleEditor", () => {
 
   it("Publicar sin resumen muestra el error, mueve el foco y no abre el modal", async () => {
     const user = userEvent.setup();
-    render(<ArticleEditor post={post({ excerpt: "" })} categories={categories} />);
+    render(<ArticleEditor post={post({ excerpt: "" })} categories={categories} tagOptions={[]} />);
     await user.click(screen.getByRole("button", { name: "Publicar" }));
     const excerpt = screen.getByLabelText("Resumen que aparece debajo del título");
     expect(excerpt).toHaveAttribute("aria-invalid", "true");
@@ -118,7 +120,7 @@ describe("ArticleEditor", () => {
       updatedAt: "2026-11-18T10:00:00.000Z",
     });
     const user = userEvent.setup();
-    render(<ArticleEditor post={post()} categories={categories} />);
+    render(<ArticleEditor post={post()} categories={categories} tagOptions={[]} />);
     await user.click(screen.getByRole("button", { name: "Publicar" }));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Publicar" }));
