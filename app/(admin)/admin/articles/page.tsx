@@ -51,7 +51,18 @@ async function Articles({ searchParams }: Pick<PageProps<"/admin/articles">, "se
 export default function ArticlesPage(props: PageProps<"/admin/articles">) {
   return (
     <>
-      <AdminPageHeader title="Artículos" description="Creá, editá y publicá las notas del blog." />
+      <AdminPageHeader
+        title="Artículos"
+        description="Creá, editá y publicá las notas del blog."
+        actions={
+          <Link
+            href="/admin/articles/new"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-accent bg-accent px-5 text-sm font-semibold text-white transition-colors hover:bg-accent-hover"
+          >
+            Nuevo artículo
+          </Link>
+        }
+      />
       <Suspense
         fallback={
           <div

@@ -63,7 +63,12 @@ export function ArticlesTable({ query, items }: { query: AdminPostQuery; items: 
             className="block border-b border-cms-line-soft px-5 py-3 last:border-b-0 md:table-row md:px-0 md:py-0"
           >
             <td data-label="Título" className={`${cell} min-w-0 md:max-w-sm`}>
-              <span className="block font-semibold text-cms-ink [overflow-wrap:anywhere]">{p.title}</span>
+              <Link
+                href={`/admin/articles/${p.id}/edit`}
+                className="inline-block min-h-6 font-semibold text-cms-ink underline-offset-2 [overflow-wrap:anywhere] hover:text-cms-link hover:underline"
+              >
+                {p.title}
+              </Link>
               <span className="block text-sm text-cms-muted [overflow-wrap:anywhere]">/blog/{p.slug}</span>
             </td>
             <td data-label="Categoría" className={cell}>

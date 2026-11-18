@@ -65,7 +65,7 @@ test("muestra título, pestañas con contador, columnas y nada fuera de alcance"
   for (const h of ["Título", "Categoría", "Estado", "Lectura", "Actualizado", "Acciones"]) {
     await expect(page.getByRole("columnheader", { name: h })).toBeVisible();
   }
-  for (const t of ["Nuevo artículo", "Exportar", "Editar"]) {
+  for (const t of ["Exportar"]) {
     await expect(page.getByText(t, { exact: true })).toHaveCount(0);
   }
   await expect(page.getByRole("checkbox")).toHaveCount(0);

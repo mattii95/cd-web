@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   deletePostAction,
@@ -119,6 +120,14 @@ export function RowMenu({ id, slug, title, status }: Props) {
           role="menu"
           className="absolute right-0 z-20 mt-1 w-56 rounded-xl border border-cms-line bg-cms-panel p-1 shadow-[0_12px_32px_rgba(11,16,32,0.18)]"
         >
+          <Link
+            role="menuitem"
+            href={`/admin/articles/${id}/edit`}
+            onClick={() => setMenuOpen(false)}
+            className={item}
+          >
+            <Pencil /> Editar
+          </Link>
           {status === "publicado" && (
             <a
               role="menuitem"

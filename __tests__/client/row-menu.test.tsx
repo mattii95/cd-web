@@ -36,17 +36,26 @@ describe("RowMenu", () => {
 
   it("un borrador muestra Publicar y Eliminar", async () => {
     await openMenu(draft);
-    expect(items()).toEqual(["Publicar", "Eliminar"]);
+    expect(items()).toEqual(["Editar", "Publicar", "Eliminar"]);
   });
 
   it("un publicado muestra Ver en el blog, Pasar a borrador y Eliminar", async () => {
     await openMenu(published);
-    expect(items()).toEqual(["Ver en el blog", "Pasar a borrador", "Eliminar"]);
+    expect(items()).toEqual(["Editar", "Ver en el blog", "Pasar a borrador", "Eliminar"]);
     const link = screen.getByRole("menuitem", { name: "Ver en el blog" });
     expect(link).toHaveAttribute("href", "/blog/mi-post");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener");
   });
+
+  it.each([["borrador", draft], ["publicado", published]] as const)(
+    "un %s muestra Editar primero, con enlace al editor",
+    async (_, props) => {
+      await openMenu(props);
+      expect(items()[0]).toBe("Editar");
+      expect(screen.getByRole("menuitem", { name: "Editar" })).toHaveAttribute("href", "/admin/articles/id-1/edit");
+    },
+  );
 
   it("el botón expone aria-expanded y Escape cierra el menú", async () => {
     const user = await openMenu(draft);
