@@ -48,7 +48,15 @@ export const nuevoPost = (
   slug,
   title: slug,
   excerpt: "extracto",
-  body: [{ type: "p" as const, text: "texto" }],
+  body: {
+    type: "doc" as const,
+    content: [
+      {
+        type: "paragraph" as const,
+        content: [{ type: "text" as const, text: "texto" }],
+      },
+    ],
+  },
   cta: "cta",
   readingMinutes: 5,
   categoryId,

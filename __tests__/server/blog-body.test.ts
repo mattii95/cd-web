@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   blocksToDoc,
   blogBodySchema,
-  blogDocSchema,
   docHeadings,
   type LegacyBlock,
 } from "@/db/blog-body";
@@ -17,77 +16,16 @@ const toStored = (body: BlogBlock[]) =>
       : b,
   );
 
-describe("blogBodySchema", () => {
-  it.each(blogPosts.map((p) => [p.slug, p.body] as const))(
-    "acepta el body de %s",
-    (_slug, body) => {
-      expect(blogBodySchema.safeParse(toStored(body)).success).toBe(true);
-    },
-  );
-
-  it("rechaza un bloque con type desconocido", () => {
-    expect(
-      blogBodySchema.safeParse([{ type: "video", text: "x" }]).success,
-    ).toBe(false);
-  });
-
-  it("rechaza un h2 sin id", () => {
-    expect(blogBodySchema.safeParse([{ type: "h2", text: "x" }]).success).toBe(
-      false,
-    );
-  });
-
-  describe("bloque image", () => {
-    const mediaId = "0b7c1c5e-6f0e-4a55-9a43-2d2a4f6c1b11";
-
-    it("acepta mediaId UUID, con alt y caption opcionales", () => {
-      expect(
-        blogBodySchema.safeParse([{ type: "image", mediaId }]).success,
-      ).toBe(true);
-      expect(
-        blogBodySchema.safeParse([
-          { type: "image", mediaId, alt: "Diagrama", caption: "Figura 1" },
-        ]).success,
-      ).toBe(true);
-    });
-
-    it("rechaza un bloque sin mediaId", () => {
-      expect(blogBodySchema.safeParse([{ type: "image" }]).success).toBe(false);
-    });
-
-    it("rechaza un mediaId que no es UUID", () => {
-      expect(
-        blogBodySchema.safeParse([{ type: "image", mediaId: "abc" }]).success,
-      ).toBe(false);
-    });
-
-    it("rechaza alt o caption vacíos", () => {
-      for (const extra of [{ alt: "" }, { alt: "   " }, { caption: "" }]) {
-        expect(
-          blogBodySchema.safeParse([{ type: "image", mediaId, ...extra }])
-            .success,
-        ).toBe(false);
-      }
-    });
-  });
-
-  it("rechaza un objeto que no es array", () => {
-    expect(blogBodySchema.safeParse({ type: "p", text: "x" }).success).toBe(
-      false,
-    );
-  });
-});
-
 const mediaId = "0b7c1c5e-6f0e-4a55-9a43-2d2a4f6c1b11";
 const t = (text: string, marks?: unknown[]) => ({ type: "text", text, marks });
 const p = (...content: unknown[]) => ({ type: "paragraph", content });
 const doc = (...content: unknown[]) => ({ type: "doc", content });
-const ok = (d: unknown) => blogDocSchema.safeParse(d).success;
+const ok = (d: unknown) => blogBodySchema.safeParse(d).success;
 const link = (href: string) =>
   doc(p(t("x", [{ type: "link", attrs: { href } }])));
 const image = { type: "image", attrs: { mediaId, alt: null, caption: null } };
 
-describe("blogDocSchema", () => {
+describe("blogBodySchema", () => {
   it.each(blogPosts.map((x) => [x.slug, x.body] as const))(
     "acepta blocksToDoc del body de %s",
     (_slug, body) => {
@@ -168,7 +106,7 @@ describe("blogDocSchema", () => {
   });
 
   it("descarta target y rel del link", () => {
-    const r = blogDocSchema.parse(
+    const r = blogBodySchema.parse(
       doc(
         p(
           t("x", [
@@ -211,7 +149,7 @@ describe("blocksToDoc", () => {
 
 describe("docHeadings", () => {
   it("lista solo H2, con ids s1/s2 y texto plano", () => {
-    const d = blogDocSchema.parse(
+    const d = blogBodySchema.parse(
       doc(
         { type: "heading", attrs: { level: 2 }, content: [t("Uno")] },
         { type: "heading", attrs: { level: 3 }, content: [t("Sub")] },

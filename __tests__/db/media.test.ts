@@ -1,10 +1,20 @@
+import type { BlogDoc } from "@/db/blog-body";
 import { mkdtemp, readdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { eq, sql } from "drizzle-orm";
 import { Pool } from "pg";
 import sharp from "sharp";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { closeDb, getDb } from "@/db/client";
 import {
   countMedia,
@@ -55,8 +65,7 @@ async function crearPost(over: Partial<typeof post.$inferInsert>) {
     .values(nuevaCategoria())
     .onConflictDoNothing()
     .returning();
-  const categoryId =
-    cat?.id ?? (await db.select().from(category))[0].id;
+  const categoryId = cat?.id ?? (await db.select().from(category))[0].id;
   const [p] = await db
     .insert(post)
     .values({ ...nuevoPost(categoryId, "autor"), ...over })
@@ -78,15 +87,29 @@ afterAll(async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
+const img = (mediaId: string) =>
+  ({ type: "image", attrs: { mediaId, alt: null, caption: null } }) as const;
+const docWith = (...content: BlogDoc["content"]): BlogDoc => ({
+  type: "doc",
+  content,
+});
+
 describe("createMedia", () => {
   it("guarda <id>.webp y una fila con medidas y bytes del archivo", async () => {
     const { item, duplicate } = await subir("red");
     expect(duplicate).toBe(false);
     expect(await archivos()).toEqual([`${item.id}.webp`]);
     const file = path.join(dir, `${item.id}.webp`);
-    expect(item).toMatchObject({ width: 64, height: 48, src: `/media/${item.id}` });
+    expect(item).toMatchObject({
+      width: 64,
+      height: 48,
+      src: `/media/${item.id}`,
+    });
     expect(item.bytes).toBe((await stat(file)).size);
-    const [row] = await getDb().select().from(media).where(eq(media.id, item.id));
+    const [row] = await getDb()
+      .select()
+      .from(media)
+      .where(eq(media.id, item.id));
     expect(row.bytes).toBe(item.bytes);
   });
 
@@ -140,7 +163,10 @@ describe("tabla media", () => {
     await getDb().insert(user).values(nuevoUsuario("sube"));
     const { item } = await subir("red", { uploadedBy: "sube" });
     await getDb().delete(user).where(eq(user.id, "sube"));
-    const [row] = await getDb().select().from(media).where(eq(media.id, item.id));
+    const [row] = await getDb()
+      .select()
+      .from(media)
+      .where(eq(media.id, item.id));
     expect(row.uploadedBy).toBeNull();
   });
 });
@@ -179,7 +205,8 @@ async function sembrar(n: number, mismaFecha = false) {
       height: 10,
       bytes: 10,
       originalName: `${i}.webp`,
-      createdAt: sql`'2026-01-01 10:00:00'::timestamp + ${mismaFecha ? 0 : i} * interval '1 second'` as never,
+      createdAt:
+        sql`'2026-01-01 10:00:00'::timestamp + ${mismaFecha ? 0 : i} * interval '1 second'` as never,
     });
   }
   return ids;
@@ -189,7 +216,10 @@ async function recorrer(limit: number) {
   const vistos: string[] = [];
   let cursor: string | null = null;
   do {
-    const page: Awaited<ReturnType<typeof listMedia>> = await listMedia({ limit, cursor });
+    const page: Awaited<ReturnType<typeof listMedia>> = await listMedia({
+      limit,
+      cursor,
+    });
     vistos.push(...page.items.map((m) => m.id));
     cursor = page.nextCursor;
   } while (cursor);
@@ -233,7 +263,8 @@ describe("listMedia paginada", () => {
         height: 1,
         bytes: 1,
         originalName: "x.webp",
-        createdAt: sql`'2026-01-01 10:00:00.000100'::timestamp + ${i} * interval '1 microsecond'` as never,
+        createdAt:
+          sql`'2026-01-01 10:00:00.000100'::timestamp + ${i} * interval '1 microsecond'` as never,
       });
     }
     const vistos = await recorrer(2);
@@ -269,22 +300,23 @@ describe("listMedia paginada", () => {
     const a = await subir("red");
     const b = await subir("blue");
     const c = await subir("green");
-    await crearPost({ coverMediaId: a.item.id, title: "Portada", slug: "portada" });
+    await crearPost({
+      coverMediaId: a.item.id,
+      title: "Portada",
+      slug: "portada",
+    });
     await crearPost({
       status: "borrador",
       publishedAt: null,
       title: "Borrador",
       slug: "borrador",
-      body: [
-        { type: "image", mediaId: b.item.id },
-        { type: "image", mediaId: b.item.id },
-      ],
+      body: docWith(img(b.item.id), img(b.item.id)),
     });
     await crearPost({
       title: "Ambos",
       slug: "ambos",
       coverMediaId: b.item.id,
-      body: [{ type: "image", mediaId: b.item.id }],
+      body: docWith(img(b.item.id)),
     });
     const { items } = await listMedia();
     expect(items).toHaveLength(3);
@@ -326,10 +358,13 @@ describe("deleteMedia", () => {
       status: "borrador",
       publishedAt: null,
       title: "Borrador",
-      body: [
-        { type: "p", text: "hola" },
-        { type: "image", mediaId: item.id },
-      ],
+      body: docWith(
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "hola" }],
+        },
+        img(item.id),
+      ),
     });
     expect(await getMediaUsage(item.id)).toMatchObject([
       { title: "Borrador", as: "cuerpo" },

@@ -17,7 +17,6 @@ import {
 import type { ServiceSlug } from "@/lib/services";
 import {
   type BlogDoc,
-  blocksToDoc,
   blogBodySchema,
   type ResolvedBlogDoc,
 } from "./blog-body";
@@ -288,8 +287,7 @@ export async function getPublishedPostBySlug(
       row,
       (await getTagsByPost([row.post.id])).get(row.post.id) ?? [],
     ),
-    // Temporal (paso 2): el body aún está en formato viejo hasta la migración.
-    body: await resolveBody(slug, blocksToDoc(body.data)),
+    body: await resolveBody(slug, body.data),
     cta: row.post.cta,
   };
 }

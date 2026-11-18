@@ -6,7 +6,12 @@ import type { BlogBlock, BlogImage, BlogRating } from "@/lib/blog-posts";
 import { blogAuthor, blogCategories, blogPosts, blogTags } from "./blog-data";
 import { processImage } from "@/lib/media/process";
 import { readMediaFile, writeMediaFile } from "@/lib/media/storage";
-import { blogBodySchema, type StoredBlogBlock } from "../blog-body";
+import {
+  blocksToDoc,
+  blogBodySchema,
+  type BlogDoc,
+  type LegacyBlock,
+} from "../blog-body";
 import * as schema from "../schema";
 
 const {
@@ -105,7 +110,7 @@ export async function seedBlog(
     }
     return mediaIds.get(image.src)!;
   };
-  const toStored = async (body: BlogBlock[]): Promise<StoredBlogBlock[]> =>
+  const toStored = async (body: BlogBlock[]): Promise<LegacyBlock[]> =>
     Promise.all(
       body.map(async (b) =>
         b.type === "image"
@@ -118,11 +123,13 @@ export async function seedBlog(
       ),
     );
 
-  const bodies = new Map<string, StoredBlogBlock[]>();
+  const bodies = new Map<string, BlogDoc>();
   const covers = new Map<string, string>(); // slug → media.id
   for (const p of blogPosts) {
     if (p.cover) covers.set(p.slug, await imageId(p.cover));
-    const parsed = blogBodySchema.safeParse(await toStored(p.body));
+    const parsed = blogBodySchema.safeParse(
+      blocksToDoc(await toStored(p.body)),
+    );
     if (!parsed.success) {
       throw new Error(`El body del post "${p.slug}" no cumple blogBodySchema`);
     }
