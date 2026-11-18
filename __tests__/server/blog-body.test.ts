@@ -1,4 +1,6 @@
+import { Editor, type JSONContent } from "@tiptap/react";
 import { describe, expect, it } from "vitest";
+import { createExtensions } from "@/components/admin/article-editor/extensions";
 import {
   blocksToDoc,
   blogBodySchema,
@@ -166,6 +168,63 @@ describe("docHeadings", () => {
     expect(docHeadings(d)).toEqual([
       { id: "s1", text: "Uno" },
       { id: "s2", text: "Dos link" },
+    ]);
+  });
+});
+
+describe("extensiones de Tiptap del panel", () => {
+  it("un doc con todo lo que arma la barra pasa blogBodySchema", () => {
+    const content = {
+      type: "doc",
+      content: [
+        { type: "heading", attrs: { level: 2 }, content: [t("Título")] },
+        { type: "heading", attrs: { level: 3 }, content: [t("Sub")] },
+        p(
+          t("negrita", [{ type: "bold" }]),
+          t(" y "),
+          t("cursiva", [{ type: "italic" }]),
+          { type: "hardBreak" },
+          t("enlace", [{ type: "link", attrs: { href: "/servicios" } }]),
+        ),
+        {
+          type: "bulletList",
+          content: [
+            {
+              type: "listItem",
+              content: [
+                p(t("uno")),
+                {
+                  type: "orderedList",
+                  attrs: { start: 1 },
+                  content: [{ type: "listItem", content: [p(t("anidado"))] }],
+                },
+              ],
+            },
+          ],
+        },
+        { type: "blockquote", content: [p(t("cita"))] },
+        { type: "tip", content: [t("consejo")] },
+        { type: "summary", content: [t("resumen")] },
+        image,
+      ],
+    } as JSONContent;
+    const editor = new Editor({
+      element: null,
+      extensions: createExtensions(),
+      content,
+    });
+    const json = editor.getJSON();
+    editor.destroy();
+    expect(blogBodySchema.safeParse(json).success).toBe(true);
+    expect(json.content?.map((n) => n.type)).toEqual([
+      "heading",
+      "heading",
+      "paragraph",
+      "bulletList",
+      "blockquote",
+      "tip",
+      "summary",
+      "image",
     ]);
   });
 });

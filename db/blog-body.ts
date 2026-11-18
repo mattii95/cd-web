@@ -49,9 +49,9 @@ export type ResolvedBlogDoc = {
 };
 
 // http(s):// o ruta interna. Rechaza "//host" y "/\host" (el navegador los toma como host).
-const href = z
-  .string()
-  .regex(/^(https?:\/\/|\/(?![/\\]))/, "href no permitido");
+const HREF_RE = /^(https?:\/\/|\/(?![/\\]))/;
+export const isAllowedHref = (value: string) => HREF_RE.test(value);
+const href = z.string().regex(HREF_RE, "href no permitido");
 
 // z.object descarta las claves desconocidas (target, rel, class de Tiptap).
 const markSchema: z.ZodType<BlogMark> = z.discriminatedUnion("type", [
