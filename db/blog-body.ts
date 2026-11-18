@@ -168,3 +168,38 @@ export function docHeadings(
   }
   return out;
 }
+
+// ---- Texto plano y tiempo de lectura (sin servidor: también lo usa el editor) ----
+
+type TextNode = { type: string; text?: string; content?: TextNode[] };
+
+const BLOCKS_WITH_TEXT = (n: TextNode) => n.type !== "image";
+
+function collect(node: TextNode): string {
+  if (node.type === "text") return node.text ?? "";
+  if (node.type === "hardBreak") return " ";
+  if (!node.content) return "";
+  const parts = node.content.filter(BLOCKS_WITH_TEXT).map(collect);
+  // Los hijos en línea se pegan; los bloques se separan con un espacio.
+  const inline = node.content.every(
+    (c) => c.type === "text" || c.type === "hardBreak",
+  );
+  return parts.join(inline ? "" : " ");
+}
+
+export function docPlainText(doc: BlogDoc): string {
+  return collect(doc as TextNode)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// 200 palabras por minuto, hacia arriba, mínimo 1. No cuenta las imágenes.
+export function docReadingMinutes(doc: BlogDoc): number {
+  const text = docPlainText(doc);
+  const words = text ? text.split(" ").length : 0;
+  return Math.max(1, Math.ceil(words / 200));
+}
+
+export function docHasText(doc: BlogDoc): boolean {
+  return docPlainText(doc).length > 0;
+}

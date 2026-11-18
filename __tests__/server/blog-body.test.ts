@@ -4,7 +4,9 @@ import { createExtensions } from "@/components/admin/article-editor/extensions";
 import {
   blocksToDoc,
   blogBodySchema,
+  docHasText,
   docHeadings,
+  docReadingMinutes,
   type LegacyBlock,
 } from "@/db/blog-body";
 import { blogPosts } from "@/db/seed/blog-data";
@@ -226,5 +228,48 @@ describe("extensiones de Tiptap del panel", () => {
       "summary",
       "image",
     ]);
+  });
+});
+
+const words = (n: number) =>
+  Array.from({ length: n }, () => "palabra").join(" ");
+
+describe("docReadingMinutes / docHasText", () => {
+  it("un doc vacío dura 1 minuto", () => {
+    expect(docReadingMinutes(doc(p()) as never)).toBe(1);
+  });
+
+  it("450 palabras repartidas en bloques son 3 minutos y no cuenta imágenes", () => {
+    const d = doc(
+      p(t(words(100))),
+      {
+        type: "bulletList",
+        content: [{ type: "listItem", content: [p(t(words(100)))] }],
+      },
+      { type: "blockquote", content: [p(t(words(100)))] },
+      { type: "tip", content: [t(words(100))] },
+      { type: "heading", attrs: { level: 2 }, content: [t(words(50))] },
+      image,
+    );
+    expect(docReadingMinutes(d as never)).toBe(3);
+  });
+
+  it("201 palabras pasan a 2 minutos; no se pegan palabras entre bloques", () => {
+    expect(docReadingMinutes(doc(p(t(words(200))), p(t("x"))) as never)).toBe(
+      2,
+    );
+  });
+
+  it("docHasText: false con párrafo vacío o solo imagen", () => {
+    expect(docHasText(doc(p()) as never)).toBe(false);
+    expect(docHasText(doc(image) as never)).toBe(false);
+  });
+
+  it("docHasText: true con una palabra en un listItem", () => {
+    const d = doc({
+      type: "bulletList",
+      content: [{ type: "listItem", content: [p(t("hola"))] }],
+    });
+    expect(docHasText(d as never)).toBe(true);
   });
 });
