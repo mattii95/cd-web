@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useLayoutEffect, useRef, useState, useTransition } from "react";
-import { saveArticleAction } from "@/actions/admin/articles";
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
+import { deletePostAction, saveArticleAction } from "@/actions/admin/articles";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { notify } from "@/components/admin/toast";
 import { ArrowLeft, Spinner } from "@/components/icons";
@@ -55,6 +55,13 @@ const CONFIRM = {
   },
 } as const;
 
+const DELETE = {
+  title: "¿Eliminar el artículo?",
+  description: (t: string) => `Se borra «${t}» con sus valoraciones y comentarios. No se puede deshacer.`,
+  confirm: "Eliminar",
+  pending: "Eliminando…",
+};
+
 const idle = { status: "idle" } as const;
 
 const input =
@@ -80,6 +87,8 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
   const [busy, setBusy] = useState<ArticleIntent | null>(null);
   const [confirm, setConfirm] = useState<"publish" | "unpublish" | null>(null);
   const [errors, setErrors] = useState<ArticleFieldErrors>({});
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
 
   const [title, setTitle] = useState(post?.title ?? "");
   const [slug, setSlug] = useState(post?.slug ?? "");
@@ -97,6 +106,22 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
     updatedAt: post?.updatedAt.toISOString() ?? null,
     title: post?.title ?? "",
   });
+
+  // Qué hay en pantalla frente a lo último cargado o guardado: decide el aviso de salida.
+  const snapshot = (over: Partial<{ slug: string }> = {}) =>
+    JSON.stringify({ title, slug, excerpt, cta, categoryId, body, tags, ...over });
+  const [baseline, setBaseline] = useState(() => snapshot());
+  const dirty = snapshot() !== baseline;
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = ""; // algunos navegadores lo exigen para mostrar el aviso nativo
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   // La cabecera es fija: la barra del cuerpo se pega justo debajo.
   const head = useRef<HTMLElement>(null);
@@ -162,6 +187,7 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
 
   const save = (intent: ArticleIntent) => {
     const data = buildForm(intent);
+    const sent = snapshot();
     setBusy(intent);
     start(async () => {
       const res = await saveArticleAction(idle, data);
@@ -177,6 +203,8 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
       notify(res);
       setErrors({});
       setSlug(res.slug);
+      // Lo enviado pasa a ser lo guardado (con el slug que dejó el servidor).
+      setBaseline(JSON.stringify({ ...JSON.parse(sent), slug: res.slug }));
       setSaved((s) => ({
         id: res.id,
         status: res.postStatus,
@@ -186,6 +214,17 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
       }));
       // Primer guardado en /new: de acá en más se edita el artículo ya creado.
       if (!saved.id) router.replace(`/admin/articles/${res.id}/edit`);
+    });
+  };
+
+  const remove = () => {
+    const data = new FormData();
+    data.set("id", saved.id ?? "");
+    start(async () => {
+      const res = await deletePostAction(idle, data);
+      notify(res);
+      setDeleteOpen(false);
+      if (res.status === "success") router.replace("/admin/articles");
     });
   };
 
@@ -217,6 +256,12 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
         <div className="min-w-0 basis-full sm:basis-auto">
           <Link
             href="/admin/articles"
+            onClick={(e) => {
+              // Con cambios sin guardar, primero se pregunta.
+              if (!dirty) return;
+              e.preventDefault();
+              setLeaveOpen(true);
+            }}
             className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-cms-link underline-offset-2 hover:underline"
           >
             <ArrowLeft /> Artículos
@@ -428,6 +473,21 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
               <p className="m-0 text-sm text-cms-text">Sin portada</p>
             )}
           </section>
+
+          {saved.id && (
+            <section className={`${card} flex flex-col gap-3`}>
+              <h2 className="m-0 font-display text-lg font-bold text-cms-ink">Eliminar artículo</h2>
+              <p className="m-0 text-sm text-cms-text">Se borra con sus valoraciones y comentarios.</p>
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => setDeleteOpen(true)}
+                className={`${btn} border-red-700 bg-cms-panel text-red-700 hover:bg-red-50`}
+              >
+                Eliminar artículo
+              </button>
+            </section>
+          )}
         </aside>
       </div>
 
@@ -440,6 +500,27 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
         pending={pending}
         onConfirm={() => confirm && save(confirm)}
         onCancel={() => setConfirm(null)}
+      />
+      <ConfirmDialog
+        open={deleteOpen}
+        title={DELETE.title}
+        description={DELETE.description(saved.title)}
+        confirmLabel={DELETE.confirm}
+        pendingLabel={DELETE.pending}
+        tone="danger"
+        pending={pending}
+        onConfirm={remove}
+        onCancel={() => setDeleteOpen(false)}
+      />
+      <ConfirmDialog
+        open={leaveOpen}
+        title="¿Salir sin guardar?"
+        description="Los cambios que no guardaste se pierden."
+        confirmLabel="Salir"
+        pendingLabel="Saliendo…"
+        pending={false}
+        onConfirm={() => router.push("/admin/articles")}
+        onCancel={() => setLeaveOpen(false)}
       />
     </div>
   );

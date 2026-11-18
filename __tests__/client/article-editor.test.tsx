@@ -4,11 +4,13 @@ import { Editor } from "@tiptap/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EditablePost } from "@/db/admin-posts";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn(), push: vi.fn() }) }));
-vi.mock("@/actions/admin/articles", () => ({ saveArticleAction: vi.fn() }));
+const router = vi.hoisted(() => ({ replace: vi.fn(), push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
+vi.mock("@/actions/admin/articles", () => ({ saveArticleAction: vi.fn(), deletePostAction: vi.fn() }));
 vi.mock("@/components/admin/toast", () => ({ notify: vi.fn() }));
 
-import { saveArticleAction } from "@/actions/admin/articles";
+import { deletePostAction, saveArticleAction } from "@/actions/admin/articles";
+import { notify } from "@/components/admin/toast";
 import { ArticleEditor } from "@/components/admin/article-editor/article-editor";
 import { EditorToolbar } from "@/components/admin/article-editor/editor-toolbar";
 import { createExtensions } from "@/components/admin/article-editor/extensions";
@@ -129,6 +131,85 @@ describe("ArticleEditor", () => {
     expect(data.get("intent")).toBe("publish");
     expect(data.get("title")).toBe("Mi artículo");
     await waitFor(() => expect(screen.getByLabelText("Dirección del artículo")).toHaveAttribute("readonly"));
+  });
+});
+
+describe("ArticleEditor: salir, conflicto y eliminar", () => {
+  const unload = () => {
+    const e = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(e);
+    return e.defaultPrevented;
+  };
+
+  it("con cambios sin guardar, ← Artículos abre ¿Salir sin guardar? y beforeunload avisa", async () => {
+    const user = userEvent.setup();
+    render(<ArticleEditor post={post()} categories={categories} tagOptions={[]} />);
+    expect(unload()).toBe(false);
+    await user.type(screen.getByLabelText("Título del artículo"), " 2");
+    expect(unload()).toBe(true);
+
+    await user.click(screen.getByRole("link", { name: /Artículos/ }));
+    const dialog = await screen.findByRole("dialog", { name: "¿Salir sin guardar?" });
+    expect(within(dialog).getByText("Los cambios que no guardaste se pierden.")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Salir" }));
+    expect(router.push).toHaveBeenCalledWith("/admin/articles");
+  });
+
+  it("sin cambios, ← Artículos no pregunta", async () => {
+    const user = userEvent.setup();
+    render(<ArticleEditor post={post()} categories={categories} tagOptions={[]} />);
+    await user.click(screen.getByRole("link", { name: /Artículos/ }));
+    expect(screen.queryByRole("dialog", { name: "¿Salir sin guardar?" })).not.toBeInTheDocument();
+  });
+
+  it("después de guardar, el aviso se apaga", async () => {
+    vi.mocked(saveArticleAction).mockResolvedValue({
+      status: "success",
+      message: "Borrador guardado.",
+      id: "0b7c1c5e-6f0e-4a55-9a43-2d2a4f6c1b11",
+      slug: "mi-articulo",
+      postStatus: "borrador",
+      updatedAt: "2026-11-18T10:00:00.000Z",
+    });
+    const user = userEvent.setup();
+    render(<ArticleEditor post={post()} categories={categories} tagOptions={[]} />);
+    await user.type(screen.getByLabelText("Título del artículo"), " 2");
+    expect(unload()).toBe(true);
+    await user.click(screen.getByRole("button", { name: "Guardar borrador" }));
+    await waitFor(() => expect(unload()).toBe(false));
+  });
+
+  it("un conflicto se muestra como toast y no cambia el estado guardado", async () => {
+    vi.mocked(saveArticleAction).mockResolvedValue({
+      status: "error",
+      message: "Alguien modificó este artículo. Recargá para ver los cambios.",
+    });
+    const user = userEvent.setup();
+    render(<ArticleEditor post={post()} categories={categories} tagOptions={[]} />);
+    await user.click(screen.getByRole("button", { name: "Guardar borrador" }));
+    await waitFor(() =>
+      expect(notify).toHaveBeenCalledWith({
+        status: "error",
+        message: "Alguien modificó este artículo. Recargá para ver los cambios.",
+      }),
+    );
+  });
+
+  it("Eliminar artículo pide confirmación, borra y vuelve a la tabla", async () => {
+    vi.mocked(deletePostAction).mockResolvedValue({ status: "success", message: "Artículo eliminado." });
+    const user = userEvent.setup();
+    render(<ArticleEditor post={post()} categories={categories} tagOptions={[]} />);
+    await user.click(screen.getByRole("button", { name: "Eliminar artículo" }));
+    const dialog = await screen.findByRole("dialog", { name: "¿Eliminar el artículo?" });
+    await user.click(within(dialog).getByRole("button", { name: "Eliminar" }));
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith("/admin/articles"));
+    expect(vi.mocked(deletePostAction).mock.calls[0][1].get("id")).toBe(post().id);
+    expect(notify).toHaveBeenCalledWith({ status: "success", message: "Artículo eliminado." });
+  });
+
+  it("en /new no hay botón Eliminar artículo", () => {
+    render(<ArticleEditor post={null} categories={categories} tagOptions={[]} />);
+    expect(screen.queryByRole("button", { name: "Eliminar artículo" })).not.toBeInTheDocument();
   });
 });
 
