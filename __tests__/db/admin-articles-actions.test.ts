@@ -13,6 +13,7 @@ import { requireAdmin } from "@/lib/auth/dal";
 import {
   deletePostAction,
   publishPostAction,
+  saveArticleAction,
   unpublishPostAction,
 } from "@/actions/admin/articles";
 
@@ -39,7 +40,7 @@ beforeEach(async () => {
   vi.mocked(requireAdmin).mockResolvedValue({ id: "admin" } as never);
   await resetBlog();
   const db = getDb();
-  await db.insert(user).values(nuevoUsuario("autor"));
+  await db.insert(user).values([nuevoUsuario("autor"), nuevoUsuario("admin")]);
   await db.insert(authorProfile).values({ userId: "autor", jobTitle: "Fundador", bio: "Bio" });
   await db.insert(category).values(nuevaCategoria());
 });
@@ -118,5 +119,138 @@ describe("deletePostAction", () => {
     });
     expect(await getDb().select().from(post)).toHaveLength(0);
     expect(revalidatePath).toHaveBeenCalledWith("/admin/articles");
+  });
+});
+
+// ---- saveArticleAction ----
+
+async function articleForm(fields: Record<string, string | string[]> = {}) {
+  const [cat] = await getDb().select().from(category);
+  const base: Record<string, string | string[]> = {
+    id: "",
+    intent: "draft",
+    updatedAt: "",
+    title: "Mi artículo",
+    slug: "mi-articulo",
+    excerpt: "Resumen",
+    cta: "Escribinos",
+    categoryId: cat.id,
+    body: JSON.stringify({
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text: "Hola" }] }],
+    }),
+    tags: [],
+    ...fields,
+  };
+  const f = new FormData();
+  for (const [k, v] of Object.entries(base)) for (const x of Array.isArray(v) ? v : [v]) f.append(k, x);
+  return f;
+}
+const filaPost = async (id: string) => (await getDb().select().from(post).where(eq(post.id, id)))[0];
+
+describe("saveArticleAction", () => {
+  it("llama a requireAdmin antes de tocar la base", async () => {
+    vi.mocked(requireAdmin).mockRejectedValue(new Error("no admin"));
+    await expect(saveArticleAction(idle, await articleForm())).rejects.toThrow("no admin");
+    expect(await getDb().select().from(post)).toHaveLength(0);
+  });
+
+  it("sin id e intent draft crea el borrador con el autor admin", async () => {
+    const r = await saveArticleAction(idle, await articleForm({ tags: ["SEO"] }));
+    expect(r).toMatchObject({ status: "success", message: "Borrador guardado.", postStatus: "borrador" });
+    if (r.status !== "success") return;
+    expect(await filaPost(r.id)).toMatchObject({ status: "borrador", authorId: "admin" });
+  });
+
+  it("publish publica, sale en getPublishedPosts e invalida cachés", async () => {
+    const r = await saveArticleAction(idle, await articleForm({ intent: "publish" }));
+    expect(r).toMatchObject({ status: "success", message: "Artículo publicado.", slug: "mi-articulo" });
+    expect(updateTag).toHaveBeenCalledWith("blog");
+    expect(updateTag).toHaveBeenCalledWith("post:mi-articulo");
+    expect(revalidatePath).toHaveBeenCalledWith("/admin/articles");
+    const list = await getPublishedPosts();
+    expect(list.items.map((p) => p.slug)).toContain("mi-articulo");
+  });
+
+  it("unpublish pasa a borrador y deja de salir en getPublishedPosts", async () => {
+    const c = await saveArticleAction(idle, await articleForm({ intent: "publish" }));
+    if (c.status !== "success") throw new Error("setup");
+    const r = await saveArticleAction(
+      idle,
+      await articleForm({ intent: "unpublish", id: c.id, updatedAt: c.updatedAt }),
+    );
+    expect(r).toMatchObject({ status: "success", message: "Artículo pasado a borrador.", postStatus: "borrador" });
+    const list = await getPublishedPosts();
+    expect(list.items).toHaveLength(0);
+  });
+
+  it("save sobre un publicado no cambia status ni published_at", async () => {
+    const c = await saveArticleAction(idle, await articleForm({ intent: "publish" }));
+    if (c.status !== "success") throw new Error("setup");
+    const antes = await filaPost(c.id);
+    const r = await saveArticleAction(
+      idle,
+      await articleForm({ intent: "save", id: c.id, updatedAt: c.updatedAt, title: "Otro título" }),
+    );
+    expect(r).toMatchObject({ status: "success", message: "Cambios guardados.", postStatus: "publicado" });
+    const despues = await filaPost(c.id);
+    expect(despues).toMatchObject({ status: "publicado", title: "Otro título" });
+    expect(despues.publishedAt).toEqual(antes.publishedAt);
+  });
+
+  it("cambiar el slug de un borrador invalida el slug nuevo y el anterior", async () => {
+    const c = await saveArticleAction(idle, await articleForm());
+    if (c.status !== "success") throw new Error("setup");
+    vi.clearAllMocks();
+    await saveArticleAction(
+      idle,
+      await articleForm({ id: c.id, updatedAt: c.updatedAt, slug: "nuevo-slug" }),
+    );
+    expect(updateTag).toHaveBeenCalledWith("post:nuevo-slug");
+    expect(updateTag).toHaveBeenCalledWith("post:mi-articulo");
+  });
+
+  it("slug repetido, updatedAt viejo e id inexistente devuelven su mensaje", async () => {
+    await crear({ slug: "ocupado" });
+    expect(await saveArticleAction(idle, await articleForm({ slug: "ocupado" }))).toEqual({
+      status: "error",
+      fieldErrors: { slug: "Ya hay un artículo con esa URL." },
+    });
+
+    const c = await saveArticleAction(idle, await articleForm());
+    if (c.status !== "success") throw new Error("setup");
+    const viejo = new Date(new Date(c.updatedAt).getTime() - 5000).toISOString();
+    expect(await saveArticleAction(idle, await articleForm({ id: c.id, updatedAt: viejo }))).toEqual({
+      status: "error",
+      message: "Alguien modificó este artículo. Recargá para ver los cambios.",
+    });
+
+    expect(
+      await saveArticleAction(idle, await articleForm({ id: crypto.randomUUID(), updatedAt: c.updatedAt })),
+    ).toEqual(GONE);
+    expect(await saveArticleAction(idle, await articleForm({ id: "no-es-uuid" }))).toEqual(GONE);
+  });
+
+  it("errores de validación vuelven por campo y no escriben", async () => {
+    const r = await saveArticleAction(idle, await articleForm({ intent: "publish", excerpt: "" }));
+    expect(r).toMatchObject({ status: "error", fieldErrors: { excerpt: expect.any(String) } });
+    expect(await getDb().select().from(post)).toHaveLength(0);
+  });
+
+  it("un body con un enlace javascript: devuelve error y no escribe", async () => {
+    const body = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "x", marks: [{ type: "link", attrs: { href: "javascript:alert(1)" } }] },
+          ],
+        },
+      ],
+    });
+    const r = await saveArticleAction(idle, await articleForm({ body }));
+    expect(r).toMatchObject({ status: "error", fieldErrors: { body: expect.any(String) } });
+    expect(await getDb().select().from(post)).toHaveLength(0);
   });
 });
