@@ -1,7 +1,7 @@
-import type { BlogBlock } from "@/lib/blog-posts";
+import { docHeadings, type ResolvedBlogDoc } from "@/db/blog-body";
 
-export function ArticleToc({ body }: { body: BlogBlock[] }) {
-  const headings = body.filter((b) => b.type === "h2");
+export function ArticleToc({ body }: { body: ResolvedBlogDoc }) {
+  const headings = docHeadings(body);
   return (
     <div className="rounded-[18px] border border-paper-border bg-white p-[22px]">
       <span className="font-mono text-xs text-text-faint">

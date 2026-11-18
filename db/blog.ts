@@ -1,7 +1,6 @@
 import "server-only";
 import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import type {
-  BlogBlock,
   BlogCategoryTag,
   BlogImage,
   BlogRating,
@@ -16,7 +15,12 @@ import {
   resolveLimit,
 } from "@/lib/pagination";
 import type { ServiceSlug } from "@/lib/services";
-import { blogBodySchema, type StoredBlogBlock } from "./blog-body";
+import {
+  type BlogDoc,
+  blocksToDoc,
+  blogBodySchema,
+  type ResolvedBlogDoc,
+} from "./blog-body";
 import { getDb } from "./client";
 import {
   authorProfile,
@@ -56,7 +60,7 @@ export type PostSummary = {
   tags: BlogTag[]; // slug ascendente
 };
 export type TagRow = BlogTag & { count: number }; // count de posts publicados
-export type PostDetail = PostSummary & { body: BlogBlock[]; cta: string };
+export type PostDetail = PostSummary & { body: ResolvedBlogDoc; cta: string };
 export type RatingSummary = {
   average: number; // 0 si no hay valoraciones; sin redondear
   total: number;
@@ -156,32 +160,41 @@ async function getTagsByPost(postIds: string[]) {
   return byPost;
 }
 
-// Cambia el mediaId de los bloques image por la imagen de la biblioteca.
+// Cambia el mediaId de los nodos image de la raíz por la imagen de la biblioteca.
 async function resolveBody(
   slug: string,
-  body: StoredBlogBlock[],
-): Promise<BlogBlock[]> {
+  body: BlogDoc,
+): Promise<ResolvedBlogDoc> {
   const ids = [
-    ...new Set(body.flatMap((b) => (b.type === "image" ? [b.mediaId] : []))),
+    ...new Set(
+      body.content.flatMap((n) =>
+        n.type === "image" ? [n.attrs.mediaId] : [],
+      ),
+    ),
   ];
   const rows = ids.length
     ? await getDb().select().from(media).where(inArray(media.id, ids))
     : [];
   const byId = new Map(rows.map((m) => [m.id, m]));
-  return body.map((b): BlogBlock => {
-    if (b.type !== "image") return b;
-    const m = byId.get(b.mediaId);
-    if (!m) {
-      throw new Error(
-        `El post "${slug}" usa la imagen ${b.mediaId}, que no existe en media`,
-      );
-    }
-    return {
-      type: "image",
-      image: { ...mediaImage(m), alt: b.alt ?? m.alt },
-      ...(b.caption && { caption: b.caption }),
-    };
-  });
+  return {
+    type: "doc",
+    content: body.content.map((n): ResolvedBlogDoc["content"][number] => {
+      if (n.type !== "image") return n;
+      const m = byId.get(n.attrs.mediaId);
+      if (!m) {
+        throw new Error(
+          `El post "${slug}" usa la imagen ${n.attrs.mediaId}, que no existe en media`,
+        );
+      }
+      return {
+        type: "image",
+        attrs: {
+          image: { ...mediaImage(m), alt: n.attrs.alt ?? m.alt },
+          caption: n.attrs.caption,
+        },
+      };
+    }),
+  };
 }
 
 export type PostFilters = { category?: string; tag?: string }; // slugs
@@ -275,7 +288,8 @@ export async function getPublishedPostBySlug(
       row,
       (await getTagsByPost([row.post.id])).get(row.post.id) ?? [],
     ),
-    body: await resolveBody(slug, body.data),
+    // Temporal (paso 2): el body aún está en formato viejo hasta la migración.
+    body: await resolveBody(slug, blocksToDoc(body.data)),
     cta: row.post.cta,
   };
 }

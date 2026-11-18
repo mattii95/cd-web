@@ -99,7 +99,9 @@ describe("seedBlog", () => {
   it("carga valoraciones, comentarios, votos y respuestas del mock", async () => {
     const db = getDb();
     await seedBlog(db, { authorEmail: AUTOR });
-    const p = (await getPublishedPosts({ limit: 100 })).items.find((x) => x.slug === SLUG)!;
+    const p = (await getPublishedPosts({ limit: 100 })).items.find(
+      (x) => x.slug === SLUG,
+    )!;
 
     const summary = await getRatingSummary(p.id);
     expect(summary.total).toBe(24);
@@ -128,10 +130,12 @@ describe("seedBlog", () => {
 
     const detail = await getPublishedPostBySlug(SLUG);
     expect(detail?.cover).toMatchObject({ width: 1920, height: 1080 });
-    const image = detail?.body.find((b) => b.type === "image");
+    const image = detail?.body.content.find((b) => b.type === "image");
     expect(image).toMatchObject({
-      image: { width: 1600, height: 900 },
-      caption: expect.any(String),
+      attrs: {
+        image: { width: 1600, height: 900 },
+        caption: expect.any(String),
+      },
     });
     expect((await db.select({ n: count() }).from(media))[0].n).toBe(2);
     expect(await readdir(dir)).toHaveLength(2);

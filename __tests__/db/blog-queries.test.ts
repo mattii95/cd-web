@@ -136,18 +136,23 @@ describe("funciones de lectura del blog", () => {
       await crearBase();
       await getDb().insert(media).values(nuevaMedia());
       await setBody([{ type: "image", mediaId, caption: "Figura 1" }]);
-      expect((await getPublishedPostBySlug("post-1"))?.body).toEqual([
-        {
-          type: "image",
-          image: {
-            src: `/media/${mediaId}`,
-            width: 1600,
-            height: 900,
-            alt: "Alt de la biblioteca",
+      expect((await getPublishedPostBySlug("post-1"))?.body).toEqual({
+        type: "doc",
+        content: [
+          {
+            type: "image",
+            attrs: {
+              image: {
+                src: `/media/${mediaId}`,
+                width: 1600,
+                height: 900,
+                alt: "Alt de la biblioteca",
+              },
+              caption: "Figura 1",
+            },
           },
-          caption: "Figura 1",
-        },
-      ]);
+        ],
+      });
     });
 
     it("el alt del bloque pisa el de media", async () => {
@@ -155,8 +160,9 @@ describe("funciones de lectura del blog", () => {
       await getDb().insert(media).values(nuevaMedia());
       await setBody([{ type: "image", mediaId, alt: "Alt del bloque" }]);
       const body = (await getPublishedPostBySlug("post-1"))?.body;
-      expect(body?.[0]).toMatchObject({ image: { alt: "Alt del bloque" } });
-      expect(body?.[0]).not.toHaveProperty("caption");
+      expect(body?.content[0]).toMatchObject({
+        attrs: { image: { alt: "Alt del bloque" }, caption: null },
+      });
     });
 
     it("getPublishedPostBySlug lanza con el slug y el mediaId si la imagen no existe", async () => {
