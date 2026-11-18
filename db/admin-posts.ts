@@ -1,8 +1,23 @@
 import "server-only";
-import { and, asc, count, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
+import { z } from "zod";
+import type { ArticleInput } from "@/lib/admin/article-form";
 import type { AdminPostQuery } from "@/lib/admin/article-params";
+import { slugify } from "@/lib/slug";
+import { type BlogDoc, docReadingMinutes } from "./blog-body";
 import { getDb } from "./client";
-import { category, post } from "./schema";
+import { category, media, post, postTag, tag } from "./schema";
 
 // Consultas del panel: sin caché, el admin ve siempre la base actual.
 export type AdminPostRow = {
@@ -127,4 +142,185 @@ export async function setPostStatus(
 export async function deletePost(id: string): Promise<{ slug: string } | null> {
   const [row] = await getDb().delete(post).where(eq(post.id, id)).returning({ slug: post.slug });
   return row ?? null;
+}
+
+// ---- Editor de artículos ----
+
+export type EditablePost = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  cta: string;
+  categoryId: string;
+  body: BlogDoc;
+  tags: { slug: string; name: string }[];
+  status: "borrador" | "publicado";
+  publishedAt: Date | null;
+  updatedAt: Date;
+  cover: { src: string; alt: string } | null;
+  images: Record<string, { src: string; alt: string }>; // mediaId → miniatura
+};
+
+export async function getPostForEdit(id: string): Promise<EditablePost | null> {
+  if (!z.uuid().safeParse(id).success) return null;
+  const db = getDb();
+  const [row] = await db.select().from(post).where(eq(post.id, id));
+  if (!row) return null;
+
+  const tags = await db
+    .select({ slug: tag.slug, name: tag.name })
+    .from(postTag)
+    .innerJoin(tag, eq(tag.id, postTag.tagId))
+    .where(eq(postTag.postId, id))
+    .orderBy(asc(tag.name), asc(tag.slug));
+
+  const ids = new Set<string>();
+  for (const n of row.body.content) if (n.type === "image") ids.add(n.attrs.mediaId);
+  if (row.coverMediaId) ids.add(row.coverMediaId);
+  const found = ids.size
+    ? await db
+        .select({ id: media.id, alt: media.alt })
+        .from(media)
+        .where(inArray(media.id, [...ids]))
+    : [];
+  const thumb = new Map(found.map((m) => [m.id, { src: `/media/${m.id}`, alt: m.alt }]));
+
+  const images: EditablePost["images"] = {};
+  for (const n of row.body.content) {
+    const t = n.type === "image" ? thumb.get(n.attrs.mediaId) : undefined;
+    if (n.type === "image" && t) images[n.attrs.mediaId] = t;
+  }
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    cta: row.cta,
+    categoryId: row.categoryId,
+    body: row.body,
+    tags,
+    status: row.status,
+    publishedAt: row.publishedAt,
+    updatedAt: row.updatedAt,
+    cover: row.coverMediaId ? (thumb.get(row.coverMediaId) ?? null) : null,
+    images,
+  };
+}
+
+export async function listAllTags(): Promise<{ slug: string; name: string }[]> {
+  return getDb()
+    .select({ slug: tag.slug, name: tag.name })
+    .from(tag)
+    .orderBy(asc(tag.name), asc(tag.slug));
+}
+
+export type SavePostResult =
+  | { ok: true; id: string; slug: string; previousSlug: string | null; updatedAt: Date }
+  | { ok: false; reason: "slug-taken" | "stale" | "not-found" };
+
+type Tx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
+
+// Las etiquetas nuevas se crean con onConflictDoNothing por slug; post_tag se reemplaza entero.
+async function replaceTags(tx: Tx, postId: string, names: string[]) {
+  await tx.delete(postTag).where(eq(postTag.postId, postId));
+  const bySlug = new Map(names.map((name) => [slugify(name), name]));
+  if (!bySlug.size) return;
+  await tx
+    .insert(tag)
+    .values([...bySlug].map(([slug, name]) => ({ slug, name })))
+    .onConflictDoNothing({ target: tag.slug });
+  const rows = await tx
+    .select({ id: tag.id })
+    .from(tag)
+    .where(inArray(tag.slug, [...bySlug.keys()]));
+  await tx.insert(postTag).values(rows.map((r) => ({ postId, tagId: r.id })));
+}
+
+// 23505 = unique_violation (drizzle envuelve el error de pg en `cause`).
+function isUniqueViolation(e: unknown): boolean {
+  const code = (e as { code?: string })?.code ?? (e as { cause?: { code?: string } })?.cause?.code;
+  return code === "23505";
+}
+
+export async function createPost(
+  input: ArticleInput,
+  status: "borrador" | "publicado",
+  authorId: string,
+): Promise<SavePostResult> {
+  try {
+    return await getDb().transaction(async (tx) => {
+      const [row] = await tx
+        .insert(post)
+        .values({
+          slug: input.slug,
+          title: input.title,
+          excerpt: input.excerpt,
+          cta: input.cta,
+          body: input.body,
+          readingMinutes: docReadingMinutes(input.body),
+          categoryId: input.categoryId,
+          authorId,
+          status,
+          publishedAt: status === "publicado" ? new Date() : null,
+        })
+        .returning({ id: post.id, slug: post.slug, updatedAt: post.updatedAt });
+      await replaceTags(tx, row.id, input.tags);
+      return { ok: true as const, id: row.id, slug: row.slug, previousSlug: null, updatedAt: row.updatedAt };
+    });
+  } catch (e) {
+    if (isUniqueViolation(e)) return { ok: false, reason: "slug-taken" };
+    throw e;
+  }
+}
+
+// El slug de un post con published_at no cambia. No toca cover_media_id ni author_id.
+export async function updatePost(
+  id: string,
+  input: ArticleInput,
+  status: "borrador" | "publicado",
+  expectedUpdatedAt: Date,
+): Promise<SavePostResult> {
+  try {
+    return await getDb().transaction(async (tx) => {
+      const [current] = await tx
+        .select({ slug: post.slug, publishedAt: post.publishedAt, updatedAt: post.updatedAt })
+        .from(post)
+        .where(eq(post.id, id))
+        .for("update");
+      if (!current) return { ok: false as const, reason: "not-found" as const };
+      if (current.updatedAt.getTime() !== expectedUpdatedAt.getTime())
+        return { ok: false as const, reason: "stale" as const };
+
+      const slug = current.publishedAt ? current.slug : input.slug;
+      const updatedAt = new Date();
+      await tx
+        .update(post)
+        .set({
+          slug,
+          title: input.title,
+          excerpt: input.excerpt,
+          cta: input.cta,
+          body: input.body,
+          readingMinutes: docReadingMinutes(input.body),
+          categoryId: input.categoryId,
+          status,
+          publishedAt: current.publishedAt ?? (status === "publicado" ? updatedAt : null),
+          updatedAt,
+        })
+        .where(eq(post.id, id));
+      await replaceTags(tx, id, input.tags);
+      return {
+        ok: true as const,
+        id,
+        slug,
+        previousSlug: slug !== current.slug ? current.slug : null,
+        updatedAt,
+      };
+    });
+  } catch (e) {
+    if (isUniqueViolation(e)) return { ok: false, reason: "slug-taken" };
+    throw e;
+  }
 }

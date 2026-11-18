@@ -1,12 +1,23 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { deletePost, listAdminPosts, setPostStatus } from "@/db/admin-posts";
+import {
+  createPost,
+  deletePost,
+  getPostForEdit,
+  listAdminPosts,
+  listAllTags,
+  setPostStatus,
+  updatePost,
+} from "@/db/admin-posts";
+import type { BlogDoc } from "@/db/blog-body";
+import type { ArticleInput } from "@/lib/admin/article-form";
 import { closeDb, getDb } from "@/db/client";
 import {
   authorProfile,
   category,
   comment,
   commentVote,
+  media,
   post,
   postRating,
   postTag,
@@ -203,5 +214,213 @@ describe("deletePost", () => {
 
   it("con un id inexistente devuelve null", async () => {
     expect(await deletePost("no-existe")).toBeNull();
+  });
+});
+
+// ---- Editor de artículos ----
+
+const words = (n: number) => Array.from({ length: n }, () => "palabra").join(" ");
+const docOf = (text: string): BlogDoc => ({
+  type: "doc",
+  content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+});
+const input = (over: Partial<ArticleInput> = {}): ArticleInput => ({
+  title: "Título",
+  slug: "titulo",
+  excerpt: "Resumen",
+  cta: "Escribinos",
+  categoryId: catId,
+  body: docOf("Hola"),
+  tags: [],
+  ...over,
+});
+const fila = async (id: string) =>
+  (await getDb().select().from(post).where(eq(post.id, id)))[0];
+const tagsDe = async (id: string) =>
+  (
+    await getDb()
+      .select({ slug: tag.slug })
+      .from(postTag)
+      .innerJoin(tag, eq(tag.id, postTag.tagId))
+      .where(eq(postTag.postId, id))
+  )
+    .map((r) => r.slug)
+    .sort();
+
+describe("createPost", () => {
+  it("borrador: sin published_at, autor, minutos del cuerpo y etiquetas nuevas", async () => {
+    const body = docOf(words(450));
+    const r = await createPost(input({ body, tags: ["SEO Local", "Web"] }), "borrador", "autor");
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const row = await fila(r.id);
+    expect(row).toMatchObject({
+      status: "borrador",
+      publishedAt: null,
+      authorId: "autor",
+      readingMinutes: 3,
+      coverMediaId: null,
+      slug: "titulo",
+    });
+    expect(await tagsDe(r.id)).toEqual(["seo-local", "web"]);
+    expect((await listAllTags()).map((t) => t.name)).toEqual(["SEO Local", "Web"]);
+  });
+
+  it("publicado fija published_at", async () => {
+    const r = await createPost(input(), "publicado", "autor");
+    expect(r.ok && (await fila(r.id)).publishedAt).not.toBeNull();
+  });
+
+  it("slug repetido devuelve slug-taken y no crea nada, ni etiquetas", async () => {
+    await crear("titulo");
+    const r = await createPost(input({ tags: ["Nueva"] }), "borrador", "autor");
+    expect(r).toEqual({ ok: false, reason: "slug-taken" });
+    expect(await getDb().select().from(post)).toHaveLength(1);
+    expect(await getDb().select().from(tag)).toHaveLength(0);
+  });
+
+  it("reutiliza etiquetas existentes por slug", async () => {
+    await getDb().insert(tag).values({ slug: "seo", name: "SEO" });
+    await createPost(input({ tags: ["seo"] }), "borrador", "autor");
+    const tags = await getDb().select().from(tag);
+    expect(tags).toHaveLength(1);
+    expect(tags[0].name).toBe("SEO");
+  });
+});
+
+describe("updatePost", () => {
+  async function borrador(slug = "titulo") {
+    const r = await createPost(input({ slug, tags: ["a", "b"] }), "borrador", "autor");
+    if (!r.ok) throw new Error("setup");
+    return r;
+  }
+
+  it("guarda los cambios y reemplaza las etiquetas (tag conserva las quitadas)", async () => {
+    const c = await borrador();
+    const r = await updatePost(
+      c.id,
+      input({ title: "Nuevo", tags: ["b", "c"] }),
+      "borrador",
+      c.updatedAt,
+    );
+    expect(r.ok).toBe(true);
+    expect((await fila(c.id)).title).toBe("Nuevo");
+    expect(await tagsDe(c.id)).toEqual(["b", "c"]);
+    expect((await getDb().select().from(tag)).map((t) => t.slug).sort()).toEqual(["a", "b", "c"]);
+  });
+
+  it("updatedAt viejo devuelve stale y no cambia nada; id inexistente, not-found", async () => {
+    const c = await borrador();
+    const viejo = new Date(c.updatedAt.getTime() - 5000);
+    expect(await updatePost(c.id, input({ title: "X" }), "borrador", viejo)).toEqual({
+      ok: false,
+      reason: "stale",
+    });
+    expect((await fila(c.id)).title).toBe("Título");
+    expect(await updatePost("no-existe", input(), "borrador", c.updatedAt)).toEqual({
+      ok: false,
+      reason: "not-found",
+    });
+  });
+
+  it("encadena guardados con el updatedAt devuelto", async () => {
+    const c = await borrador();
+    const r1 = await updatePost(c.id, input({ title: "Uno" }), "borrador", c.updatedAt);
+    if (!r1.ok) throw new Error("r1");
+    const r2 = await updatePost(c.id, input({ title: "Dos" }), "borrador", r1.updatedAt);
+    expect(r2.ok).toBe(true);
+    expect((await fila(c.id)).title).toBe("Dos");
+  });
+
+  it("borrador nunca publicado cambia el slug y devuelve el anterior", async () => {
+    const c = await borrador();
+    const r = await updatePost(c.id, input({ slug: "otro" }), "borrador", c.updatedAt);
+    expect(r).toMatchObject({ ok: true, slug: "otro", previousSlug: "titulo" });
+  });
+
+  it("post con published_at ignora el slug enviado", async () => {
+    const c = await borrador();
+    const pub = await updatePost(c.id, input(), "publicado", c.updatedAt);
+    if (!pub.ok) throw new Error("pub");
+    const r = await updatePost(c.id, input({ slug: "otro" }), "publicado", pub.updatedAt);
+    expect(r).toMatchObject({ ok: true, slug: "titulo", previousSlug: null });
+    expect((await fila(c.id)).slug).toBe("titulo");
+  });
+
+  it("slug de otro post devuelve slug-taken", async () => {
+    await crear("ocupado");
+    const c = await borrador();
+    const r = await updatePost(c.id, input({ slug: "ocupado" }), "borrador", c.updatedAt);
+    expect(r).toEqual({ ok: false, reason: "slug-taken" });
+  });
+
+  it("publicar fija published_at si estaba vacío; pasar a borrador no lo toca", async () => {
+    const c = await borrador();
+    const pub = await updatePost(c.id, input(), "publicado", c.updatedAt);
+    if (!pub.ok) throw new Error("pub");
+    const fecha = (await fila(c.id)).publishedAt;
+    expect(fecha).not.toBeNull();
+    const back = await updatePost(c.id, input(), "borrador", pub.updatedAt);
+    if (!back.ok) throw new Error("back");
+    expect((await fila(c.id)).publishedAt).toEqual(fecha);
+    const again = await updatePost(c.id, input(), "publicado", back.updatedAt);
+    expect(again.ok).toBe(true);
+    expect((await fila(c.id)).publishedAt).toEqual(fecha);
+  });
+
+  it("nunca cambia cover_media_id ni author_id", async () => {
+    const db = getDb();
+    const [m] = await db
+      .insert(media)
+      .values({ sha256: "x", alt: "Alt", width: 1, height: 1, bytes: 1, originalName: "a.png" })
+      .returning();
+    const c = await borrador();
+    await db.update(post).set({ coverMediaId: m.id }).where(eq(post.id, c.id));
+    const [{ updatedAt }] = await db.select({ updatedAt: post.updatedAt }).from(post);
+    await updatePost(c.id, input({ title: "Otro" }), "borrador", updatedAt);
+    expect(await fila(c.id)).toMatchObject({ coverMediaId: m.id, authorId: "autor" });
+  });
+});
+
+describe("getPostForEdit", () => {
+  it("devuelve etiquetas, portada e imágenes del cuerpo resueltas", async () => {
+    const db = getDb();
+    const [m1, m2] = await db
+      .insert(media)
+      .values([
+        { sha256: "1", alt: "Uno", width: 1, height: 1, bytes: 1, originalName: "1.png" },
+        { sha256: "2", alt: "Dos", width: 1, height: 1, bytes: 1, originalName: "2.png" },
+      ])
+      .returning();
+    const body: BlogDoc = {
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "x" }] },
+        { type: "image", attrs: { mediaId: m1.id, alt: null, caption: null } },
+      ],
+    };
+    const c = await createPost(input({ body, tags: ["Web", "SEO"] }), "borrador", "autor");
+    if (!c.ok) throw new Error("setup");
+    await db.update(post).set({ coverMediaId: m2.id }).where(eq(post.id, c.id));
+
+    const r = await getPostForEdit(c.id);
+    expect(r).toMatchObject({
+      id: c.id,
+      slug: "titulo",
+      status: "borrador",
+      categoryId: catId,
+      tags: [
+        { slug: "seo", name: "SEO" },
+        { slug: "web", name: "Web" },
+      ],
+      cover: { src: `/media/${m2.id}`, alt: "Dos" },
+      images: { [m1.id]: { src: `/media/${m1.id}`, alt: "Uno" } },
+    });
+    expect(r?.body).toEqual(body);
+  });
+
+  it("id inexistente o que no es UUID devuelve null", async () => {
+    expect(await getPostForEdit(crypto.randomUUID())).toBeNull();
+    expect(await getPostForEdit("no-existe")).toBeNull();
   });
 });
