@@ -19,7 +19,7 @@ async function insertarPost(opts: {
   const estado = opts.estado ?? "publicado";
   const [{ id }] = await sql<{ id: string }>(
     `insert into post (id, slug, title, excerpt, body, cta, reading_minutes, category_id, author_id, status, published_at)
-     select gen_random_uuid()::text, $1, $1, 'extracto', '[{"type":"p","text":"texto"}]'::jsonb, 'cta', 3,
+     select gen_random_uuid()::text, $1, $1, 'extracto', '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"texto"}]}]}'::jsonb, 'cta', 3,
             (select id from category where slug = $2), (select id from "user" where email = $3),
             $4::post_status, case when $4 = 'publicado' then make_timestamp(2026, 11, $5, 12, 0, 0) end
      returning id`,

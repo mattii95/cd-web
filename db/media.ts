@@ -1,10 +1,7 @@
 import "server-only";
 import { count, desc, eq, inArray, sql } from "drizzle-orm";
 import { MediaError, processImage } from "@/lib/media/process";
-import {
-  deleteMediaFile,
-  writeMediaFile,
-} from "@/lib/media/storage";
+import { deleteMediaFile, writeMediaFile } from "@/lib/media/storage";
 import {
   decodeCursor,
   encodeCursor,
@@ -86,14 +83,14 @@ async function getUsageByMedia(
       title: string;
     }>(sql`
       select distinct
-        el->>'mediaId' as "mediaId",
+        el->'attrs'->>'mediaId' as "mediaId",
         p.id as "postId",
         p.slug as slug,
         p.title as title
       from ${post} p
-      cross join lateral jsonb_array_elements(p.body) el
+      cross join lateral jsonb_array_elements(p.body->'content') el
       where el->>'type' = 'image'
-        and el->>'mediaId' in (${sql.join(
+        and el->'attrs'->>'mediaId' in (${sql.join(
           ids.map((id) => sql`${id}`),
           sql`, `,
         )})

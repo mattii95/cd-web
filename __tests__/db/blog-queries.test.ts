@@ -99,9 +99,12 @@ describe("funciones de lectura del blog", () => {
     });
     expect(await getPublishedPostBySlug("no-existe")).toBeNull();
     expect(await getPublishedPostBySlug("borrador")).toBeNull();
-    expect((await getPublishedPostBySlug("post-1"))?.body).toEqual([
-      { type: "p", text: "texto" },
-    ]);
+    expect((await getPublishedPostBySlug("post-1"))?.body).toEqual({
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "texto" }] },
+      ],
+    });
   });
 
   it("getPublishedPostBySlug lanza con el slug si el body es inválido", async () => {
@@ -109,7 +112,7 @@ describe("funciones de lectura del blog", () => {
     await crearBase();
     await db
       .update(post)
-      .set({ body: [{ type: "video" }] as never })
+      .set({ body: { type: "doc", content: [{ type: "video" }] } as never })
       .where(eq(post.slug, "post-1"));
     await expect(getPublishedPostBySlug("post-1")).rejects.toThrow(/post-1/);
   });
@@ -126,6 +129,15 @@ describe("funciones de lectura del blog", () => {
       originalName: "x.png",
       ...over,
     });
+    const imgDoc = (attrs: { alt?: string; caption?: string }) => ({
+      type: "doc",
+      content: [
+        {
+          type: "image",
+          attrs: { mediaId, alt: null, caption: null, ...attrs },
+        },
+      ],
+    });
     const setBody = (body: unknown) =>
       getDb()
         .update(post)
@@ -135,33 +147,39 @@ describe("funciones de lectura del blog", () => {
     it("getPublishedPostBySlug resuelve el bloque image con las medidas de media", async () => {
       await crearBase();
       await getDb().insert(media).values(nuevaMedia());
-      await setBody([{ type: "image", mediaId, caption: "Figura 1" }]);
-      expect((await getPublishedPostBySlug("post-1"))?.body).toEqual([
-        {
-          type: "image",
-          image: {
-            src: `/media/${mediaId}`,
-            width: 1600,
-            height: 900,
-            alt: "Alt de la biblioteca",
+      await setBody(imgDoc({ caption: "Figura 1" }));
+      expect((await getPublishedPostBySlug("post-1"))?.body).toEqual({
+        type: "doc",
+        content: [
+          {
+            type: "image",
+            attrs: {
+              image: {
+                src: `/media/${mediaId}`,
+                width: 1600,
+                height: 900,
+                alt: "Alt de la biblioteca",
+              },
+              caption: "Figura 1",
+            },
           },
-          caption: "Figura 1",
-        },
-      ]);
+        ],
+      });
     });
 
     it("el alt del bloque pisa el de media", async () => {
       await crearBase();
       await getDb().insert(media).values(nuevaMedia());
-      await setBody([{ type: "image", mediaId, alt: "Alt del bloque" }]);
+      await setBody(imgDoc({ alt: "Alt del bloque" }));
       const body = (await getPublishedPostBySlug("post-1"))?.body;
-      expect(body?.[0]).toMatchObject({ image: { alt: "Alt del bloque" } });
-      expect(body?.[0]).not.toHaveProperty("caption");
+      expect(body?.content[0]).toMatchObject({
+        attrs: { image: { alt: "Alt del bloque" }, caption: null },
+      });
     });
 
     it("getPublishedPostBySlug lanza con el slug y el mediaId si la imagen no existe", async () => {
       await crearBase();
-      await setBody([{ type: "image", mediaId }]);
+      await setBody(imgDoc({}));
       await expect(getPublishedPostBySlug("post-1")).rejects.toThrow(
         new RegExp(`post-1.*${mediaId}`),
       );

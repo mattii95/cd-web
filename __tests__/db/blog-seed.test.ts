@@ -34,6 +34,7 @@ import {
   tag,
   user,
 } from "@/db/schema";
+import { blogBodySchema } from "@/db/blog-body";
 import { seedBlog } from "@/db/seed/blog";
 import { blogPosts } from "@/db/seed/blog-data";
 import { nuevoUsuario, resetBlog } from "./blog-helpers";
@@ -99,7 +100,9 @@ describe("seedBlog", () => {
   it("carga valoraciones, comentarios, votos y respuestas del mock", async () => {
     const db = getDb();
     await seedBlog(db, { authorEmail: AUTOR });
-    const p = (await getPublishedPosts({ limit: 100 })).items.find((x) => x.slug === SLUG)!;
+    const p = (await getPublishedPosts({ limit: 100 })).items.find(
+      (x) => x.slug === SLUG,
+    )!;
 
     const summary = await getRatingSummary(p.id);
     expect(summary.total).toBe(24);
@@ -128,21 +131,39 @@ describe("seedBlog", () => {
 
     const detail = await getPublishedPostBySlug(SLUG);
     expect(detail?.cover).toMatchObject({ width: 1920, height: 1080 });
-    const image = detail?.body.find((b) => b.type === "image");
+    const image = detail?.body.content.find((b) => b.type === "image");
     expect(image).toMatchObject({
-      image: { width: 1600, height: 900 },
-      caption: expect.any(String),
+      attrs: {
+        image: { width: 1600, height: 900 },
+        caption: expect.any(String),
+      },
     });
     expect((await db.select({ n: count() }).from(media))[0].n).toBe(2);
     expect(await readdir(dir)).toHaveLength(2);
+  });
+
+  it("guarda los 8 body como doc válido", async () => {
+    const db = getDb();
+    await seedBlog(db, { authorEmail: AUTOR });
+    const rows = await db.select({ body: post.body }).from(post);
+    expect(rows).toHaveLength(8);
+    for (const r of rows)
+      expect(blogBodySchema.safeParse(r.body).success).toBe(true);
   });
 
   it("es idempotente", async () => {
     const db = getDb();
     await seedBlog(db, { authorEmail: AUTOR });
     const primera = await contar();
+    const bodies = await db
+      .select({ b: post.body })
+      .from(post)
+      .orderBy(post.slug);
     const archivos = await readdir(dir);
     await seedBlog(db, { authorEmail: AUTOR });
+    expect(
+      await db.select({ b: post.body }).from(post).orderBy(post.slug),
+    ).toEqual(bodies);
     expect(await contar()).toEqual(primera);
     expect((await readdir(dir)).sort()).toEqual(archivos.sort());
   });
