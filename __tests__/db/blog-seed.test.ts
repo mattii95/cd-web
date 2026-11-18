@@ -34,6 +34,7 @@ import {
   tag,
   user,
 } from "@/db/schema";
+import { blogBodySchema } from "@/db/blog-body";
 import { seedBlog } from "@/db/seed/blog";
 import { blogPosts } from "@/db/seed/blog-data";
 import { nuevoUsuario, resetBlog } from "./blog-helpers";
@@ -141,12 +142,28 @@ describe("seedBlog", () => {
     expect(await readdir(dir)).toHaveLength(2);
   });
 
+  it("guarda los 8 body como doc válido", async () => {
+    const db = getDb();
+    await seedBlog(db, { authorEmail: AUTOR });
+    const rows = await db.select({ body: post.body }).from(post);
+    expect(rows).toHaveLength(8);
+    for (const r of rows)
+      expect(blogBodySchema.safeParse(r.body).success).toBe(true);
+  });
+
   it("es idempotente", async () => {
     const db = getDb();
     await seedBlog(db, { authorEmail: AUTOR });
     const primera = await contar();
+    const bodies = await db
+      .select({ b: post.body })
+      .from(post)
+      .orderBy(post.slug);
     const archivos = await readdir(dir);
     await seedBlog(db, { authorEmail: AUTOR });
+    expect(
+      await db.select({ b: post.body }).from(post).orderBy(post.slug),
+    ).toEqual(bodies);
     expect(await contar()).toEqual(primera);
     expect((await readdir(dir)).sort()).toEqual(archivos.sort());
   });

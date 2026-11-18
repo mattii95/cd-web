@@ -1,6 +1,6 @@
 # SPEC 18 — Cuerpo de los artículos en formato Tiptap
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 09, SPEC 10, SPEC 13
 > **Fecha:** 2026-11-17
 > **Objetivo:** Que `post.body` guarde un documento JSON de Tiptap (párrafos, H2, H3, listas, citas, Consejo, En resumen, imágenes, negrita, cursiva y enlaces), con los posts existentes convertidos por una migración y el blog público renderizándolo sin cambios visibles en los artículos actuales.
@@ -174,46 +174,46 @@ Convenciones:
 
 **General**
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado.
-- [ ] `npm run test:e2e` pasa completo, con `blog.spec.ts` sin cambios.
-- [ ] `package.json` no tiene dependencias `@tiptap/*`.
-- [ ] `grep -rn "StoredBlogBlock\|jsonb_array_elements(p.body)" app components db lib __tests__` no devuelve nada.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado.
+- [x] `npm run test:e2e` pasa completo, con `blog.spec.ts` sin cambios.
+- [x] `package.json` no tiene dependencias `@tiptap/*`.
+- [x] `grep -rn "StoredBlogBlock\|jsonb_array_elements(p.body)" app components db lib __tests__` no devuelve nada.
 
 **Formato (`blog-body.test.ts`)**
 
-- [ ] `blogBodySchema` acepta `blocksToDoc` de los cuerpos de los 8 posts mock.
-- [ ] Acepta un doc con H3, listas con viñetas y numeradas (con `start: 3`), una lista anidada dentro de un `listItem`, una cita con dos párrafos, `hardBreak`, un párrafo vacío y texto con `bold`, `italic` y `link`.
-- [ ] Rechaza: un nodo de tipo desconocido, una marca desconocida, un `heading` de nivel 1 y uno de nivel 4, un `text` vacío, una `image` dentro de un `listItem` o de un `blockquote`, un `tip` con un `paragraph` adentro, un `mediaId` que no es UUID, y un array (formato viejo).
-- [ ] Rechaza un `link` con `href` `javascript:alert(1)`, `mailto:a@b.c`, `//evil.com` y `data:text/html,x`; acepta `https://ejemplo.com` y `/servicios`.
-- [ ] Un `link` con `target` y `rel` se acepta y el resultado parseado no los incluye.
-- [ ] `blocksToDoc` convierte cada uno de los cinco tipos de bloque según la tabla del alcance y conserva el orden; una `image` sin `alt` ni `caption` queda con ambos en `null`.
-- [ ] `docHeadings` de un doc con H2, H3, H2 devuelve dos entradas con `id` `s1` y `s2`; el `text` de un H2 con negrita y enlace es el texto plano concatenado.
+- [x] `blogBodySchema` acepta `blocksToDoc` de los cuerpos de los 8 posts mock.
+- [x] Acepta un doc con H3, listas con viñetas y numeradas (con `start: 3`), una lista anidada dentro de un `listItem`, una cita con dos párrafos, `hardBreak`, un párrafo vacío y texto con `bold`, `italic` y `link`.
+- [x] Rechaza: un nodo de tipo desconocido, una marca desconocida, un `heading` de nivel 1 y uno de nivel 4, un `text` vacío, una `image` dentro de un `listItem` o de un `blockquote`, un `tip` con un `paragraph` adentro, un `mediaId` que no es UUID, y un array (formato viejo).
+- [x] Rechaza un `link` con `href` `javascript:alert(1)`, `mailto:a@b.c`, `//evil.com` y `data:text/html,x`; acepta `https://ejemplo.com` y `/servicios`.
+- [x] Un `link` con `target` y `rel` se acepta y el resultado parseado no los incluye.
+- [x] `blocksToDoc` convierte cada uno de los cinco tipos de bloque según la tabla del alcance y conserva el orden; una `image` sin `alt` ni `caption` queda con ambos en `null`.
+- [x] `docHeadings` de un doc con H2, H3, H2 devuelve dos entradas con `id` `s1` y `s2`; el `text` de un H2 con negrita y enlace es el texto plano concatenado.
 
 **Migración y lectura (`db`)**
 
-- [ ] En `cuerpo-tiptap-migration.test.ts`, un post con `body` en formato viejo (los cinco tipos de bloque) queda, después de correr el SQL de `0005_cuerpo_tiptap.sql`, igual a `blocksToDoc` del mismo array.
-- [ ] Correr el SQL dos veces deja el mismo `body`; un `body` que ya es doc no cambia.
-- [ ] `getPublishedPostBySlug` devuelve el `body` como `ResolvedBlogDoc`, con las imágenes resueltas a `src`, `width` y `height` de Medios y el `alt` del nodo o, si es `null`, el de Medios.
-- [ ] `getPublishedPostBySlug` sobre un post con `body` inválido lanza un error que nombra el slug; con un `mediaId` inexistente, uno que nombra el slug y el id.
-- [ ] `blog-seed.test.ts`: después del seed, los 8 `body` pasan `blogBodySchema` y correrlo dos veces deja los mismos `body`.
-- [ ] `media.test.ts`: una imagen usada en la raíz del cuerpo de un post aparece en su uso y `deleteMedia` lanza `MediaInUseError`.
+- [x] En `cuerpo-tiptap-migration.test.ts`, un post con `body` en formato viejo (los cinco tipos de bloque) queda, después de correr el SQL de `0005_cuerpo_tiptap.sql`, igual a `blocksToDoc` del mismo array.
+- [x] Correr el SQL dos veces deja el mismo `body`; un `body` que ya es doc no cambia.
+- [x] `getPublishedPostBySlug` devuelve el `body` como `ResolvedBlogDoc`, con las imágenes resueltas a `src`, `width` y `height` de Medios y el `alt` del nodo o, si es `null`, el de Medios.
+- [x] `getPublishedPostBySlug` sobre un post con `body` inválido lanza un error que nombra el slug; con un `mediaId` inexistente, uno que nombra el slug y el id.
+- [x] `blog-seed.test.ts`: después del seed, los 8 `body` pasan `blogBodySchema` y correrlo dos veces deja los mismos `body`.
+- [x] `media.test.ts`: una imagen usada en la raíz del cuerpo de un post aparece en su uso y `deleteMedia` lanza `MediaInUseError`.
 
 **Render (`article-body.test.tsx`)**
 
-- [ ] Dos H2 se renderizan como `<h2 id="s1">` y `<h2 id="s2">` con `01` y `02`; un H3 entre ellos es un `<h3>` sin `id` ni número.
-- [ ] `bold`, `italic` y `hardBreak` producen `<strong>`, `<em>` y `<br>`.
-- [ ] Un enlace a `https://ejemplo.com` tiene `target="_blank"` y `rel="noopener noreferrer"`; uno a `/servicios` no tiene `target`.
-- [ ] Listas con viñetas, numeradas con `start="3"`, anidadas y citas producen `<ul>`, `<ol start="3">`, `<li>` anidado y `<blockquote>`.
-- [ ] Un párrafo vacío no genera `<p>`.
-- [ ] `tip` muestra "Consejo" y `summary` "En resumen", con el texto y sus marcas.
-- [ ] `ArticleToc` lista solo los H2, con `href="#s1"`, `#s2`, y sin H3.
+- [x] Dos H2 se renderizan como `<h2 id="s1">` y `<h2 id="s2">` con `01` y `02`; un H3 entre ellos es un `<h3>` sin `id` ni número.
+- [x] `bold`, `italic` y `hardBreak` producen `<strong>`, `<em>` y `<br>`.
+- [x] Un enlace a `https://ejemplo.com` tiene `target="_blank"` y `rel="noopener noreferrer"`; uno a `/servicios` no tiene `target`.
+- [x] Listas con viñetas, numeradas con `start="3"`, anidadas y citas producen `<ul>`, `<ol start="3">`, `<li>` anidado y `<blockquote>`.
+- [x] Un párrafo vacío no genera `<p>`.
+- [x] `tip` muestra "Consejo" y `summary` "En resumen", con el texto y sus marcas.
+- [x] `ArticleToc` lista solo los H2, con `href="#s1"`, `#s2`, y sin H3.
 
 **Blog público (E2E y manual)**
 
-- [ ] `blog.spec.ts` pasa sin cambios.
+- [x] `blog.spec.ts` pasa sin cambios.
 - [ ] Después de `npm run db:migrate` sobre la base con el seed viejo, `/blog/senales-sistema-a-medida` muestra el mismo índice, las mismas anclas `#s1`, `#s2` y las mismas imágenes que antes de migrar.
 - [ ] H3, listas, citas y enlaces cumplen 4.5:1 de contraste y siguen la tipografía del artículo (revisado con `/frontend-design`).
 
