@@ -60,8 +60,11 @@ const Summary = Node.create({
 });
 
 // Atómico: se muestra, se selecciona y se mueve, pero no se inserta ni se edita.
-const BlogImage = Node.create({
+export type EditorImages = Record<string, { src: string; alt: string }>;
+
+const BlogImage = Node.create<{ images: EditorImages }>({
   name: "image",
+  addOptions: () => ({ images: {} }),
   atom: true,
   draggable: true,
   selectable: true,
@@ -82,7 +85,7 @@ const BlogImage = Node.create({
   },
 });
 
-export function createExtensions() {
+export function createExtensions(images: EditorImages = {}) {
   return [
     StarterKit.configure({
       document: false,
@@ -101,6 +104,6 @@ export function createExtensions() {
     BlogDocument,
     Tip,
     Summary,
-    BlogImage,
+    BlogImage.configure({ images }),
   ];
 }

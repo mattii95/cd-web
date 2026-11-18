@@ -324,3 +324,11 @@ export async function updatePost(
     throw e;
   }
 }
+
+// Para el select del editor: getCategories (público) no expone el id.
+export async function listEditorCategories(): Promise<{ id: string; label: string }[]> {
+  return getDb()
+    .select({ id: category.id, label: category.label })
+    .from(category)
+    .orderBy(asc(category.position));
+}

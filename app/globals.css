@@ -236,3 +236,129 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ==========================================================================
+   Editor de artículos (panel): el cuerpo se ve como en el blog (ArticleBody)
+   ========================================================================== */
+
+.article-editor .ProseMirror {
+  counter-reset: ae-h2;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 24rem;
+  padding: 24px;
+  color: #2b3449;
+  font-size: 18px;
+  line-height: 1.8;
+  outline: none;
+  overflow-wrap: anywhere;
+}
+.article-editor .ProseMirror > * { margin: 0; }
+.article-editor .ProseMirror p { margin: 0; }
+.article-editor .ProseMirror h2 {
+  counter-increment: ae-h2;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-top: 16px;
+  font-family: var(--font-display), sans-serif;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--color-cms-ink);
+}
+.article-editor .ProseMirror h2::before {
+  content: counter(ae-h2, decimal-leading-zero);
+  flex: none;
+  font-family: var(--font-mono), monospace;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--color-accent);
+}
+.article-editor .ProseMirror h3 {
+  margin-top: 8px;
+  font-family: var(--font-display), sans-serif;
+  font-size: 21px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-cms-ink);
+}
+.article-editor .ProseMirror ul,
+.article-editor .ProseMirror ol {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-left: 24px;
+}
+.article-editor .ProseMirror ul { list-style: disc; }
+.article-editor .ProseMirror ol { list-style: decimal; }
+.article-editor .ProseMirror li::marker { color: var(--color-accent); }
+.article-editor .ProseMirror li > ul,
+.article-editor .ProseMirror li > ol { margin-top: 8px; }
+.article-editor .ProseMirror blockquote {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 8px 0;
+  padding-left: 20px;
+  border-left: 3px solid var(--color-accent);
+  font-style: italic;
+}
+.article-editor .ProseMirror a {
+  color: var(--color-cms-link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: text;
+}
+.article-editor .ProseMirror div[data-type="tip"],
+.article-editor .ProseMirror div[data-type="summary"] {
+  padding: 22px 26px;
+  border-radius: 18px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.article-editor .ProseMirror div[data-type="tip"]::before,
+.article-editor .ProseMirror div[data-type="summary"]::before {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-display), sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.article-editor .ProseMirror div[data-type="tip"] { background: #050b1c; color: #dbe4fb; }
+.article-editor .ProseMirror div[data-type="tip"]::before { content: "Consejo"; color: #fff; }
+.article-editor .ProseMirror div[data-type="tip"] a { color: var(--color-accent-pale); }
+.article-editor .ProseMirror div[data-type="summary"] {
+  background: var(--color-accent-tint);
+  border: 1px solid #c9d9fb;
+}
+.article-editor .ProseMirror div[data-type="summary"]::before { content: "En resumen"; color: var(--color-cms-ink); }
+.article-editor .ProseMirror div[data-type="summary"] a { color: var(--color-accent-hover); }
+.article-editor .ae-image { margin: 8px 0; cursor: grab; }
+.article-editor .ae-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--color-cms-line);
+  border-radius: 18px;
+}
+.article-editor .ae-image figcaption { margin-top: 12px; font-size: 14px; line-height: 1.5; color: var(--color-cms-muted); }
+.article-editor .ae-image.is-selected img,
+.article-editor .ae-image.is-selected .ae-image-missing { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.article-editor .ae-image-missing {
+  display: flex;
+  min-height: 9rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--color-cms-control);
+  border-radius: 18px;
+  background: var(--color-cms-panel-alt);
+  font-size: 15px;
+  color: var(--color-cms-muted);
+}
+.article-editor .ProseMirror .ProseMirror-gapcursor::after { border-top-color: var(--color-cms-ink); }

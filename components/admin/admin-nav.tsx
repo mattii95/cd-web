@@ -2,10 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Suspense } from "react";
 import { adminNav, isActive } from "./nav-items";
 
+// usePathname en una ruta dinámica sin params conocidos (ej. /admin/articles/[id]/edit) necesita
+// un <Suspense>: mientras tanto se muestran los mismos enlaces, sin marcar la página actual.
 export function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
-  const pathname = usePathname();
+  return (
+    <Suspense fallback={<NavList pathname="" onNavigate={onNavigate} />}>
+      <CurrentNav onNavigate={onNavigate} />
+    </Suspense>
+  );
+}
+
+function CurrentNav({ onNavigate }: { onNavigate?: () => void }) {
+  return <NavList pathname={usePathname()} onNavigate={onNavigate} />;
+}
+
+function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   return (
     <nav aria-label="Navegación del panel" className="flex flex-col gap-8">
       {adminNav.map((group) => (
