@@ -32,7 +32,7 @@ async function seedArticles() {
                        status, published_at, updated_at)
      select gen_random_uuid()::text, 'e2e-art-' || lpad(i::text, 2, '0'),
             'E2E Artículo ' || lpad(i::text, 2, '0'), 'extracto',
-            '[{"type":"p","text":"texto"}]'::jsonb, 'cta', 3 + i % 5,
+            '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"texto"}]}]}'::jsonb, 'cta', 3 + i % 5,
             case when i % 2 = 1 then $1 else $2 end, $3,
             (case when i <= 3 then 'borrador' else 'publicado' end)::post_status,
             case when i <= 3 then null else now() - (i || ' hours')::interval end,
