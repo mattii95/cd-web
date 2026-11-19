@@ -1,5 +1,5 @@
 import "server-only";
-import { count, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { MediaError, processImage } from "@/lib/media/process";
 import { deleteMediaFile, writeMediaFile } from "@/lib/media/storage";
 import {
@@ -156,18 +156,28 @@ export async function createMedia(input: {
 
 const DEFAULT_MEDIA_LIMIT = 24;
 
+export type MediaQuery = PageParams & { query?: string };
+
 export async function listMedia(
-  params: PageParams = {},
+  params: MediaQuery = {},
 ): Promise<Page<MediaItem>> {
   const limit = resolveLimit(params.limit, DEFAULT_MEDIA_LIMIT);
   const cursor = params.cursor ? decodeCursor(params.cursor) : null;
+  const text = params.query?.trim();
+  // "\" es el escape por defecto de LIKE en Postgres.
+  const pattern = text ? `%${text.replace(/[\\%_]/g, "\\$&")}%` : null;
   const rows = await getDb()
     .select({ row: media, t: sql<string>`${media.createdAt}::text` })
     .from(media)
     .where(
-      cursor
-        ? sql`(${media.createdAt}, ${media.id}) < (${cursor.t}::timestamp, ${cursor.id})`
-        : undefined,
+      and(
+        cursor
+          ? sql`(${media.createdAt}, ${media.id}) < (${cursor.t}::timestamp, ${cursor.id})`
+          : undefined,
+        pattern
+          ? or(ilike(media.alt, pattern), ilike(media.originalName, pattern))
+          : undefined,
+      ),
     )
     .orderBy(desc(media.createdAt), desc(media.id))
     .limit(limit + 1);
