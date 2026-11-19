@@ -19,8 +19,13 @@ async function Library({ searchParams }: Pick<PageProps<"/admin/media">, "search
   const filter: MediaQuery = { query: query.q ?? undefined, usage: toUsage(query.uso) ?? undefined };
   const [{ items, nextCursor }, total] = await Promise.all([listMedia(filter), countMedia(filter)]);
   const filtered = query.q !== null || query.uso !== null;
-  // Una imagen nueva, o otra búsqueda o filtro, reinicia la grilla a la primera tanda.
-  const key = `${query.q}|${query.uso}|${items.map((i) => i.id).join(",")}`;
+  // Una subida (o otra búsqueda o filtro) reinicia la grilla a la primera tanda. La clave sale de la
+  // biblioteca entera y no de los resultados: editar un alt refresca la página, y si ya no coincide con
+  // la búsqueda los resultados cambian, pero la grilla (y el modal abierto) tienen que seguir.
+  const [newest, library] = filtered
+    ? await Promise.all([listMedia({ limit: 1 }), countMedia()])
+    : [{ items }, total];
+  const key = `${query.q}|${query.uso}|${newest.items[0]?.id}|${library}`;
   return (
     <>
       {(filtered || total > 0) && <MediaToolbar query={query} />}

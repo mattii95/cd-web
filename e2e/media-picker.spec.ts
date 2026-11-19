@@ -117,11 +117,16 @@ test("portada y cuerpo subiendo imágenes desde el selector: se ven en el blog y
   await expect(blog.locator(`img[src*="${png.id}"]`).first()).toBeAttached();
   await expect(blog.locator(`figure img[src*="${webp.id}"]`)).toHaveCount(1);
 
-  // Medios: las dos imágenes figuran "En uso en".
+  // Medios: el detalle de las dos imágenes figura "En uso en" este artículo.
   await blog.goto("/admin/media");
-  const cards = blog.locator("main ul > li");
-  await expect(cards.nth(0)).toContainText(`En uso en: ${TITLE}`);
-  await expect(cards.nth(1)).toContainText(`En uso en: ${TITLE}`);
+  for (const [alt, as] of [["Círculo blanco sobre fondo azul", "portada"], ["Cuadro azul", "cuerpo"]]) {
+    await blog.getByRole("button", { name: `Ver detalles de ${alt}`, exact: true }).click();
+    await expect(
+      blog.getByRole("dialog", { name: alt, exact: true }).getByRole("link", { name: `${TITLE} · ${as}` }),
+    ).toBeVisible();
+    await blog.keyboard.press("Escape");
+    await expect(blog.getByRole("dialog")).toBeHidden();
+  }
 
   // Quitar la portada y guardar deja la tarjeta con el dibujo de la categoría.
   await page.getByRole("button", { name: "Quitar portada" }).click();

@@ -104,7 +104,7 @@ export async function clearSeedMedia() {
 // Imágenes que los tests suben por la UI (e2e/fixtures): fila y archivo. Borrar antes los posts que las usan.
 export async function clearUploadedMedia() {
   const rows = await sql<{ id: string }>(
-    "delete from media where original_name in ('imagen.png', 'imagen.webp') returning id",
+    "delete from media where original_name in ('imagen.png', 'imagen.webp') or original_name like 'e2e-medios-%' returning id",
   );
   for (const { id } of rows) await rm(path.join(mediaDir(), `${id}.webp`), { force: true });
 }
