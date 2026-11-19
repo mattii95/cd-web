@@ -231,7 +231,8 @@ const input = (over: Partial<ArticleInput> = {}): ArticleInput => ({
   cta: "Escribinos",
   categoryId: catId,
   body: docOf("Hola"),
-  tags: [],
+  tagSlugs: [],
+  newTags: [],
   coverMediaId: null,
   ...over,
 });
@@ -274,7 +275,7 @@ const bodyConImagen = (mediaId: string): BlogDoc => ({
 describe("createPost", () => {
   it("borrador: sin published_at, autor, minutos del cuerpo y etiquetas nuevas", async () => {
     const body = docOf(words(450));
-    const r = await createPost(input({ body, tags: ["SEO Local", "Web"] }), "borrador", "autor");
+    const r = await createPost(input({ body, newTags: ["SEO Local", "Web"] }), "borrador", "autor");
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const row = await fila(r.id);
@@ -310,7 +311,7 @@ describe("createPost", () => {
         donde === "portada"
           ? { coverMediaId: huerfano }
           : { body: bodyConImagen(huerfano) };
-      const r = await createPost(input({ tags: ["Nueva"], ...over }), "borrador", "autor");
+      const r = await createPost(input({ newTags: ["Nueva"], ...over }), "borrador", "autor");
       expect(r).toEqual({ ok: false, reason: "missing-media" });
       expect(await getDb().select().from(post)).toHaveLength(0);
       expect(await getDb().select().from(tag)).toHaveLength(0);
@@ -324,24 +325,68 @@ describe("createPost", () => {
 
   it("slug repetido devuelve slug-taken y no crea nada, ni etiquetas", async () => {
     await crear("titulo");
-    const r = await createPost(input({ tags: ["Nueva"] }), "borrador", "autor");
+    const r = await createPost(input({ newTags: ["Nueva"] }), "borrador", "autor");
     expect(r).toEqual({ ok: false, reason: "slug-taken" });
     expect(await getDb().select().from(post)).toHaveLength(1);
     expect(await getDb().select().from(tag)).toHaveLength(0);
   });
 
-  it("reutiliza etiquetas existentes por slug", async () => {
+  it("un nombre nuevo cuyo slug ya existe reutiliza esa etiqueta", async () => {
     await getDb().insert(tag).values({ slug: "seo", name: "SEO" });
-    await createPost(input({ tags: ["seo"] }), "borrador", "autor");
+    await createPost(input({ newTags: ["seo"] }), "borrador", "autor");
     const tags = await getDb().select().from(tag);
     expect(tags).toHaveLength(1);
     expect(tags[0].name).toBe("SEO");
   });
 });
 
+describe("etiquetas por slug (SPEC 21)", () => {
+  it("renombrar una etiqueta y guardar con su slug no crea otra", async () => {
+    const db = getDb();
+    await db.insert(tag).values({ slug: "seo", name: "SEO" });
+    const c = await createPost(input({ tagSlugs: ["seo"] }), "borrador", "autor");
+    if (!c.ok) throw new Error("setup");
+    await db.update(tag).set({ name: "Posicionamiento" }).where(eq(tag.slug, "seo"));
+    const r = await updatePost(c.id, input({ tagSlugs: ["seo"] }), "borrador", c.updatedAt);
+    expect(r.ok).toBe(true);
+    expect(await db.select().from(tag)).toHaveLength(1);
+    expect(await tagsDe(c.id)).toEqual(["seo"]);
+  });
+
+  it("un nombre nuevo que coincide con el nombre de una renombrada la reutiliza", async () => {
+    const db = getDb();
+    await db.insert(tag).values({ slug: "seo", name: "Posicionamiento" });
+    const c = await createPost(input({ newTags: ["posicionamiento"] }), "borrador", "autor");
+    if (!c.ok) throw new Error("setup");
+    expect(await db.select().from(tag)).toHaveLength(1);
+    expect(await tagsDe(c.id)).toEqual(["seo"]);
+  });
+
+  it("un slug inexistente devuelve missing-tag y no cambia nada", async () => {
+    const db = getDb();
+    const c = await createPost(input({ newTags: ["a"] }), "borrador", "autor");
+    if (!c.ok) throw new Error("setup");
+    const antes = await fila(c.id);
+    const r = await updatePost(
+      c.id,
+      input({ title: "Otro", tagSlugs: ["borrada"], newTags: ["Nueva"] }),
+      "borrador",
+      c.updatedAt,
+    );
+    expect(r).toEqual({ ok: false, reason: "missing-tag" });
+    expect(await fila(c.id)).toEqual(antes);
+    expect(await tagsDe(c.id)).toEqual(["a"]);
+    expect((await db.select().from(tag)).map((t) => t.slug)).toEqual(["a"]);
+
+    const n = await createPost(input({ slug: "otro", tagSlugs: ["borrada"] }), "borrador", "autor");
+    expect(n).toEqual({ ok: false, reason: "missing-tag" });
+    expect(await db.select().from(post)).toHaveLength(1);
+  });
+});
+
 describe("updatePost", () => {
   async function borrador(slug = "titulo") {
-    const r = await createPost(input({ slug, tags: ["a", "b"] }), "borrador", "autor");
+    const r = await createPost(input({ slug, newTags: ["a", "b"] }), "borrador", "autor");
     if (!r.ok) throw new Error("setup");
     return r;
   }
@@ -350,7 +395,7 @@ describe("updatePost", () => {
     const c = await borrador();
     const r = await updatePost(
       c.id,
-      input({ title: "Nuevo", tags: ["b", "c"] }),
+      input({ title: "Nuevo", tagSlugs: ["b"], newTags: ["c"] }),
       "borrador",
       c.updatedAt,
     );
@@ -451,7 +496,7 @@ describe("updatePost", () => {
           : { body: bodyConImagen(huerfano) };
       const r = await updatePost(
         c.id,
-        input({ title: "Otro", tags: ["Nueva"], ...over }),
+        input({ title: "Otro", newTags: ["Nueva"], ...over }),
         "publicado",
         c.updatedAt,
       );
@@ -480,7 +525,7 @@ describe("getPostForEdit", () => {
         { type: "image", attrs: { mediaId: m1.id, alt: null, caption: null } },
       ],
     };
-    const c = await createPost(input({ body, tags: ["Web", "SEO"] }), "borrador", "autor");
+    const c = await createPost(input({ body, newTags: ["Web", "SEO"] }), "borrador", "autor");
     if (!c.ok) throw new Error("setup");
     await db.update(post).set({ coverMediaId: m2.id }).where(eq(post.id, c.id));
 

@@ -72,7 +72,7 @@ describe("parseArticleForm", () => {
     ["sin categoría", { categoryId: "" }, "categoryId"],
     ["título largo", { title: "a".repeat(121) }, "title"],
     ["slug inválido", { slug: "Mal Slug" }, "slug"],
-    ["6 etiquetas", { tags: ["a", "b", "c", "d", "e", "f"] }, "tags"],
+    ["6 etiquetas", { newTags: ["a", "b", "c", "d", "e", "f"] }, "tags"],
     [
       "body inválido",
       { body: JSON.stringify({ type: "doc", content: [{ type: "x" }] }) },
@@ -114,18 +114,35 @@ describe("parseArticleForm", () => {
     expect(errorsOf(form({ intent: "publish" }))).toHaveProperty("slug");
   });
 
-  it("etiquetas repetidas por slug quedan una", () => {
-    const r = parseArticleForm(form({ tags: ["SEO", "seo", " Seo "] }), null);
-    expect(r.ok && r.input.tags).toEqual(["SEO"]);
+  it("devuelve tagSlugs y newTags", () => {
+    const r = parseArticleForm(form({ tagSlugs: ["seo"], newTags: ["Nueva"] }), null);
+    expect(r.ok && [r.input.tagSlugs, r.input.newTags]).toEqual([["seo"], ["Nueva"]]);
   });
 
-  it("descarta etiquetas cuyo slug queda vacío", () => {
-    const r = parseArticleForm(form({ tags: ["¡¿?!", "web"] }), null);
-    expect(r.ok && r.input.tags).toEqual(["web"]);
+  it("nombres nuevos repetidos por slug quedan uno, y no repiten un slug existente", () => {
+    const r = parseArticleForm(
+      form({ tagSlugs: ["seo", "seo"], newTags: ["Web", "web", " WEB ", "SEO"] }),
+      null,
+    );
+    expect(r.ok && [r.input.tagSlugs, r.input.newTags]).toEqual([["seo"], ["Web"]]);
   });
 
-  it("etiqueta de más de 40 caracteres es error", () => {
-    expect(errorsOf(form({ tags: ["a".repeat(41)] }))).toHaveProperty("tags");
+  it("descarta nombres nuevos cuyo slug queda vacío", () => {
+    const r = parseArticleForm(form({ newTags: ["¡¿?!", "web"] }), null);
+    expect(r.ok && r.input.newTags).toEqual(["web"]);
+  });
+
+  it("nombre nuevo de más de 40 caracteres es error", () => {
+    expect(errorsOf(form({ newTags: ["a".repeat(41)] }))).toHaveProperty("tags");
+  });
+
+  it("un tagSlug que no es slug es error en tags", () => {
+    expect(errorsOf(form({ tagSlugs: ["Mal Slug"] }))).toHaveProperty("tags");
+  });
+
+  it("3 slugs y 3 nombres nuevos pasan el máximo de 5", () => {
+    const e = errorsOf(form({ tagSlugs: ["a", "b", "c"], newTags: ["d", "e", "f"] }));
+    expect(e?.tags).toBe("Podés usar hasta 5 etiquetas.");
   });
 
   it("lee id y updatedAt; vacíos en /new", () => {

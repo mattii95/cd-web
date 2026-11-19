@@ -26,6 +26,7 @@ const MSG = {
   stale: "Alguien modificó este artículo. Recargá para ver los cambios.",
   slugTaken: "Ya hay un artículo con esa URL.",
   missingMedia: "Una de las imágenes ya no está en Medios. Elegí otra.",
+  missingTag: "Una de las etiquetas ya no existe. Recargá la página.",
   db: "No pudimos guardar el cambio. Intentá de nuevo en unos minutos.",
 };
 
@@ -127,6 +128,7 @@ export async function saveArticleAction(
       if (res.reason === "slug-taken")
         return { status: "error", fieldErrors: { slug: MSG.slugTaken } };
       if (res.reason === "missing-media") return fail(MSG.missingMedia);
+      if (res.reason === "missing-tag") return fail(MSG.missingTag);
       return fail(res.reason === "stale" ? MSG.stale : MSG.gone);
     }
 

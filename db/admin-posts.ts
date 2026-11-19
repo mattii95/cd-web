@@ -221,24 +221,55 @@ export async function listAllTags(): Promise<{ slug: string; name: string }[]> {
 
 export type SavePostResult =
   | { ok: true; id: string; slug: string; previousSlug: string | null; updatedAt: Date }
-  | { ok: false; reason: "slug-taken" | "stale" | "not-found" | "missing-media" };
+  | { ok: false; reason: "slug-taken" | "stale" | "not-found" | "missing-media" | "missing-tag" };
 
 type Tx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
 
-// Las etiquetas nuevas se crean con onConflictDoNothing por slug; post_tag se reemplaza entero.
-async function replaceTags(tx: Tx, postId: string, names: string[]) {
-  await tx.delete(postTag).where(eq(postTag.postId, postId));
-  const bySlug = new Map(names.map((name) => [slugify(name), name]));
-  if (!bySlug.size) return;
-  await tx
-    .insert(tag)
-    .values([...bySlug].map(([slug, name]) => ({ slug, name })))
-    .onConflictDoNothing({ target: tag.slug });
-  const rows = await tx
+// Una etiqueta existente (por slug) que ya no está en `tag` se borró o fusionó en otra pestaña.
+// Se mira antes de escribir el post: devolver ok:false desde la transacción no la deshace.
+async function hasMissingTag(tx: Tx, input: ArticleInput): Promise<boolean> {
+  if (!input.tagSlugs.length) return false;
+  const found = await tx
     .select({ id: tag.id })
     .from(tag)
-    .where(inArray(tag.slug, [...bySlug.keys()]));
-  await tx.insert(postTag).values(rows.map((r) => ({ postId, tagId: r.id })));
+    .where(inArray(tag.slug, input.tagSlugs));
+  return found.length < input.tagSlugs.length;
+}
+
+// post_tag se reemplaza entero. Un nombre nuevo reutiliza la etiqueta cuyo slug o nombre
+// da el mismo slugify; si no hay, se crea (onConflictDoNothing por slug).
+async function replaceTags(tx: Tx, postId: string, input: ArticleInput) {
+  await tx.delete(postTag).where(eq(postTag.postId, postId));
+  const ids = new Set<string>();
+  if (input.tagSlugs.length) {
+    const rows = await tx
+      .select({ id: tag.id })
+      .from(tag)
+      .where(inArray(tag.slug, input.tagSlugs));
+    for (const r of rows) ids.add(r.id);
+  }
+  if (input.newTags.length) {
+    // La tabla es chica (decenas de filas): slugify(name) no se puede evaluar en SQL.
+    const all = await tx.select({ id: tag.id, slug: tag.slug, name: tag.name }).from(tag);
+    const byKey = new Map<string, string>();
+    for (const t of all) byKey.set(slugify(t.name), t.id);
+    for (const t of all) byKey.set(t.slug, t.id); // el slug gana sobre el nombre
+    for (const name of input.newTags) {
+      const key = slugify(name);
+      let id = byKey.get(key);
+      if (!id) {
+        const [row] = await tx
+          .insert(tag)
+          .values({ slug: key, name })
+          .onConflictDoNothing({ target: tag.slug })
+          .returning({ id: tag.id });
+        id = row?.id ?? (await tx.select({ id: tag.id }).from(tag).where(eq(tag.slug, key)))[0].id;
+        byKey.set(key, id);
+      }
+      ids.add(id);
+    }
+  }
+  if (ids.size) await tx.insert(postTag).values([...ids].map((tagId) => ({ postId, tagId })));
 }
 
 // La portada y cada imagen del cuerpo deben existir en media: el cuerpo no tiene FK
@@ -267,6 +298,8 @@ export async function createPost(
     return await getDb().transaction(async (tx) => {
       if (await hasMissingMedia(tx, input))
         return { ok: false as const, reason: "missing-media" as const };
+      if (await hasMissingTag(tx, input))
+        return { ok: false as const, reason: "missing-tag" as const };
       const [row] = await tx
         .insert(post)
         .values({
@@ -283,7 +316,7 @@ export async function createPost(
           publishedAt: status === "publicado" ? new Date() : null,
         })
         .returning({ id: post.id, slug: post.slug, updatedAt: post.updatedAt });
-      await replaceTags(tx, row.id, input.tags);
+      await replaceTags(tx, row.id, input);
       return { ok: true as const, id: row.id, slug: row.slug, previousSlug: null, updatedAt: row.updatedAt };
     });
   } catch (e) {
@@ -312,6 +345,8 @@ export async function updatePost(
 
       if (await hasMissingMedia(tx, input))
         return { ok: false as const, reason: "missing-media" as const };
+      if (await hasMissingTag(tx, input))
+        return { ok: false as const, reason: "missing-tag" as const };
 
       const slug = current.publishedAt ? current.slug : input.slug;
       const updatedAt = new Date();
@@ -331,7 +366,7 @@ export async function updatePost(
           updatedAt,
         })
         .where(eq(post.id, id));
-      await replaceTags(tx, id, input.tags);
+      await replaceTags(tx, id, input);
       return {
         ok: true as const,
         id,

@@ -12,6 +12,7 @@ import { type BlogDoc, docReadingMinutes } from "@/db/blog-body";
 import {
   ARTICLE_LIMITS,
   type ArticleFieldErrors,
+  type ArticleTag,
   type ArticleIntent,
   EMPTY_DOC,
   parseArticleForm,
@@ -99,7 +100,7 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
   const [cta, setCta] = useState(post?.cta ?? "");
   const [categoryId, setCategoryId] = useState(post?.categoryId ?? "");
   const [body, setBody] = useState<BlogDoc>(post?.body ?? EMPTY_DOC);
-  const [tags, setTags] = useState(post?.tags.map((t) => t.name) ?? []);
+  const [tags, setTags] = useState<ArticleTag[]>(post?.tags ?? []);
   const [cover, setCover] = useState<Cover | null>(post?.cover ?? null);
   const [saved, setSaved] = useState<Saved>({
     id: post?.id ?? null,
@@ -167,7 +168,10 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
     fd.set("categoryId", categoryId);
     fd.set("body", JSON.stringify(body));
     fd.set("coverMediaId", cover?.id ?? "");
-    for (const t of tags) fd.append("tags", t);
+    for (const t of tags) {
+      if (t.slug) fd.append("tagSlugs", t.slug);
+      else fd.append("newTags", t.name);
+    }
     return fd;
   };
 

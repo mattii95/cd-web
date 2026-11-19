@@ -25,10 +25,14 @@ export type ArticleInput = {
   cta: string;
   categoryId: string; // uuid
   body: BlogDoc;
-  tags: string[]; // nombres, únicos por slug, máx. 5
+  tagSlugs: string[]; // etiquetas existentes, por slug
+  newTags: string[]; // nombres de etiquetas nuevas; tagSlugs + newTags ≤ 5, sin repetidos
   coverMediaId: string | null; // uuid
 };
-export type ArticleField = keyof ArticleInput;
+// Etiqueta en el editor: slug null = nueva, todavía no existe en la tabla `tag`.
+export type ArticleTag = { slug: string | null; name: string };
+// Los errores de las dos listas de etiquetas se muestran en un solo campo.
+export type ArticleField = Exclude<keyof ArticleInput, "tagSlugs" | "newTags"> | "tags";
 export type ArticleFieldErrors = Partial<Record<ArticleField, string>>;
 
 export type ParsedArticleForm =
@@ -124,21 +128,32 @@ export function parseArticleForm(
   if (!errors.body && strict && !docHasText(body))
     errors.body = "Escribí el cuerpo del artículo.";
 
-  const tags: string[] = [];
-  const seen = new Set<string>();
-  for (const raw of data.getAll("tags")) {
-    const name = normalizeTagName(typeof raw === "string" ? raw : "");
-    const key = slugify(name);
-    if (!key) continue;
-    if (name.length > ARTICLE_LIMITS.tagName) {
-      errors.tags = `Cada etiqueta puede tener hasta ${ARTICLE_LIMITS.tagName} caracteres.`;
+  const tagSlugs: string[] = [];
+  for (const raw of data.getAll("tagSlugs")) {
+    const s = typeof raw === "string" ? raw : "";
+    if (!isSlug(s)) {
+      errors.tags = "Una de las etiquetas no es válida. Recargá la página.";
       break;
     }
-    if (seen.has(key)) continue;
-    seen.add(key);
-    tags.push(name);
+    if (!tagSlugs.includes(s)) tagSlugs.push(s);
   }
-  if (!errors.tags && tags.length > ARTICLE_LIMITS.tags)
+  const newTags: string[] = [];
+  const seen = new Set(tagSlugs);
+  if (!errors.tags) {
+    for (const raw of data.getAll("newTags")) {
+      const name = normalizeTagName(typeof raw === "string" ? raw : "");
+      const key = slugify(name);
+      if (!key) continue;
+      if (name.length > ARTICLE_LIMITS.tagName) {
+        errors.tags = `Cada etiqueta puede tener hasta ${ARTICLE_LIMITS.tagName} caracteres.`;
+        break;
+      }
+      if (seen.has(key)) continue;
+      seen.add(key);
+      newTags.push(name);
+    }
+  }
+  if (!errors.tags && tagSlugs.length + newTags.length > ARTICLE_LIMITS.tags)
     errors.tags = `Podés usar hasta ${ARTICLE_LIMITS.tags} etiquetas.`;
 
   if (Object.keys(errors).length) return { ok: false, fieldErrors: errors };
@@ -149,6 +164,6 @@ export function parseArticleForm(
     id: str(data, "id") || null,
     intent,
     expectedUpdatedAt: Number.isNaN(updatedAt.getTime()) ? null : updatedAt,
-    input: { title, slug, excerpt, cta, categoryId, body, tags, coverMediaId },
+    input: { title, slug, excerpt, cta, categoryId, body, tagSlugs, newTags, coverMediaId },
   };
 }
