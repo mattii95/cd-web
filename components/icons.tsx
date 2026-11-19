@@ -60,6 +60,10 @@ export const Check = (p: IconProps) => (
   <Icon size={16} strokeWidth={2.2} {...p}><path d="M20 6L9 17l-5-5" /></Icon>
 );
 
+export const Close = (p: IconProps) => (
+  <Icon size={18} strokeWidth={2.2} {...p}><path d="M18 6L6 18M6 6l12 12" /></Icon>
+);
+
 // Redes y contacto
 export const Instagram = (p: IconProps) => (
   <Icon {...p}>

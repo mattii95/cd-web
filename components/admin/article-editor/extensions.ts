@@ -1,4 +1,4 @@
-import { mergeAttributes, Node, ReactNodeViewRenderer } from "@tiptap/react";
+import { type Editor, mergeAttributes, Node, ReactNodeViewRenderer } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { isAllowedHref } from "@/db/blog-body";
 import { ImageNodeView } from "./image-node-view";
@@ -59,12 +59,19 @@ const Summary = Node.create({
   },
 });
 
-// Atómico: se muestra, se selecciona y se mueve, pero no se inserta ni se edita.
+// Atómico: se muestra, se selecciona y se mueve.
 export type EditorImages = Record<string, { src: string; alt: string }>;
 
-const BlogImage = Node.create<{ images: EditorImages }>({
+// `configure` copia las options: el mapa vivo (que se amplía con cada imagen elegida) va en storage.
+export const editorImages = (editor: Editor) =>
+  (editor.storage as unknown as { image: { images: EditorImages } }).image.images;
+
+const BlogImage = Node.create<{ images: EditorImages }, { images: EditorImages }>({
   name: "image",
   addOptions: () => ({ images: {} }),
+  addStorage() {
+    return { images: { ...this.options.images } };
+  },
   atom: true,
   draggable: true,
   selectable: true,

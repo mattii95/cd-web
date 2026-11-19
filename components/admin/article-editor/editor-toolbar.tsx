@@ -6,7 +6,7 @@ import { LinkPopover } from "./link-popover";
 
 type ItemKey =
   | "undo" | "redo" | "h2" | "h3" | "bold" | "italic" | "link"
-  | "bullet" | "ordered" | "quote" | "tip" | "summary";
+  | "bullet" | "ordered" | "quote" | "tip" | "summary" | "image";
 
 const svg = (children: ReactNode) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -30,6 +30,7 @@ const ICONS: Record<ItemKey, ReactNode> = {
   quote: svg(<><path d="M5 17V12a5 5 0 015-5M13 17v-5a5 5 0 015-5" /><path d="M5 17h4v-4H5zM13 17h4v-4h-4z" /></>),
   tip: svg(<path d="M13 2L4 14h7l-1 8 9-12h-7z" />),
   summary: svg(<><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M8 9h8M8 13h8M8 17h5" /></>),
+  image: svg(<><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="9" cy="10" r="1.5" /><path d="M21 16l-5-5-8 9" /></>),
 };
 
 const GROUPS: { key: ItemKey; label: string }[][] = [
@@ -38,9 +39,10 @@ const GROUPS: { key: ItemKey; label: string }[][] = [
   [{ key: "bold", label: "Negrita" }, { key: "italic", label: "Cursiva" }, { key: "link", label: "Enlace" }],
   [{ key: "bullet", label: "Lista con viñetas" }, { key: "ordered", label: "Lista numerada" }],
   [{ key: "quote", label: "Cita" }, { key: "tip", label: "Consejo" }, { key: "summary", label: "En resumen" }],
+  [{ key: "image", label: "Insertar imagen" }],
 ];
 
-const RUN: Record<Exclude<ItemKey, "link">, (e: Editor) => void> = {
+const RUN: Record<Exclude<ItemKey, "link" | "image">, (e: Editor) => void> = {
   undo: (e) => e.chain().focus().undo().run(),
   redo: (e) => e.chain().focus().redo().run(),
   h2: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
@@ -54,7 +56,7 @@ const RUN: Record<Exclude<ItemKey, "link">, (e: Editor) => void> = {
   summary: (e) => e.chain().focus().toggleSummary().run(),
 };
 
-export function EditorToolbar({ editor }: { editor: Editor }) {
+export function EditorToolbar({ editor, onInsertImage }: { editor: Editor; onInsertImage: () => void }) {
   const state = useEditorState({
     editor,
     selector: ({ editor: e }) => ({
@@ -82,7 +84,7 @@ export function EditorToolbar({ editor }: { editor: Editor }) {
 
   const disabled = (k: ItemKey) =>
     k === "undo" ? !state.canUndo : k === "redo" ? !state.canRedo : k === "link" ? !state.canLink : false;
-  const pressed = (k: ItemKey) => (k === "undo" || k === "redo" ? undefined : state[k]);
+  const pressed = (k: ItemKey) => (k === "undo" || k === "redo" || k === "image" ? undefined : state[k]);
   const enabled = GROUPS.flat().map((i) => i.key).filter((k) => !disabled(k));
   // Un solo botón entra en el orden de tabulación; las flechas mueven entre los demás.
   const tabbable = enabled.includes(rover) ? rover : enabled[0];
@@ -130,7 +132,14 @@ export function EditorToolbar({ editor }: { editor: Editor }) {
                   onFocus={() => setRover(key)}
                   // Mantiene la selección del editor al tocar el botón.
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => (key === "link" ? setLinkOpen((o) => !o) : RUN[key](editor))}
+                  onClick={() => {
+                    if (key === "link") return setLinkOpen((o) => !o);
+                    if (key === "image") {
+                      setLinkOpen(false); // el selector no se abre encima del popover de enlace
+                      return onInsertImage();
+                    }
+                    RUN[key](editor);
+                  }}
                   className={`flex size-11 flex-none cursor-pointer items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                     on
                       ? "bg-accent text-white hover:bg-accent-hover"

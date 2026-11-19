@@ -232,6 +232,7 @@ const input = (over: Partial<ArticleInput> = {}): ArticleInput => ({
   categoryId: catId,
   body: docOf("Hola"),
   tags: [],
+  coverMediaId: null,
   ...over,
 });
 const fila = async (id: string) =>
@@ -246,6 +247,29 @@ const tagsDe = async (id: string) =>
   )
     .map((r) => r.slug)
     .sort();
+
+async function subirMedia(n: number) {
+  return getDb()
+    .insert(media)
+    .values(
+      Array.from({ length: n }, (_, i) => ({
+        sha256: `cp-${i}`,
+        alt: `Alt ${i}`,
+        width: 1,
+        height: 1,
+        bytes: 1,
+        originalName: `${i}.png`,
+      })),
+    )
+    .returning();
+}
+const bodyConImagen = (mediaId: string): BlogDoc => ({
+  type: "doc",
+  content: [
+    { type: "paragraph", content: [{ type: "text", text: "Hola" }] },
+    { type: "image", attrs: { mediaId, alt: null, caption: null } },
+  ],
+});
 
 describe("createPost", () => {
   it("borrador: sin published_at, autor, minutos del cuerpo y etiquetas nuevas", async () => {
@@ -265,6 +289,33 @@ describe("createPost", () => {
     expect(await tagsDe(r.id)).toEqual(["seo-local", "web"]);
     expect((await listAllTags()).map((t) => t.name)).toEqual(["SEO Local", "Web"]);
   });
+
+  it("con coverMediaId guarda cover_media_id", async () => {
+    const [m] = await subirMedia(1);
+    const r = await createPost(input({ coverMediaId: m.id }), "borrador", "autor");
+    expect(r.ok && (await fila(r.id)).coverMediaId).toBe(m.id);
+  });
+
+  it("con una imagen del cuerpo existente se guarda", async () => {
+    const [m] = await subirMedia(1);
+    const r = await createPost(input({ body: bodyConImagen(m.id) }), "borrador", "autor");
+    expect(r.ok).toBe(true);
+  });
+
+  it.each(["portada", "cuerpo"])(
+    "con una %s que no existe devuelve missing-media y no crea nada, ni etiquetas",
+    async (donde) => {
+      const huerfano = crypto.randomUUID();
+      const over =
+        donde === "portada"
+          ? { coverMediaId: huerfano }
+          : { body: bodyConImagen(huerfano) };
+      const r = await createPost(input({ tags: ["Nueva"], ...over }), "borrador", "autor");
+      expect(r).toEqual({ ok: false, reason: "missing-media" });
+      expect(await getDb().select().from(post)).toHaveLength(0);
+      expect(await getDb().select().from(tag)).toHaveLength(0);
+    },
+  );
 
   it("publicado fija published_at", async () => {
     const r = await createPost(input(), "publicado", "autor");
@@ -368,18 +419,48 @@ describe("updatePost", () => {
     expect((await fila(c.id)).publishedAt).toEqual(fecha);
   });
 
-  it("nunca cambia cover_media_id ni author_id", async () => {
-    const db = getDb();
-    const [m] = await db
-      .insert(media)
-      .values({ sha256: "x", alt: "Alt", width: 1, height: 1, bytes: 1, originalName: "a.png" })
-      .returning();
+  it("nunca cambia author_id", async () => {
     const c = await borrador();
-    await db.update(post).set({ coverMediaId: m.id }).where(eq(post.id, c.id));
-    const [{ updatedAt }] = await db.select({ updatedAt: post.updatedAt }).from(post);
-    await updatePost(c.id, input({ title: "Otro" }), "borrador", updatedAt);
-    expect(await fila(c.id)).toMatchObject({ coverMediaId: m.id, authorId: "autor" });
+    await updatePost(c.id, input({ title: "Otro" }), "borrador", c.updatedAt);
+    expect(await fila(c.id)).toMatchObject({ title: "Otro", authorId: "autor" });
   });
+
+  it("con coverMediaId lo cambia, y con null lo deja vacío", async () => {
+    const [m1, m2] = await subirMedia(2);
+    const c = await borrador();
+    const a = await updatePost(c.id, input({ coverMediaId: m1.id }), "borrador", c.updatedAt);
+    if (!a.ok) throw new Error("a");
+    expect((await fila(c.id)).coverMediaId).toBe(m1.id);
+    const b = await updatePost(c.id, input({ coverMediaId: m2.id }), "borrador", a.updatedAt);
+    if (!b.ok) throw new Error("b");
+    expect((await fila(c.id)).coverMediaId).toBe(m2.id);
+    const n = await updatePost(c.id, input({ coverMediaId: null }), "borrador", b.updatedAt);
+    expect(n.ok).toBe(true);
+    expect((await fila(c.id)).coverMediaId).toBeNull();
+  });
+
+  it.each(["portada", "cuerpo"])(
+    "con una %s que no existe devuelve missing-media y no cambia nada",
+    async (donde) => {
+      const c = await borrador();
+      const antes = await fila(c.id);
+      const huerfano = crypto.randomUUID();
+      const over =
+        donde === "portada"
+          ? { coverMediaId: huerfano }
+          : { body: bodyConImagen(huerfano) };
+      const r = await updatePost(
+        c.id,
+        input({ title: "Otro", tags: ["Nueva"], ...over }),
+        "publicado",
+        c.updatedAt,
+      );
+      expect(r).toEqual({ ok: false, reason: "missing-media" });
+      expect(await fila(c.id)).toEqual(antes);
+      expect(await tagsDe(c.id)).toEqual(["a", "b"]);
+      expect((await listAllTags()).map((t) => t.name)).not.toContain("Nueva");
+    },
+  );
 });
 
 describe("getPostForEdit", () => {
@@ -413,7 +494,7 @@ describe("getPostForEdit", () => {
         { slug: "seo", name: "SEO" },
         { slug: "web", name: "Web" },
       ],
-      cover: { src: `/media/${m2.id}`, alt: "Dos" },
+      cover: { id: m2.id, src: `/media/${m2.id}`, alt: "Dos" },
       images: { [m1.id]: { src: `/media/${m1.id}`, alt: "Uno" } },
     });
     expect(r?.body).toEqual(body);

@@ -334,6 +334,79 @@ describe("listMedia paginada", () => {
   });
 });
 
+describe("listMedia con búsqueda", () => {
+  const subirConAlt = async (color: string, alt: string, name?: string) =>
+    createMedia({
+      file: await png(color),
+      originalName: name ?? `${color}.png`,
+      alt,
+      uploadedBy: null,
+    });
+
+  it("filtra por alt u original_name sin distinguir mayúsculas", async () => {
+    const a = await subirConAlt("red", "Foto del EQUIPO");
+    const b = await subirConAlt("blue", "Otra", "equipo-2026.png");
+    await subirConAlt("green", "Oficina");
+    const { items } = await listMedia({ query: "equipo" });
+    expect(new Set(items.map((m) => m.id))).toEqual(
+      new Set([a.item.id, b.item.id]),
+    );
+  });
+
+  it("escapa % y _ como texto literal", async () => {
+    const pct = await subirConAlt("red", "Descuento 50% hoy");
+    await subirConAlt("blue", "Cincuenta 500 hoy");
+    const guion = await subirConAlt("green", "a_b");
+    await subirConAlt("yellow", "axb");
+    expect((await listMedia({ query: "50%" })).items.map((m) => m.id)).toEqual([
+      pct.item.id,
+    ]);
+    expect((await listMedia({ query: "a_b" })).items.map((m) => m.id)).toEqual([
+      guion.item.id,
+    ]);
+  });
+
+  it("escapa la barra invertida", async () => {
+    const a = await subirConAlt("red", "ruta a\\b");
+    await subirConAlt("blue", "ruta ab");
+    expect((await listMedia({ query: "a\\b" })).items.map((m) => m.id)).toEqual(
+      [a.item.id],
+    );
+  });
+
+  it("una búsqueda en blanco devuelve lo mismo que sin query", async () => {
+    await sembrar(3);
+    expect(await listMedia({ query: "   " })).toEqual(await listMedia());
+  });
+
+  it("la segunda página sigue filtrada y no repite", async () => {
+    const db = getDb();
+    for (let i = 0; i < 40; i++) {
+      await db.insert(media).values({
+        id: crypto.randomUUID(),
+        sha256: `sha-q-${i}`,
+        alt: i % 4 === 0 ? `otra ${i}` : `equipo ${i}`,
+        width: 1,
+        height: 1,
+        bytes: 1,
+        originalName: `f${i}.webp`,
+      });
+    }
+    // 30 coinciden: 24 en la primera página y 6 en la segunda.
+    const p1 = await listMedia({ query: "equipo" });
+    expect(p1.items).toHaveLength(24);
+    expect(p1.nextCursor).not.toBeNull();
+    const p2 = await listMedia({ query: "equipo", cursor: p1.nextCursor });
+    expect(p2.items).toHaveLength(6);
+    expect(p2.nextCursor).toBeNull();
+    const ids = [...p1.items, ...p2.items].map((m) => m.id);
+    expect(new Set(ids).size).toBe(30);
+    expect(
+      [...p1.items, ...p2.items].every((m) => m.alt.includes("equipo")),
+    ).toBe(true);
+  });
+});
+
 describe("countMedia", () => {
   it("devuelve el total de filas", async () => {
     expect(await countMedia()).toBe(0);

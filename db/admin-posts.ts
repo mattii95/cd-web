@@ -158,7 +158,7 @@ export type EditablePost = {
   status: "borrador" | "publicado";
   publishedAt: Date | null;
   updatedAt: Date;
-  cover: { src: string; alt: string } | null;
+  cover: { id: string; src: string; alt: string } | null;
   images: Record<string, { src: string; alt: string }>; // mediaId → miniatura
 };
 
@@ -204,7 +204,10 @@ export async function getPostForEdit(id: string): Promise<EditablePost | null> {
     status: row.status,
     publishedAt: row.publishedAt,
     updatedAt: row.updatedAt,
-    cover: row.coverMediaId ? (thumb.get(row.coverMediaId) ?? null) : null,
+    cover:
+      row.coverMediaId && thumb.has(row.coverMediaId)
+        ? { id: row.coverMediaId, ...thumb.get(row.coverMediaId)! }
+        : null,
     images,
   };
 }
@@ -218,7 +221,7 @@ export async function listAllTags(): Promise<{ slug: string; name: string }[]> {
 
 export type SavePostResult =
   | { ok: true; id: string; slug: string; previousSlug: string | null; updatedAt: Date }
-  | { ok: false; reason: "slug-taken" | "stale" | "not-found" };
+  | { ok: false; reason: "slug-taken" | "stale" | "not-found" | "missing-media" };
 
 type Tx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
 
@@ -238,6 +241,17 @@ async function replaceTags(tx: Tx, postId: string, names: string[]) {
   await tx.insert(postTag).values(rows.map((r) => ({ postId, tagId: r.id })));
 }
 
+// La portada y cada imagen del cuerpo deben existir en media: el cuerpo no tiene FK
+// y una imagen borrada rompería /blog/{slug}.
+async function hasMissingMedia(tx: Tx, input: ArticleInput): Promise<boolean> {
+  const ids = new Set<string>();
+  if (input.coverMediaId) ids.add(input.coverMediaId);
+  for (const n of input.body.content) if (n.type === "image") ids.add(n.attrs.mediaId);
+  if (!ids.size) return false;
+  const found = await tx.select({ id: media.id }).from(media).where(inArray(media.id, [...ids]));
+  return found.length < ids.size;
+}
+
 // 23505 = unique_violation (drizzle envuelve el error de pg en `cause`).
 function isUniqueViolation(e: unknown): boolean {
   const code = (e as { code?: string })?.code ?? (e as { cause?: { code?: string } })?.cause?.code;
@@ -251,6 +265,8 @@ export async function createPost(
 ): Promise<SavePostResult> {
   try {
     return await getDb().transaction(async (tx) => {
+      if (await hasMissingMedia(tx, input))
+        return { ok: false as const, reason: "missing-media" as const };
       const [row] = await tx
         .insert(post)
         .values({
@@ -261,6 +277,7 @@ export async function createPost(
           body: input.body,
           readingMinutes: docReadingMinutes(input.body),
           categoryId: input.categoryId,
+          coverMediaId: input.coverMediaId,
           authorId,
           status,
           publishedAt: status === "publicado" ? new Date() : null,
@@ -275,7 +292,7 @@ export async function createPost(
   }
 }
 
-// El slug de un post con published_at no cambia. No toca cover_media_id ni author_id.
+// El slug de un post con published_at no cambia. No toca author_id.
 export async function updatePost(
   id: string,
   input: ArticleInput,
@@ -293,6 +310,9 @@ export async function updatePost(
       if (current.updatedAt.getTime() !== expectedUpdatedAt.getTime())
         return { ok: false as const, reason: "stale" as const };
 
+      if (await hasMissingMedia(tx, input))
+        return { ok: false as const, reason: "missing-media" as const };
+
       const slug = current.publishedAt ? current.slug : input.slug;
       const updatedAt = new Date();
       await tx
@@ -305,6 +325,7 @@ export async function updatePost(
           body: input.body,
           readingMinutes: docReadingMinutes(input.body),
           categoryId: input.categoryId,
+          coverMediaId: input.coverMediaId,
           status,
           publishedAt: current.publishedAt ?? (status === "publicado" ? updatedAt : null),
           updatedAt,

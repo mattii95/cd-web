@@ -2,9 +2,11 @@
 
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useRef, useState } from "react";
+import { MediaPicker } from "@/components/admin/media-picker/media-picker";
 import type { BlogDoc } from "@/db/blog-body";
 import { EditorToolbar } from "./editor-toolbar";
 import { createExtensions, type EditorImages } from "./extensions";
+import { insertImage } from "./insert-image";
 
 export const BODY_ID = "campo-body";
 
@@ -18,6 +20,7 @@ type Props = {
 
 export function BodyEditor({ initial, images, onChange, invalid, describedBy }: Props) {
   const [empty, setEmpty] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   // El editor se crea una vez: onChange siempre apunta a la última versión.
   const onChangeRef = useRef(onChange);
   useEffect(() => {
@@ -34,6 +37,9 @@ export function BodyEditor({ initial, images, onChange, invalid, describedBy }: 
       onChangeRef.current(e.getJSON() as BlogDoc);
     },
     editorProps: {
+      // Subir archivos saltearía el alt obligatorio: pegar o soltar archivos no hace nada.
+      handlePaste: (_view, event) => (event.clipboardData?.files.length ?? 0) > 0,
+      handleDrop: (_view, event) => (event.dataTransfer?.files.length ?? 0) > 0,
       attributes: {
         id: BODY_ID,
         "aria-label": "Cuerpo del artículo",
@@ -61,7 +67,7 @@ export function BodyEditor({ initial, images, onChange, invalid, describedBy }: 
       {/* La barra queda pegada debajo de la cabecera fija del editor. */}
       <div className="sticky top-[var(--editor-head,0px)] z-20 rounded-t-2xl bg-cms-panel">
         {editor ? (
-          <EditorToolbar editor={editor} />
+          <EditorToolbar editor={editor} onInsertImage={() => setPickerOpen(true)} />
         ) : (
           <div aria-hidden="true" className="h-[57px] rounded-t-2xl border-b border-cms-line bg-cms-panel-alt" />
         )}
@@ -74,6 +80,15 @@ export function BodyEditor({ initial, images, onChange, invalid, describedBy }: 
         )}
         <EditorContent editor={editor} className="article-editor" />
       </div>
+      <MediaPicker
+        open={pickerOpen}
+        mode="body"
+        onSelect={(item) => {
+          setPickerOpen(false);
+          if (editor) insertImage(editor, item);
+        }}
+        onClose={() => setPickerOpen(false)}
+      />
     </div>
   );
 }

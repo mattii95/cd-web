@@ -96,6 +96,19 @@ describe("blogBodySchema", () => {
     for (const d of bad) expect(ok(d)).toBe(false);
   });
 
+  it("image acepta alt y caption null o con texto, y rechaza vacíos o de más de 300", () => {
+    const img = (alt: string | null, caption: string | null) =>
+      doc({ type: "image", attrs: { mediaId, alt, caption } });
+    expect(ok(img(null, null))).toBe(true);
+    expect(ok(img("Gráfico", "Pie"))).toBe(true);
+    expect(ok(img("a".repeat(300), null))).toBe(true);
+    expect(ok(img("", null))).toBe(false);
+    expect(ok(img("   ", null))).toBe(false);
+    expect(ok(img(null, ""))).toBe(false);
+    expect(ok(img("a".repeat(301), null))).toBe(false);
+    expect(ok(img(null, "a".repeat(301)))).toBe(false);
+  });
+
   it("rechaza hrefs peligrosos y acepta https y rutas internas", () => {
     for (const h of [
       "javascript:alert(1)",

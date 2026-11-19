@@ -143,6 +143,40 @@ describe("parseArticleForm", () => {
     expect(edit.ok && edit.expectedUpdatedAt?.toISOString()).toBe(iso);
   });
 
+  it("coverMediaId vacío o ausente es null; con un UUID lo devuelve", () => {
+    const sin = parseArticleForm(form(), null);
+    expect(sin.ok && sin.input.coverMediaId).toBeNull();
+    const vacio = parseArticleForm(form({ coverMediaId: "" }), null);
+    expect(vacio.ok && vacio.input.coverMediaId).toBeNull();
+    const con = parseArticleForm(form({ coverMediaId: cat }), null);
+    expect(con.ok && con.input.coverMediaId).toBe(cat);
+  });
+
+  it("coverMediaId que no es UUID da fieldErrors.coverMediaId", () => {
+    expect(errorsOf(form({ coverMediaId: "no-uuid" }))).toEqual({
+      coverMediaId: "Elegí la portada de nuevo.",
+    });
+  });
+
+  it("publicar sin portada es válido", () => {
+    const r = parseArticleForm(
+      form({
+        intent: "publish",
+        slug: "mi-articulo",
+        excerpt: "Resumen",
+        cta: "Escribinos",
+        body: JSON.stringify({
+          type: "doc",
+          content: [
+            { type: "paragraph", content: [{ type: "text", text: "Hola" }] },
+          ],
+        }),
+      }),
+      null,
+    );
+    expect(r.ok).toBe(true);
+  });
+
   it("un intent desconocido no pasa", () => {
     expect(parseArticleForm(form({ intent: "x" }), null).ok).toBe(false);
   });
