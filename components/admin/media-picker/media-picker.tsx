@@ -46,6 +46,13 @@ export function MediaPicker({ open, mode, selectedId = null, onSelect, onClose }
         e.preventDefault();
         onClose();
       }}
+      // En un input type="search" Escape primero borra el texto y no llega a cerrar el diálogo:
+      // se atiende acá, y preventDefault evita que además dispare "cancel".
+      onKeyDown={(e) => {
+        if (e.key !== "Escape") return;
+        e.preventDefault();
+        onClose();
+      }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

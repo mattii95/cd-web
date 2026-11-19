@@ -180,6 +180,14 @@ describe("MediaPicker", () => {
     expect(props.onSelect).not.toHaveBeenCalled();
   });
 
+  it("Escape dentro de la búsqueda cierra el selector, sin tocar onSelect", async () => {
+    const props = setup();
+    await screen.findByRole("button", { name: "Alt 1" });
+    await userEvent.type(screen.getByRole("searchbox"), "algo{Escape}");
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+    expect(props.onSelect).not.toHaveBeenCalled();
+  });
+
   it("cerrado no se ve", () => {
     setup({ open: false });
     expect(screen.queryByRole("dialog")).toBeNull();

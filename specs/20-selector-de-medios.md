@@ -219,66 +219,66 @@ Convenciones:
 
 **General**
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado.
-- [ ] `npm run test:e2e` pasa completo, con `blog.spec.ts`, `medios.spec.ts` y `article-editor.spec.ts` sin cambios en sus casos.
-- [ ] `package.json` no suma dependencias.
-- [ ] `grep -rn "@/db" components/admin/media-picker` no devuelve nada.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado.
+- [x] `npm run test:e2e` pasa completo, con `blog.spec.ts`, `medios.spec.ts` y `article-editor.spec.ts` sin cambios en sus casos.
+- [x] `package.json` no suma dependencias.
+- [x] `grep -rn "@/db" components/admin/media-picker` no devuelve nada.
 
 **Formato y formulario (`server`)**
 
-- [ ] `blogBodySchema` acepta una `image` con `alt` y `caption` en `null` o con texto, y rechaza `alt: ""`, `alt: "   "`, `caption: ""` y un `alt` de 301 caracteres.
-- [ ] `parseArticleForm` con `coverMediaId` vacío devuelve `coverMediaId: null`; con un UUID lo devuelve; con `no-uuid` devuelve `fieldErrors.coverMediaId`.
-- [ ] Publicar sin portada sigue siendo válido.
+- [x] `blogBodySchema` acepta una `image` con `alt` y `caption` en `null` o con texto, y rechaza `alt: ""`, `alt: "   "`, `caption: ""` y un `alt` de 301 caracteres.
+- [x] `parseArticleForm` con `coverMediaId` vacío devuelve `coverMediaId: null`; con un UUID lo devuelve; con `no-uuid` devuelve `fieldErrors.coverMediaId`.
+- [x] Publicar sin portada sigue siendo válido.
 
 **Consultas y actions (`db`)**
 
-- [ ] `listMedia({ query: "equipo" })` devuelve solo las imágenes con "equipo" en `alt` u `original_name`, sin distinguir mayúsculas.
-- [ ] `listMedia({ query: "50%" })` no devuelve imágenes sin `50%`; `listMedia({ query: "a_b" })` no devuelve `axb`.
-- [ ] `listMedia({ query: "   " })` devuelve lo mismo que `listMedia()`.
-- [ ] Con más de 24 resultados de una búsqueda, la segunda página con el `nextCursor` sigue filtrada y no repite imágenes.
-- [ ] `searchMediaAction` y `uploadPickerMediaAction` llaman a `requireAdmin()` antes de tocar la base o el disco.
-- [ ] `searchMediaAction` con un cursor inválido devuelve `status: "error"` con "No pudimos cargar las imágenes.".
-- [ ] `uploadPickerMediaAction` con un PNG válido devuelve `status: "success"`, "Imagen subida." y un `item` con `src` `/media/<id>`; con el mismo archivo otra vez, "Esa imagen ya estaba subida." y el mismo `item.id`.
-- [ ] `uploadPickerMediaAction` con un `.txt` devuelve el mensaje de `MediaError` y no crea filas ni archivos.
-- [ ] `createPost` con `coverMediaId` guarda `cover_media_id`; `updatePost` con `null` lo deja vacío y con otro id lo cambia.
-- [ ] `createPost` y `updatePost` con una portada o un `mediaId` del cuerpo que no existe en `media` devuelven `reason: "missing-media"` y no cambian el post, sus etiquetas ni crean etiquetas.
-- [ ] `getPostForEdit` devuelve `cover.id` igual a `cover_media_id`.
-- [ ] `saveArticleAction` con `missing-media` devuelve "Una de las imágenes ya no está en Medios. Elegí otra." y, al guardar bien, llama a `revalidatePath("/admin/media")`.
-- [ ] Después de guardar una portada, `getMediaUsage` de esa imagen incluye el post con `as: "portada"`.
+- [x] `listMedia({ query: "equipo" })` devuelve solo las imágenes con "equipo" en `alt` u `original_name`, sin distinguir mayúsculas.
+- [x] `listMedia({ query: "50%" })` no devuelve imágenes sin `50%`; `listMedia({ query: "a_b" })` no devuelve `axb`.
+- [x] `listMedia({ query: "   " })` devuelve lo mismo que `listMedia()`.
+- [x] Con más de 24 resultados de una búsqueda, la segunda página con el `nextCursor` sigue filtrada y no repite imágenes.
+- [x] `searchMediaAction` y `uploadPickerMediaAction` llaman a `requireAdmin()` antes de tocar la base o el disco.
+- [x] `searchMediaAction` con un cursor inválido devuelve `status: "error"` con "No pudimos cargar las imágenes.".
+- [x] `uploadPickerMediaAction` con un PNG válido devuelve `status: "success"`, "Imagen subida." y un `item` con `src` `/media/<id>`; con el mismo archivo otra vez, "Esa imagen ya estaba subida." y el mismo `item.id`.
+- [x] `uploadPickerMediaAction` con un `.txt` devuelve el mensaje de `MediaError` y no crea filas ni archivos.
+- [x] `createPost` con `coverMediaId` guarda `cover_media_id`; `updatePost` con `null` lo deja vacío y con otro id lo cambia.
+- [x] `createPost` y `updatePost` con una portada o un `mediaId` del cuerpo que no existe en `media` devuelven `reason: "missing-media"` y no cambian el post, sus etiquetas ni crean etiquetas.
+- [x] `getPostForEdit` devuelve `cover.id` igual a `cover_media_id`.
+- [x] `saveArticleAction` con `missing-media` devuelve "Una de las imágenes ya no está en Medios. Elegí otra." y, al guardar bien, llama a `revalidatePath("/admin/media")`.
+- [x] Después de guardar una portada, `getMediaUsage` de esa imagen incluye el post con `as: "portada"`.
 
 **Componentes (`client`)**
 
-- [ ] `MediaPicker` en modo `cover` muestra "Elegir portada" y "Usar como portada"; en modo `body`, "Insertar imagen" e "Insertar".
-- [ ] El botón principal está deshabilitado hasta seleccionar una miniatura; la miniatura seleccionada tiene `aria-pressed="true"`.
-- [ ] En modo `cover` con `selectedId`, esa miniatura aparece seleccionada al abrir.
-- [ ] Escribir en la búsqueda llama a `searchMediaAction` una sola vez 300 ms después de la última tecla, con `cursor: null`.
-- [ ] Con `nextCursor`, "Cargar más" agrega miniaturas sin quitar las anteriores; sin `nextCursor` no aparece.
-- [ ] Se ven "Todavía no hay imágenes. Subí la primera.", "No hay imágenes que coincidan con «x»." y "No pudimos cargar las imágenes." con "Reintentar" en cada caso.
-- [ ] Subir con éxito vuelve a "Biblioteca" con la imagen primera y seleccionada, y anuncia "Imagen subida.".
-- [ ] `Escape` y "Cancelar" llaman a `onClose` sin llamar a `onSelect`.
-- [ ] `ArticleEditor` sin portada muestra "Sin portada" y "Elegir portada"; elegir una muestra su miniatura, "Cambiar portada" y "Quitar portada", y "← Artículos" pasa a abrir "¿Salir sin guardar?".
-- [ ] La barra del cuerpo tiene "Insertar imagen" después de "En resumen".
-- [ ] `ImageNodeView` seleccionado muestra "Texto alternativo", "Pie de foto", "Cambiar imagen" y "Quitar imagen"; sin seleccionar no los muestra.
-- [ ] Aplicar un texto alternativo vacío o tocar "Usar el de Medios" deja `alt: null`; aplicar "Gráfico de ventas " deja `alt: "Gráfico de ventas"`.
-- [ ] "Cambiar imagen" deja `alt: null` y conserva `caption`.
+- [x] `MediaPicker` en modo `cover` muestra "Elegir portada" y "Usar como portada"; en modo `body`, "Insertar imagen" e "Insertar".
+- [x] El botón principal está deshabilitado hasta seleccionar una miniatura; la miniatura seleccionada tiene `aria-pressed="true"`.
+- [x] En modo `cover` con `selectedId`, esa miniatura aparece seleccionada al abrir.
+- [x] Escribir en la búsqueda llama a `searchMediaAction` una sola vez 300 ms después de la última tecla, con `cursor: null`.
+- [x] Con `nextCursor`, "Cargar más" agrega miniaturas sin quitar las anteriores; sin `nextCursor` no aparece.
+- [x] Se ven "Todavía no hay imágenes. Subí la primera.", "No hay imágenes que coincidan con «x»." y "No pudimos cargar las imágenes." con "Reintentar" en cada caso.
+- [x] Subir con éxito vuelve a "Biblioteca" con la imagen primera y seleccionada, y anuncia "Imagen subida.".
+- [x] `Escape` y "Cancelar" llaman a `onClose` sin llamar a `onSelect`.
+- [x] `ArticleEditor` sin portada muestra "Sin portada" y "Elegir portada"; elegir una muestra su miniatura, "Cambiar portada" y "Quitar portada", y "← Artículos" pasa a abrir "¿Salir sin guardar?".
+- [x] La barra del cuerpo tiene "Insertar imagen" después de "En resumen".
+- [x] `ImageNodeView` seleccionado muestra "Texto alternativo", "Pie de foto", "Cambiar imagen" y "Quitar imagen"; sin seleccionar no los muestra.
+- [x] Aplicar un texto alternativo vacío o tocar "Usar el de Medios" deja `alt: null`; aplicar "Gráfico de ventas " deja `alt: "Gráfico de ventas"`.
+- [x] "Cambiar imagen" deja `alt: null` y conserva `caption`.
 
 **Editor (E2E, `media-picker.spec.ts`)**
 
-- [ ] En un artículo nuevo, "Elegir portada" → "Subir imagen" con `e2e/fixtures/imagen.png` y un alt → "Usar como portada" muestra la miniatura en el panel; al publicar, `/blog` muestra esa portada en la tarjeta y `/blog/{slug}` en el hero.
-- [ ] "Insertar imagen" con el cursor en el segundo párrafo, elegir una imagen y "Insertar" la deja después de ese párrafo; con pie "Diagrama del flujo" y guardar, `/blog/{slug}` muestra un `<figure>` en ese lugar con `<figcaption>` "Diagrama del flujo".
-- [ ] Un alt propio en la imagen del cuerpo aparece como `alt` del `<img>` en `/blog/{slug}`; con "Usar el de Medios", aparece el de Medios.
-- [ ] Insertar con el cursor dentro de una lista deja la imagen después de la lista, no adentro.
-- [ ] La búsqueda del selector con parte del alt de una imagen la muestra y oculta las que no coinciden.
-- [ ] "Quitar portada" y "Guardar cambios" deja la tarjeta de `/blog` con el dibujo de la categoría.
-- [ ] Después de guardar, `/admin/media` muestra "En uso en: {título}" en la portada y en la imagen del cuerpo.
-- [ ] Si la imagen elegida como portada se borra (en el test, directo en la base) antes de guardar, el editor muestra "Una de las imágenes ya no está en Medios. Elegí otra." y `/blog/{slug}` sigue igual.
-- [ ] Soltar un archivo sobre el cuerpo no inserta nada.
-- [ ] Guardar `senales-sistema-a-medida` sin tocar nada deja `/blog/senales-sistema-a-medida` igual (portada e imagen del cuerpo).
-- [ ] A 390 px el selector ocupa la pantalla, la grilla tiene 2 columnas y no hay scroll horizontal.
-- [ ] El modal, la barra de la imagen y el popover cumplen 4.5:1 de contraste y todos sus controles miden 44 px o más (revisado con `/frontend-design`).
+- [x] En un artículo nuevo, "Elegir portada" → "Subir imagen" con `e2e/fixtures/imagen.png` y un alt → "Usar como portada" muestra la miniatura en el panel; al publicar, `/blog` muestra esa portada en la tarjeta y `/blog/{slug}` en el hero.
+- [x] "Insertar imagen" con el cursor en el segundo párrafo, elegir una imagen y "Insertar" la deja después de ese párrafo; con pie "Diagrama del flujo" y guardar, `/blog/{slug}` muestra un `<figure>` en ese lugar con `<figcaption>` "Diagrama del flujo".
+- [x] Un alt propio en la imagen del cuerpo aparece como `alt` del `<img>` en `/blog/{slug}`; con "Usar el de Medios", aparece el de Medios.
+- [x] Insertar con el cursor dentro de una lista deja la imagen después de la lista, no adentro.
+- [x] La búsqueda del selector con parte del alt de una imagen la muestra y oculta las que no coinciden.
+- [x] "Quitar portada" y "Guardar cambios" deja la tarjeta de `/blog` con el dibujo de la categoría.
+- [x] Después de guardar, `/admin/media` muestra "En uso en: {título}" en la portada y en la imagen del cuerpo.
+- [x] Si la imagen elegida como portada se borra (en el test, directo en la base) antes de guardar, el editor muestra "Una de las imágenes ya no está en Medios. Elegí otra." y `/blog/{slug}` sigue igual.
+- [x] Soltar un archivo sobre el cuerpo no inserta nada.
+- [x] Guardar `senales-sistema-a-medida` sin tocar nada deja `/blog/senales-sistema-a-medida` igual (portada e imagen del cuerpo).
+- [x] A 390 px el selector ocupa la pantalla, la grilla tiene 2 columnas y no hay scroll horizontal.
+- [x] El modal, la barra de la imagen y el popover cumplen 4.5:1 de contraste y todos sus controles miden 44 px o más (revisado con `/frontend-design`).
 
 ## Decisiones
 
