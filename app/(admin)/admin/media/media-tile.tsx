@@ -1,12 +1,14 @@
 import Image from "next/image";
 import type { CardItem } from "./card-item";
 
-// Solo muestra: el modal de detalle (paso 5) cuelga de este botón.
-export function MediaTile({ item }: { item: CardItem }) {
+// Solo muestra: el modal de detalle cuelga de este botón.
+export function MediaTile({ item, onOpen }: { item: CardItem; onOpen: () => void }) {
   const inUse = item.usage.length > 0;
   return (
     <button
       type="button"
+      data-media-id={item.id}
+      onClick={onOpen}
       aria-label={`Ver detalles de ${item.alt}`}
       className="group flex w-full cursor-pointer flex-col overflow-hidden rounded-xl border border-cms-line bg-cms-panel p-0 text-left transition-shadow hover:shadow-[0_8px_24px_rgba(11,16,32,0.12)]"
     >
