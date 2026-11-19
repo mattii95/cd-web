@@ -284,7 +284,7 @@ async function hasMissingMedia(tx: Tx, input: ArticleInput): Promise<boolean> {
 }
 
 // 23505 = unique_violation (drizzle envuelve el error de pg en `cause`).
-function isUniqueViolation(e: unknown): boolean {
+export function isUniqueViolation(e: unknown): boolean {
   const code = (e as { code?: string })?.code ?? (e as { cause?: { code?: string } })?.cause?.code;
   return code === "23505";
 }

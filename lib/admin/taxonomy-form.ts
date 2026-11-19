@@ -22,6 +22,12 @@ export type ParsedForm<T> =
   | { ok: true; id: string | null; input: T } // id null = crear
   | { ok: false; fieldErrors: Partial<Record<keyof T, string>> };
 
+// Estado de las actions que guardan desde un modal: errores por campo o un mensaje general.
+export type TaxonomyFormState<T> =
+  | { status: "idle" }
+  | { status: "error"; message?: string; fieldErrors?: Partial<Record<keyof T, string>> }
+  | { status: "success"; message: string };
+
 const str = (data: FormData, key: string) => {
   const v = data.get(key);
   return typeof v === "string" ? v : "";
