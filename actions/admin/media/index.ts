@@ -8,6 +8,7 @@ import {
   deleteMedia,
   listMedia,
   MediaError,
+  type MediaItem,
   MediaInUseError,
   updateMediaAlt,
 } from "@/db/media";
@@ -21,19 +22,27 @@ const upload = z.object({
   alt: z.string().trim().min(1).max(300),
 });
 
-export async function uploadMediaAction(
-  _: FormState,
-  data: FormData,
-): Promise<FormState> {
+type Uploaded =
+  | { ok: true; message: string; item: MediaItem }
+  | { ok: false; message: string };
+
+// Lógica común de uploadMediaAction y uploadPickerMediaAction.
+async function uploadFromForm(data: FormData): Promise<Uploaded> {
   const admin = await requireAdmin();
-  const parsed = upload.safeParse({ file: data.get("file"), alt: data.get("alt") });
+  const parsed = upload.safeParse({
+    file: data.get("file"),
+    alt: data.get("alt"),
+  });
   if (!parsed.success) {
-    return error("Elegí una imagen y escribí su texto alternativo.");
+    return {
+      ok: false,
+      message: "Elegí una imagen y escribí su texto alternativo.",
+    };
   }
 
   const { file, alt } = parsed.data;
   try {
-    const { duplicate } = await createMedia({
+    const { item, duplicate } = await createMedia({
       file: Buffer.from(await file.arrayBuffer()),
       originalName: file.name.slice(0, 200),
       alt,
@@ -41,14 +50,97 @@ export async function uploadMediaAction(
     });
     revalidatePath("/admin/media");
     return {
-      status: "success",
+      ok: true,
+      item,
       message: duplicate ? "Esa imagen ya estaba subida." : "Imagen subida.",
     };
   } catch (e) {
-    if (e instanceof MediaError) return error(e.message);
-    return error("No pudimos subir la imagen. Intentá de nuevo en unos minutos.");
+    if (e instanceof MediaError) return { ok: false, message: e.message };
+    return {
+      ok: false,
+      message: "No pudimos subir la imagen. Intentá de nuevo en unos minutos.",
+    };
   }
 }
+
+export async function uploadMediaAction(
+  _: FormState,
+  data: FormData,
+): Promise<FormState> {
+  const r = await uploadFromForm(data);
+  return r.ok ? { status: "success", message: r.message } : error(r.message);
+}
+
+// Lo único que viaja al selector: sin usage, bytes ni originalName.
+export type PickerItem = {
+  id: string;
+  src: string; // "/media/<id>"
+  alt: string; // el de Medios
+  width: number;
+  height: number;
+};
+const toPickerItem = ({
+  id,
+  src,
+  alt,
+  width,
+  height,
+}: MediaItem): PickerItem => ({
+  id,
+  src,
+  alt,
+  width,
+  height,
+});
+
+export type PickerUploadState =
+  | { status: "idle" }
+  | { status: "error"; message: string }
+  | { status: "success"; message: string; item: PickerItem };
+
+export async function uploadPickerMediaAction(
+  _: PickerUploadState,
+  data: FormData,
+): Promise<PickerUploadState> {
+  const r = await uploadFromForm(data);
+  return r.ok
+    ? { status: "success", message: r.message, item: toPickerItem(r.item) }
+    : { status: "error", message: r.message };
+}
+
+export type PickerPage =
+  | { status: "success"; items: PickerItem[]; nextCursor: string | null }
+  | { status: "error"; message: string };
+
+const searchInput = z.object({
+  query: z.string().max(100),
+  cursor: z.string().min(1).max(200).nullable(),
+});
+
+// Sin revalidatePath: es una lectura.
+export async function searchMediaAction(input: {
+  query: string;
+  cursor: string | null;
+}): Promise<PickerPage> {
+  await requireAdmin();
+  const parsed = searchInput.safeParse(input);
+  if (!parsed.success) return pickerError();
+  try {
+    // Un cursor inválido (InvalidCursorError) cae acá igual que cualquier otro fallo.
+    const { items, nextCursor } = await listMedia({
+      query: parsed.data.query,
+      cursor: parsed.data.cursor,
+    });
+    return { status: "success", items: items.map(toPickerItem), nextCursor };
+  } catch {
+    return pickerError();
+  }
+}
+
+const pickerError = (): PickerPage => ({
+  status: "error",
+  message: "No pudimos cargar las imágenes.",
+});
 
 const alt = z.string().trim().min(1).max(300);
 
@@ -60,12 +152,15 @@ export async function updateMediaAltAction(
   const parsed = z
     .object({ id: z.uuid(), alt })
     .safeParse({ id: data.get("id"), alt: data.get("alt") });
-  if (!parsed.success) return error("El texto alternativo no puede estar vacío.");
+  if (!parsed.success)
+    return error("El texto alternativo no puede estar vacío.");
 
   try {
     await updateMediaAlt(parsed.data.id, parsed.data.alt);
   } catch {
-    return error("No pudimos guardar el cambio. Intentá de nuevo en unos minutos.");
+    return error(
+      "No pudimos guardar el cambio. Intentá de nuevo en unos minutos.",
+    );
   }
   // Sin revalidatePath: MediaGrid actualiza su estado local.
   return { status: "success", message: "Texto alternativo guardado." };
@@ -86,7 +181,9 @@ export async function deleteMediaAction(
       const titles = [...new Set(e.usage.map((u) => u.title))].join(", ");
       return error(`No se puede borrar: está en uso en ${titles}.`);
     }
-    return error("No pudimos borrar la imagen. Intentá de nuevo en unos minutos.");
+    return error(
+      "No pudimos borrar la imagen. Intentá de nuevo en unos minutos.",
+    );
   }
   // Sin revalidatePath: MediaGrid saca la tarjeta de su estado local.
   return { status: "success", message: "Imagen borrada." };
