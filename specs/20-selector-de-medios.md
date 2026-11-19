@@ -1,6 +1,6 @@
 # SPEC 20 — Selector de Medios
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 10, SPEC 12, SPEC 16, SPEC 18, SPEC 19
 > **Fecha:** 2026-11-18
 > **Objetivo:** Que el admin elija, cambie o quite la portada e inserte imágenes en el cuerpo desde el editor de artículos con un modal de Medios que busca, pagina y sube, y que edite el texto alternativo y el pie de cada imagen del cuerpo.
