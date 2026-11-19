@@ -30,7 +30,7 @@ async function crearCategoria(page: Page) {
   await page.getByRole("button", { name: "Nueva categoría" }).click();
   await page.getByRole("textbox", { name: "Nombre" }).fill(NAME);
   await page.getByRole("combobox", { name: "Servicio del CTA" }).selectOption({ label: "Desarrollo web" });
-  await page.getByRole("radio", { name: "Rayo" }).check({ force: true });
+  await page.getByRole("radio", { name: "Rayo" }).locator("xpath=ancestor::label").click();
   await page.getByRole("button", { name: "Crear categoría" }).click();
   await expect(page.getByText("Categoría creada.")).toBeVisible();
   await expect(row(page, NAME)).toBeVisible();
@@ -172,7 +172,7 @@ test("un error de URL repetida se muestra debajo del campo", async ({ page }) =>
   await page.getByRole("button", { name: "Nueva categoría" }).click();
   await page.getByRole("textbox", { name: "Nombre" }).fill("Sistemas");
   await page.getByRole("combobox", { name: "Servicio del CTA" }).selectOption({ label: "Desarrollo web" });
-  await page.getByRole("radio", { name: "Rayo" }).check({ force: true });
+  await page.getByRole("radio", { name: "Rayo" }).locator("xpath=ancestor::label").click();
   await page.getByRole("button", { name: "Crear categoría" }).click();
   await expect(modal(page).getByText("Ya hay una categoría con esa URL.")).toBeVisible();
   await expect(page.getByRole("textbox", { name: "URL" })).toBeFocused();

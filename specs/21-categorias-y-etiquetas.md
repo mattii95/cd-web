@@ -1,6 +1,6 @@
 # SPEC 21 — Categorías y etiquetas
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 09, SPEC 11, SPEC 13, SPEC 16, SPEC 17, SPEC 19
 > **Fecha:** 2026-11-19
 > **Objetivo:** Que el admin cree, edite, reordene y borre categorías en `/admin/categories` y cree, renombre, fusione y borre etiquetas en `/admin/tags`, sin romper el blog público ni el editor de artículos.
@@ -347,98 +347,98 @@ Convenciones:
 
 **General**
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado.
-- [ ] `npm run test:e2e` pasa completo, con `blog.spec.ts` y `article-editor.spec.ts` sin cambios de comportamiento.
-- [ ] `grep -rn "BlogCategoryTag\|BlogTagSlug" app components db lib __tests__ e2e` no devuelve nada.
-- [ ] La barra lateral tiene, en "Contenido del blog", Artículos, Categorías, Etiquetas y Medios, en ese orden; "Categorías" está activa en `/admin/categories` y "Etiquetas" en `/admin/tags`.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado.
+- [x] `npm run test:e2e` pasa completo, con `blog.spec.ts` y `article-editor.spec.ts` sin cambios de comportamiento.
+- [x] `grep -rn "BlogCategoryTag\|BlogTagSlug" app components db lib __tests__ e2e` no devuelve nada.
+- [x] La barra lateral tiene, en "Contenido del blog", Artículos, Categorías, Etiquetas y Medios, en ese orden; "Categorías" está activa en `/admin/categories` y "Etiquetas" en `/admin/tags`.
 
 **Migración y seed (`db`)**
 
-- [ ] Después de migrar, `desarrollo-web`, `sistemas`, `saas` e `ia` tienen `icon` `code`, `layers`, `cloud` y `sparkles`.
-- [ ] Insertar una categoría con slug `Mal Slug`, `label` vacío o un `icon` fuera del enum falla por la base.
-- [ ] Cambiar el `label` de `sistemas` y las `position` y correr el seed otra vez deja el `label` y las `position` cambiados.
-- [ ] Renombrar la etiqueta `seo` y correr el seed otra vez deja el nombre cambiado.
+- [x] Después de migrar, `desarrollo-web`, `sistemas`, `saas` e `ia` tienen `icon` `code`, `layers`, `cloud` y `sparkles`.
+- [x] Insertar una categoría con slug `Mal Slug`, `label` vacío o un `icon` fuera del enum falla por la base.
+- [x] Cambiar el `label` de `sistemas` y las `position` y correr el seed otra vez deja el `label` y las `position` cambiados.
+- [x] Renombrar la etiqueta `seo` y correr el seed otra vez deja el nombre cambiado.
 
 **Blog público**
 
-- [ ] Con el seed, `/blog` muestra los mismos 4 filtros de categoría en el mismo orden y las miniaturas sin portada con el mismo ícono que antes.
-- [ ] Una categoría sin artículos publicados no sale en los filtros de `/blog`; `/blog?categoria={su slug}` muestra "Todos".
-- [ ] Un artículo publicado en una categoría nueva con ícono `bolt` muestra el ícono Rayo en su tarjeta sin portada, y la categoría sale como filtro con su "Texto del filtro".
-- [ ] Reordenar categorías en el panel cambia el orden de los filtros de `/blog` sin reiniciar el servidor.
-- [ ] Renombrar una etiqueta en el panel cambia el nombre en las tarjetas, en el artículo y en el filtro de `/blog`.
+- [x] Con el seed, `/blog` muestra los mismos 4 filtros de categoría en el mismo orden y las miniaturas sin portada con el mismo ícono que antes.
+- [x] Una categoría sin artículos publicados no sale en los filtros de `/blog`; `/blog?categoria={su slug}` muestra "Todos".
+- [x] Un artículo publicado en una categoría nueva con ícono `bolt` muestra el ícono Rayo en su tarjeta sin portada, y la categoría sale como filtro con su "Texto del filtro".
+- [x] Reordenar categorías en el panel cambia el orden de los filtros de `/blog` sin reiniciar el servidor.
+- [x] Renombrar una etiqueta en el panel cambia el nombre en las tarjetas, en el artículo y en el filtro de `/blog`.
 
 **Utilidades (`server`)**
 
-- [ ] `parseCategoryForm` sin nombre, con un nombre de 41 caracteres, slug `Mal Slug`, servicio `otro` o ícono `star` devuelve el error en el campo correspondiente.
-- [ ] `parseCategoryForm` con "Texto del filtro" vacío lo rechaza (el cliente lo autocompleta; el servidor no).
-- [ ] `parseTagForm` sin nombre, con 41 caracteres o con un nombre que da `slugify` vacío (`"¡¿?!"`) devuelve error en `name`.
-- [ ] `parseTagParams({ q: "  seo ", page: "2" })` devuelve `{ q: "seo", page: 2 }`; `page: "0"`, `page: "abc"` y una `q` de 101 caracteres caen a los valores por defecto o se recortan como en `article-params`.
-- [ ] `parseArticleForm` con `tagSlugs=["seo"]` y `newTags=["Nueva"]` devuelve las dos listas; con 3 slugs y 3 nombres, error "Podés usar hasta 5 etiquetas."; con `tagSlugs=["Mal Slug"]`, error en `tags`.
+- [x] `parseCategoryForm` sin nombre, con un nombre de 41 caracteres, slug `Mal Slug`, servicio `otro` o ícono `star` devuelve el error en el campo correspondiente.
+- [x] `parseCategoryForm` con "Texto del filtro" vacío lo rechaza (el cliente lo autocompleta; el servidor no).
+- [x] `parseTagForm` sin nombre, con 41 caracteres o con un nombre que da `slugify` vacío (`"¡¿?!"`) devuelve error en `name`.
+- [x] `parseTagParams({ q: "  seo ", page: "2" })` devuelve `{ q: "seo", page: 2 }`; `page: "0"`, `page: "abc"` y una `q` de 101 caracteres caen a los valores por defecto o se recortan como en `article-params`.
+- [x] `parseArticleForm` con `tagSlugs=["seo"]` y `newTags=["Nueva"]` devuelve las dos listas; con 3 slugs y 3 nombres, error "Podés usar hasta 5 etiquetas."; con `tagSlugs=["Mal Slug"]`, error en `tags`.
 
 **Categorías (`admin-categories.test.ts`, `taxonomy-actions.test.ts`)**
 
-- [ ] `createCategory` guarda la categoría con `position` = la última + 1.
-- [ ] `createCategory` y `updateCategory` con un slug que ya usa otra categoría devuelven `slug-taken` y no cambian nada.
-- [ ] `updateCategory` sobre una categoría con artículos publicados ignora un slug distinto y devuelve `previousSlug: null`; sin publicados cambia el slug y devuelve el anterior.
-- [ ] `moveCategory("down")` sobre la primera la intercambia con la segunda; `"up"` sobre la primera devuelve `edge` y no cambia nada.
-- [ ] `deleteCategory` sobre una categoría con un borrador devuelve `in-use` con `total: 1`; sin artículos la borra.
-- [ ] `listAdminCategories` devuelve `published` y `total` correctos con borradores y publicados mezclados.
-- [ ] Cada action llama a `requireAdmin()` antes de tocar la base y, si cambió algo, a `updateTag("blog")`, `revalidatePath("/admin/categories")` y `revalidatePath("/admin/articles")`.
-- [ ] Las actions devuelven los mensajes de la tabla de mensajes para crear, guardar, borrar, slug repetido, categoría con artículos e id inexistente.
+- [x] `createCategory` guarda la categoría con `position` = la última + 1.
+- [x] `createCategory` y `updateCategory` con un slug que ya usa otra categoría devuelven `slug-taken` y no cambian nada.
+- [x] `updateCategory` sobre una categoría con artículos publicados ignora un slug distinto y devuelve `previousSlug: null`; sin publicados cambia el slug y devuelve el anterior.
+- [x] `moveCategory("down")` sobre la primera la intercambia con la segunda; `"up"` sobre la primera devuelve `edge` y no cambia nada.
+- [x] `deleteCategory` sobre una categoría con un borrador devuelve `in-use` con `total: 1`; sin artículos la borra.
+- [x] `listAdminCategories` devuelve `published` y `total` correctos con borradores y publicados mezclados.
+- [x] Cada action llama a `requireAdmin()` antes de tocar la base y, si cambió algo, a `updateTag("blog")`, `revalidatePath("/admin/categories")` y `revalidatePath("/admin/articles")`.
+- [x] Las actions devuelven los mensajes de la tabla de mensajes para crear, guardar, borrar, slug repetido, categoría con artículos e id inexistente.
 
 **Etiquetas (`admin-tags.test.ts`, `taxonomy-actions.test.ts`)**
 
-- [ ] `listAdminTags` ordena por nombre sin distinguir mayúsculas, pagina de a 25, busca por nombre o slug, y `q: "50%"` no devuelve todas.
-- [ ] `createTag` con un nombre cuyo `slugify` coincide con el de otra (`"Seo"` con `SEO` existente) devuelve `name-taken`; con un slug ocupado, `slug-taken`.
-- [ ] `updateTagRow` cambia el nombre de `seo` a "Posicionamiento" y el slug sigue siendo `seo` (tiene publicados).
-- [ ] `updateTagRow` sobre una etiqueta sin publicados cambia el slug.
-- [ ] `mergeTags(A, B)` con un artículo que tiene A y B y otro que tiene solo A deja los dos con B una sola vez, borra A y devuelve `moved: 2`.
-- [ ] `mergeTags(A, A)` devuelve `same`; con un id inexistente, `not-found`; en los dos casos no cambia nada.
-- [ ] `deleteTag` borra la etiqueta y sus `post_tag`; los artículos siguen existiendo.
-- [ ] `searchTagOptions("se", idDeSeo)` no devuelve `seo` y devuelve como mucho 10.
-- [ ] Las actions llaman a `requireAdmin()` primero, invalidan `blog`, `/admin/tags` y `/admin/articles`, y devuelven los mensajes de la tabla.
+- [x] `listAdminTags` ordena por nombre sin distinguir mayúsculas, pagina de a 25, busca por nombre o slug, y `q: "50%"` no devuelve todas.
+- [x] `createTag` con un nombre cuyo `slugify` coincide con el de otra (`"Seo"` con `SEO` existente) devuelve `name-taken`; con un slug ocupado, `slug-taken`.
+- [x] `updateTagRow` cambia el nombre de `seo` a "Posicionamiento" y el slug sigue siendo `seo` (tiene publicados).
+- [x] `updateTagRow` sobre una etiqueta sin publicados cambia el slug.
+- [x] `mergeTags(A, B)` con un artículo que tiene A y B y otro que tiene solo A deja los dos con B una sola vez, borra A y devuelve `moved: 2`.
+- [x] `mergeTags(A, A)` devuelve `same`; con un id inexistente, `not-found`; en los dos casos no cambia nada.
+- [x] `deleteTag` borra la etiqueta y sus `post_tag`; los artículos siguen existiendo.
+- [x] `searchTagOptions("se", idDeSeo)` no devuelve `seo` y devuelve como mucho 10.
+- [x] Las actions llaman a `requireAdmin()` primero, invalidan `blog`, `/admin/tags` y `/admin/articles`, y devuelven los mensajes de la tabla.
 
 **Editor (`admin-posts.test.ts`, `admin-articles-actions.test.ts`)**
 
-- [ ] Renombrar la etiqueta `seo` a "Posicionamiento" y guardar un artículo con `tagSlugs=["seo"]` no crea ninguna etiqueta nueva y el artículo sigue con `seo`.
-- [ ] Guardar con `tagSlugs=["borrada"]` (inexistente) devuelve `missing-tag`, no cambia nada y la action responde "Una de las etiquetas ya no existe. Recargá la página.".
-- [ ] Guardar con `newTags=["seo"]` cuando ya existe la etiqueta `seo` reutiliza esa, no crea otra.
+- [x] Renombrar la etiqueta `seo` a "Posicionamiento" y guardar un artículo con `tagSlugs=["seo"]` no crea ninguna etiqueta nueva y el artículo sigue con `seo`.
+- [x] Guardar con `tagSlugs=["borrada"]` (inexistente) devuelve `missing-tag`, no cambia nada y la action responde "Una de las etiquetas ya no existe. Recargá la página.".
+- [x] Guardar con `newTags=["seo"]` cuando ya existe la etiqueta `seo` reutiliza esa, no crea otra.
 
 **Componentes (`client`)**
 
-- [ ] `CategoryDialog` al crear: escribir "Marketing digital" llena "Texto del filtro" con lo mismo y "URL" con `marketing-digital`; editar el slug a mano corta el seguimiento.
-- [ ] `CategoryDialog` con una categoría con publicados muestra "URL" de solo lectura con su nota.
-- [ ] `CategoryDialog` sin servicio ni ícono muestra los dos errores y pone el foco en "Servicio del CTA".
-- [ ] El selector de ícono es un `radiogroup` que se recorre con flechas y cada opción tiene su nombre accesible ("Código", "Rayo"…).
-- [ ] `TagDialog` con una etiqueta con publicados muestra "URL" de solo lectura con su nota.
-- [ ] `MergeTagDialog` deshabilita "Fusionar" hasta elegir destino y muestra "Los {N} artículos de «{origen}» pasan a «{destino}»…".
-- [ ] `TagInput` con la opción `{ slug: "seo", name: "Posicionamiento" }`: escribir "posicionamiento" y `Enter` agrega el chip con `slug: "seo"` y no muestra "Crear «posicionamiento»".
+- [x] `CategoryDialog` al crear: escribir "Marketing digital" llena "Texto del filtro" con lo mismo y "URL" con `marketing-digital`; editar el slug a mano corta el seguimiento.
+- [x] `CategoryDialog` con una categoría con publicados muestra "URL" de solo lectura con su nota.
+- [x] `CategoryDialog` sin servicio ni ícono muestra los dos errores y pone el foco en "Servicio del CTA".
+- [x] El selector de ícono es un `radiogroup` que se recorre con flechas y cada opción tiene su nombre accesible ("Código", "Rayo"…).
+- [x] `TagDialog` con una etiqueta con publicados muestra "URL" de solo lectura con su nota.
+- [x] `MergeTagDialog` deshabilita "Fusionar" hasta elegir destino y muestra "Los {N} artículos de «{origen}» pasan a «{destino}»…".
+- [x] `TagInput` con la opción `{ slug: "seo", name: "Posicionamiento" }`: escribir "posicionamiento" y `Enter` agrega el chip con `slug: "seo"` y no muestra "Crear «posicionamiento»".
 
 **Categorías (E2E, `categories.spec.ts`)**
 
-- [ ] "Categorías" en la barra lateral lleva a `/admin/categories` con las 4 del seed en orden.
-- [ ] "Nueva categoría" con nombre, servicio e ícono muestra "Categoría creada." y la categoría queda última en la tabla.
-- [ ] La categoría nueva aparece en el select "Categoría" del editor de artículos; un artículo publicado con ella hace aparecer el filtro en `/blog`.
-- [ ] Con ese artículo publicado, "Editar" muestra la URL de solo lectura.
-- [ ] "Bajar" sobre la primera la deja segunda después de recargar, y el orden de los filtros de `/blog` cambia igual.
-- [ ] "Borrar" está deshabilitado en una categoría con artículos y muestra "Tiene {N} artículos…"; en una sin artículos pide confirmación y la borra.
-- [ ] Sin sesión, `/admin/categories` redirige a `/cuenta/login`.
-- [ ] A 390 px no hay scroll horizontal y el modal ocupa la pantalla.
+- [x] "Categorías" en la barra lateral lleva a `/admin/categories` con las 4 del seed en orden.
+- [x] "Nueva categoría" con nombre, servicio e ícono muestra "Categoría creada." y la categoría queda última en la tabla.
+- [x] La categoría nueva aparece en el select "Categoría" del editor de artículos; un artículo publicado con ella hace aparecer el filtro en `/blog`.
+- [x] Con ese artículo publicado, "Editar" muestra la URL de solo lectura.
+- [x] "Bajar" sobre la primera la deja segunda después de recargar, y el orden de los filtros de `/blog` cambia igual.
+- [x] "Borrar" está deshabilitado en una categoría con artículos y muestra "Tiene {N} artículos…"; en una sin artículos pide confirmación y la borra.
+- [x] Sin sesión, `/admin/categories` redirige a `/cuenta/login`.
+- [x] A 390 px no hay scroll horizontal y el modal ocupa la pantalla.
 
 **Etiquetas (E2E, `tags.spec.ts`)**
 
-- [ ] "Etiquetas" en la barra lateral lleva a `/admin/tags` con las etiquetas del seed en orden alfabético y su conteo de artículos.
-- [ ] Buscar "seo" deja solo las que coinciden y la URL queda en `/admin/tags?q=seo`; una búsqueda sin resultados muestra el estado vacío.
-- [ ] "Nueva etiqueta" crea una etiqueta con 0 artículos que aparece en el autocompletado del editor.
-- [ ] Renombrar `seo` a "Posicionamiento" cambia el nombre en el artículo publicado sin cambiar `/blog?etiqueta=seo`; después, editar y guardar ese artículo no crea otra etiqueta.
-- [ ] "Fusionar con…" de una etiqueta hacia otra muestra "Listo: {N} artículos pasaron a «{destino}».", la origen desaparece de la tabla y de `/blog`, y sus artículos muestran la destino.
-- [ ] "Borrar" pide confirmación con la cantidad de artículos y la etiqueta deja de salir en los artículos y en `/blog`.
-- [ ] Sin sesión, `/admin/tags` redirige a `/cuenta/login`.
-- [ ] A 390 px no hay scroll horizontal.
-- [ ] El texto, los botones, los errores y los modales de las dos páginas cumplen 4.5:1 de contraste y todos los controles miden 44 px o más (revisado con `/frontend-design`).
+- [x] "Etiquetas" en la barra lateral lleva a `/admin/tags` con las etiquetas del seed en orden alfabético y su conteo de artículos.
+- [x] Buscar "seo" deja solo las que coinciden y la URL queda en `/admin/tags?q=seo`; una búsqueda sin resultados muestra el estado vacío.
+- [x] "Nueva etiqueta" crea una etiqueta con 0 artículos que aparece en el autocompletado del editor.
+- [x] Renombrar `seo` a "Posicionamiento" cambia el nombre en el artículo publicado sin cambiar `/blog?etiqueta=seo`; después, editar y guardar ese artículo no crea otra etiqueta.
+- [x] "Fusionar con…" de una etiqueta hacia otra muestra "Listo: {N} artículos pasaron a «{destino}».", la origen desaparece de la tabla y de `/blog`, y sus artículos muestran la destino.
+- [x] "Borrar" pide confirmación con la cantidad de artículos y la etiqueta deja de salir en los artículos y en `/blog`.
+- [x] Sin sesión, `/admin/tags` redirige a `/cuenta/login`.
+- [x] A 390 px no hay scroll horizontal.
+- [x] El texto, los botones, los errores y los modales de las dos páginas cumplen 4.5:1 de contraste y todos los controles miden 44 px o más (revisado con `/frontend-design`).
 
 ## Decisiones
 
