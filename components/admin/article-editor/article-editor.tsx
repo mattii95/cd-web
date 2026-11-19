@@ -19,6 +19,7 @@ import {
 import { formatDate } from "@/lib/format-date";
 import { SLUG_MAX, slugify } from "@/lib/slug";
 import { BODY_ID, BodyEditor } from "./body-editor";
+import { type Cover, CoverField } from "./cover-field";
 import { TagInput } from "./tag-input";
 
 type Props = {
@@ -99,6 +100,7 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
   const [categoryId, setCategoryId] = useState(post?.categoryId ?? "");
   const [body, setBody] = useState<BlogDoc>(post?.body ?? EMPTY_DOC);
   const [tags, setTags] = useState(post?.tags.map((t) => t.name) ?? []);
+  const [cover, setCover] = useState<Cover | null>(post?.cover ?? null);
   const [saved, setSaved] = useState<Saved>({
     id: post?.id ?? null,
     status: post?.status ?? null,
@@ -109,7 +111,7 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
 
   // Qué hay en pantalla frente a lo último cargado o guardado: decide el aviso de salida.
   const snapshot = (over: Partial<{ slug: string }> = {}) =>
-    JSON.stringify({ title, slug, excerpt, cta, categoryId, body, tags, ...over });
+    JSON.stringify({ title, slug, excerpt, cta, categoryId, body, tags, coverId: cover?.id ?? null, ...over });
   const [baseline, setBaseline] = useState(() => snapshot());
   const dirty = snapshot() !== baseline;
 
@@ -164,7 +166,7 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
     fd.set("cta", cta);
     fd.set("categoryId", categoryId);
     fd.set("body", JSON.stringify(body));
-    fd.set("coverMediaId", post?.cover?.id ?? "");
+    fd.set("coverMediaId", cover?.id ?? "");
     for (const t of tags) fd.append("tags", t);
     return fd;
   };
@@ -463,16 +465,7 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
 
           <section className={`${card} flex flex-col gap-3`}>
             <h2 className="m-0 font-display text-lg font-bold text-cms-ink">Imagen de portada</h2>
-            {post?.cover ? (
-              // eslint-disable-next-line @next/next/no-img-element -- miniatura de solo lectura; /media sirve el WebP ya procesado
-              <img
-                src={post.cover.src}
-                alt={post.cover.alt}
-                className="aspect-[16/9] w-full rounded-xl border border-cms-line object-cover"
-              />
-            ) : (
-              <p className="m-0 text-sm text-cms-text">Sin portada</p>
-            )}
+            <CoverField cover={cover} disabled={pending} onChange={setCover} />
           </section>
 
           {saved.id && (

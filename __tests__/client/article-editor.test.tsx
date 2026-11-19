@@ -8,8 +8,10 @@ const router = vi.hoisted(() => ({ replace: vi.fn(), push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 vi.mock("@/actions/admin/articles", () => ({ saveArticleAction: vi.fn(), deletePostAction: vi.fn() }));
 vi.mock("@/components/admin/toast", () => ({ notify: vi.fn() }));
+vi.mock("@/actions/admin/media", () => ({ searchMediaAction: vi.fn(), uploadPickerMediaAction: vi.fn() }));
 
 import { deletePostAction, saveArticleAction } from "@/actions/admin/articles";
+import { searchMediaAction } from "@/actions/admin/media";
 import { notify } from "@/components/admin/toast";
 import { ArticleEditor } from "@/components/admin/article-editor/article-editor";
 import { EditorToolbar } from "@/components/admin/article-editor/editor-toolbar";
@@ -210,6 +212,82 @@ describe("ArticleEditor: salir, conflicto y eliminar", () => {
   it("en /new no hay botón Eliminar artículo", () => {
     render(<ArticleEditor post={null} categories={categories} tagOptions={[]} />);
     expect(screen.queryByRole("button", { name: "Eliminar artículo" })).not.toBeInTheDocument();
+  });
+});
+
+describe("ArticleEditor: portada", () => {
+  const MID = "7f2b9c62-3c4d-4e5f-8a61-2c3d4e5f6071";
+  const M1 = { id: MID, src: `/media/${MID}`, alt: "Equipo en la oficina", width: 1200, height: 800 };
+  const saved = {
+    status: "success",
+    message: "Borrador guardado.",
+    id: "0b7c1c5e-6f0e-4a55-9a43-2d2a4f6c1b11",
+    slug: "mi-articulo",
+    postStatus: "borrador",
+    updatedAt: "2026-11-18T10:00:00.000Z",
+  } as const;
+
+  const elegir = async (user: ReturnType<typeof userEvent.setup>) => {
+    vi.mocked(searchMediaAction).mockResolvedValue({ status: "success", items: [M1], nextCursor: null });
+    await user.click(screen.getByRole("button", { name: /^(Elegir|Cambiar) portada$/ }));
+    await user.click(await screen.findByRole("button", { name: M1.alt }));
+    await user.click(screen.getByRole("button", { name: "Usar como portada" }));
+  };
+
+  it("sin portada muestra 'Sin portada' y 'Elegir portada'", () => {
+    render(<ArticleEditor post={post()} categories={categories} tagOptions={[]} />);
+    expect(screen.getByText("Sin portada")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Elegir portada" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Quitar portada" })).not.toBeInTheDocument();
+  });
+
+  it("elegir una portada muestra su miniatura y alt, y deja cambios sin guardar", async () => {
+    const user = userEvent.setup();
+    render(<ArticleEditor post={post()} categories={categories} tagOptions={[]} />);
+    await elegir(user);
+    expect(screen.getByText(M1.alt)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cambiar portada" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Quitar portada" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: /Artículos/ }));
+    expect(await screen.findByRole("dialog", { name: "¿Salir sin guardar?" })).toBeInTheDocument();
+  });
+
+  it("quitar la portada vuelve a 'Sin portada' y cuenta como cambio", async () => {
+    const user = userEvent.setup();
+    const cover = { id: MID, src: M1.src, alt: M1.alt };
+    render(<ArticleEditor post={post({ cover })} categories={categories} tagOptions={[]} />);
+    expect(screen.getByText(M1.alt)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Quitar portada" }));
+    expect(screen.getByText("Sin portada")).toBeInTheDocument();
+    await user.click(screen.getByRole("link", { name: /Artículos/ }));
+    expect(await screen.findByRole("dialog", { name: "¿Salir sin guardar?" })).toBeInTheDocument();
+  });
+
+  it("guardar envía coverMediaId: el elegido, el que ya tenía o vacío si se quitó", async () => {
+    vi.mocked(saveArticleAction).mockResolvedValue(saved);
+    const user = userEvent.setup();
+    render(<ArticleEditor post={post()} categories={categories} tagOptions={[]} />);
+    await elegir(user);
+    await user.click(screen.getByRole("button", { name: "Guardar borrador" }));
+    await waitFor(() => expect(saveArticleAction).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(saveArticleAction).mock.calls[0][1].get("coverMediaId")).toBe(MID);
+
+    await user.click(screen.getByRole("button", { name: "Quitar portada" }));
+    await user.click(screen.getByRole("button", { name: "Guardar borrador" }));
+    await waitFor(() => expect(saveArticleAction).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(saveArticleAction).mock.calls[1][1].get("coverMediaId")).toBe("");
+  });
+
+  it("después de guardar, la portada elegida ya no cuenta como cambio", async () => {
+    vi.mocked(saveArticleAction).mockResolvedValue(saved);
+    const user = userEvent.setup();
+    render(<ArticleEditor post={post()} categories={categories} tagOptions={[]} />);
+    await elegir(user);
+    await user.click(screen.getByRole("button", { name: "Guardar borrador" }));
+    await waitFor(() => expect(notify).toHaveBeenCalled());
+    await user.click(screen.getByRole("link", { name: /Artículos/ }));
+    expect(screen.queryByRole("dialog", { name: "¿Salir sin guardar?" })).not.toBeInTheDocument();
   });
 });
 
