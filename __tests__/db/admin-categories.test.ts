@@ -144,9 +144,11 @@ describe("moveCategory", () => {
   });
 
   it("con posiciones repetidas el movimiento las corrige", async () => {
-    const [a] = await tres();
+    await tres();
     await getDb().update(category).set({ position: 7 });
-    expect(await moveCategory(a, "down")).toMatchObject({ ok: true });
+    // Con posiciones iguales el orden sale del id (aleatorio): se mueve la que quedó primera.
+    const [primera] = await listAdminCategories();
+    expect(await moveCategory(primera.id, "down")).toMatchObject({ ok: true });
     const posiciones = (await listAdminCategories()).map((c) => c.position);
     expect(posiciones).toEqual([0, 1, 2]);
   });
