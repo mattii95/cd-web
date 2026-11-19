@@ -3,7 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import type { PageParams } from "@/lib/pagination";
 import {
   getApprovedComments,
-  getCategories,
+  getPublicCategories,
   getPublishedPostBySlug,
   getPublishedPosts,
   getRatingSummary,
@@ -19,7 +19,7 @@ export async function cachedCategories() {
   "use cache";
   cacheLife("hours");
   cacheTag("blog");
-  return getCategories();
+  return getPublicCategories();
 }
 
 export async function cachedTags() {

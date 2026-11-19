@@ -92,6 +92,18 @@ export async function getCategories(): Promise<BlogCategoryRow[]> {
   return rows.map(toCategory);
 }
 
+// Filtros de /blog: solo categorías con al menos un artículo publicado.
+export async function getPublicCategories(): Promise<BlogCategoryRow[]> {
+  const rows = await getDb()
+    .select()
+    .from(category)
+    .where(
+      sql`exists (select 1 from ${post} where ${post.categoryId} = ${category.id} and ${post.status} = 'publicado')`,
+    )
+    .orderBy(asc(category.position), asc(category.id));
+  return rows.map(toCategory);
+}
+
 // Solo columnas públicas del autor: nunca el email.
 function selectPublished() {
   return getDb()
