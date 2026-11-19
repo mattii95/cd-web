@@ -179,6 +179,12 @@ export const Photos = (p: IconProps) => (
 export const Users = (p: IconProps) => (
   <Icon size={18} strokeWidth={2} {...p}><circle cx="9" cy="8" r="4" /><path d="M2 21a7 7 0 0114 0" /><path d="M16 4.5a4 4 0 010 7M18 14.5A7 7 0 0122 21" /></Icon>
 );
+export const Folder = (p: IconProps) => (
+  <Icon size={18} strokeWidth={2} {...p}><path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V6z" /></Icon>
+);
+export const Tag = (p: IconProps) => (
+  <Icon size={18} strokeWidth={2} {...p}><path d="M3 12V4h8l10 10-8 8L3 12z" /><circle cx="7.5" cy="8.5" r="1.3" /></Icon>
+);
 export const Search = (p: IconProps) => (
   <Icon size={18} strokeWidth={2} {...p}><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></Icon>
 );
