@@ -21,9 +21,6 @@ type Props = {
 export function BodyEditor({ initial, images, onChange, invalid, describedBy }: Props) {
   const [empty, setEmpty] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  // Mapa mediaId → miniatura, compartido con la vista de cada imagen. Se amplía con cada imagen
-  // elegida; es un objeto mutable a propósito: las vistas lo leen al crearse.
-  const [known] = useState<EditorImages>(() => ({ ...images }));
   // El editor se crea una vez: onChange siempre apunta a la última versión.
   const onChangeRef = useRef(onChange);
   useEffect(() => {
@@ -32,7 +29,7 @@ export function BodyEditor({ initial, images, onChange, invalid, describedBy }: 
 
   const editor = useEditor({
     immediatelyRender: false,
-    extensions: createExtensions(known),
+    extensions: createExtensions(images),
     content: initial,
     onCreate: ({ editor: e }) => setEmpty(e.isEmpty),
     onUpdate: ({ editor: e }) => {
@@ -88,7 +85,7 @@ export function BodyEditor({ initial, images, onChange, invalid, describedBy }: 
         mode="body"
         onSelect={(item) => {
           setPickerOpen(false);
-          if (editor) insertImage(editor, known, item);
+          if (editor) insertImage(editor, item);
         }}
         onClose={() => setPickerOpen(false)}
       />

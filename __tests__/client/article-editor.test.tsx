@@ -15,7 +15,7 @@ import { searchMediaAction } from "@/actions/admin/media";
 import { notify } from "@/components/admin/toast";
 import { ArticleEditor } from "@/components/admin/article-editor/article-editor";
 import { EditorToolbar } from "@/components/admin/article-editor/editor-toolbar";
-import { createExtensions } from "@/components/admin/article-editor/extensions";
+import { createExtensions, editorImages } from "@/components/admin/article-editor/extensions";
 import { insertImage } from "@/components/admin/article-editor/insert-image";
 import { LINK_ERROR } from "@/components/admin/article-editor/link-popover";
 
@@ -380,12 +380,11 @@ describe("insertImage", () => {
   it("con el cursor en el segundo párrafo la deja después de ese párrafo, seleccionada y con alt y pie en null", () => {
     const editor = make(para("uno"), para("dos"), para("tres"));
     editor.commands.setTextSelection(7); // dentro de "dos"
-    const images = {};
-    insertImage(editor, images, item);
+    insertImage(editor, item);
     expect(types(editor)).toEqual(["paragraph", "paragraph", "image", "paragraph"]);
     expect(editor.getJSON().content?.[2].attrs).toEqual({ mediaId: MID, alt: null, caption: null });
     expect(editor.state.selection).toMatchObject({ node: { type: { name: "image" } } });
-    expect(images).toEqual({ [MID]: { src: item.src, alt: "Equipo" } });
+    expect(editorImages(editor)[MID]).toEqual({ src: item.src, alt: "Equipo" });
   });
 
   it("con el cursor dentro de una lista la deja después de la lista", () => {
@@ -394,21 +393,21 @@ describe("insertImage", () => {
       para("fin"),
     );
     editor.commands.setTextSelection(5); // dentro de "a"
-    insertImage(editor, {}, item);
+    insertImage(editor, item);
     expect(types(editor)).toEqual(["bulletList", "image", "paragraph"]);
   });
 
   it("con el cursor dentro de una cita la deja después de la cita", () => {
     const editor = make({ type: "blockquote", content: [para("cita")] }, para("fin"));
     editor.commands.setTextSelection(3);
-    insertImage(editor, {}, item);
+    insertImage(editor, item);
     expect(types(editor)).toEqual(["blockquote", "image", "paragraph"]);
   });
 
   it("si el bloque es un párrafo vacío, la imagen lo reemplaza", () => {
     const editor = make(para("uno"), para());
     editor.commands.setTextSelection(editor.state.doc.content.size - 1);
-    insertImage(editor, {}, item);
+    insertImage(editor, item);
     // StarterKit agrega un párrafo vacío después de una imagen final, para poder seguir escribiendo.
     expect(types(editor)).toEqual(["paragraph", "image", "paragraph"]);
   });
@@ -420,7 +419,7 @@ describe("insertImage", () => {
       para("dos"),
     );
     editor.commands.setNodeSelection(5);
-    insertImage(editor, {}, item);
+    insertImage(editor, item);
     expect(types(editor)).toEqual(["paragraph", "image", "image", "paragraph"]);
   });
 });
