@@ -232,6 +232,7 @@ const input = (over: Partial<ArticleInput> = {}): ArticleInput => ({
   categoryId: catId,
   body: docOf("Hola"),
   tags: [],
+  coverMediaId: null,
   ...over,
 });
 const fila = async (id: string) =>

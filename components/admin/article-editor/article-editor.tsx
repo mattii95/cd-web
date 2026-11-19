@@ -164,6 +164,7 @@ export function ArticleEditor({ post, categories, tagOptions }: Props) {
     fd.set("cta", cta);
     fd.set("categoryId", categoryId);
     fd.set("body", JSON.stringify(body));
+    fd.set("coverMediaId", post?.cover?.id ?? "");
     for (const t of tags) fd.append("tags", t);
     return fd;
   };

@@ -3,6 +3,15 @@ import type { BlogBlock, BlogImage } from "@/lib/blog-posts";
 
 const text = z.string().min(1);
 
+export const IMAGE_TEXT_MAX = 300;
+// alt y caption de una imagen del cuerpo: null o texto con algo después de trim.
+// refine y no .trim(): valida sin cambiar el valor guardado.
+const imageText = z
+  .string()
+  .max(IMAGE_TEXT_MAX)
+  .refine((s) => s.trim().length > 0)
+  .nullable();
+
 // ---- Formato Tiptap (nombres de nodos y marcas de Tiptap) ----
 
 export type BlogMark =
@@ -113,8 +122,8 @@ export const blogBodySchema: z.ZodType<BlogDoc> = z.object({
         type: z.literal("image"),
         attrs: z.object({
           mediaId: z.uuid(),
-          alt: z.string().nullable(),
-          caption: z.string().nullable(),
+          alt: imageText,
+          caption: imageText,
         }),
       }),
     ]),

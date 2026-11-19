@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { blogBodySchema, docHasText, type BlogDoc } from "@/db/blog-body";
+import {
+  blogBodySchema,
+  docHasText,
+  IMAGE_TEXT_MAX,
+  type BlogDoc,
+} from "@/db/blog-body";
 import { isSlug, slugify } from "@/lib/slug";
 
 export type ArticleIntent = "draft" | "publish" | "unpublish" | "save";
@@ -10,6 +15,7 @@ export const ARTICLE_LIMITS = {
   cta: 300,
   tags: 5,
   tagName: 40,
+  imageText: IMAGE_TEXT_MAX,
 } as const;
 
 export type ArticleInput = {
@@ -20,6 +26,7 @@ export type ArticleInput = {
   categoryId: string; // uuid
   body: BlogDoc;
   tags: string[]; // nombres, únicos por slug, máx. 5
+  coverMediaId: string | null; // uuid
 };
 export type ArticleField = keyof ArticleInput;
 export type ArticleFieldErrors = Partial<Record<ArticleField, string>>;
@@ -96,6 +103,11 @@ export function parseArticleForm(
     errors.cta = `El llamado a la acción no puede pasar de ${ARTICLE_LIMITS.cta} caracteres.`;
   else if (strict && !cta) errors.cta = "Escribí el llamado a la acción.";
 
+  // Vacío = sin portada.
+  const coverMediaId = str(data, "coverMediaId") || null;
+  if (coverMediaId && !z.uuid().safeParse(coverMediaId).success)
+    errors.coverMediaId = "Elegí la portada de nuevo.";
+
   let body = EMPTY_DOC;
   const rawBody = str(data, "body");
   if (rawBody) {
@@ -137,6 +149,6 @@ export function parseArticleForm(
     id: str(data, "id") || null,
     intent,
     expectedUpdatedAt: Number.isNaN(updatedAt.getTime()) ? null : updatedAt,
-    input: { title, slug, excerpt, cta, categoryId, body, tags },
+    input: { title, slug, excerpt, cta, categoryId, body, tags, coverMediaId },
   };
 }

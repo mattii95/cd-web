@@ -158,7 +158,7 @@ export type EditablePost = {
   status: "borrador" | "publicado";
   publishedAt: Date | null;
   updatedAt: Date;
-  cover: { src: string; alt: string } | null;
+  cover: { id: string; src: string; alt: string } | null;
   images: Record<string, { src: string; alt: string }>; // mediaId → miniatura
 };
 
@@ -204,7 +204,10 @@ export async function getPostForEdit(id: string): Promise<EditablePost | null> {
     status: row.status,
     publishedAt: row.publishedAt,
     updatedAt: row.updatedAt,
-    cover: row.coverMediaId ? (thumb.get(row.coverMediaId) ?? null) : null,
+    cover:
+      row.coverMediaId && thumb.has(row.coverMediaId)
+        ? { id: row.coverMediaId, ...thumb.get(row.coverMediaId)! }
+        : null,
     images,
   };
 }
