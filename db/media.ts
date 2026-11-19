@@ -42,6 +42,8 @@ export class MediaInUseError extends Error {
   }
 }
 
+export class MediaNotFoundError extends Error {}
+
 const toItem = (
   row: typeof media.$inferSelect,
   usage: MediaUsage[],
@@ -156,16 +158,40 @@ export async function createMedia(input: {
 
 const DEFAULT_MEDIA_LIMIT = 24;
 
-export type MediaQuery = PageParams & { query?: string };
+export type MediaQuery = PageParams & {
+  query?: string;
+  usage?: "used" | "unused";
+};
+
+// "En uso" = portada de algún post o nodo image del cuerpo, de cualquier estado
+// (la misma regla que getUsageByMedia).
+const isUsed = sql`(
+  exists (select 1 from ${post} where ${post.coverMediaId} = ${media.id})
+  or exists (
+    select 1 from ${post} p
+    cross join lateral jsonb_array_elements(p.body->'content') el
+    where el->>'type' = 'image' and el->'attrs'->>'mediaId' = ${media.id}::text
+  )
+)`;
+
+function filterWhere({ query, usage }: Pick<MediaQuery, "query" | "usage">) {
+  const text = query?.trim();
+  // "\" es el escape por defecto de LIKE en Postgres.
+  const pattern = text ? `%${text.replace(/[\\%_]/g, "\\$&")}%` : null;
+  return and(
+    pattern
+      ? or(ilike(media.alt, pattern), ilike(media.originalName, pattern))
+      : undefined,
+    usage === "used" ? isUsed : undefined,
+    usage === "unused" ? sql`not ${isUsed}` : undefined,
+  );
+}
 
 export async function listMedia(
   params: MediaQuery = {},
 ): Promise<Page<MediaItem>> {
   const limit = resolveLimit(params.limit, DEFAULT_MEDIA_LIMIT);
   const cursor = params.cursor ? decodeCursor(params.cursor) : null;
-  const text = params.query?.trim();
-  // "\" es el escape por defecto de LIKE en Postgres.
-  const pattern = text ? `%${text.replace(/[\\%_]/g, "\\$&")}%` : null;
   const rows = await getDb()
     .select({ row: media, t: sql<string>`${media.createdAt}::text` })
     .from(media)
@@ -174,9 +200,7 @@ export async function listMedia(
         cursor
           ? sql`(${media.createdAt}, ${media.id}) < (${cursor.t}::timestamp, ${cursor.id})`
           : undefined,
-        pattern
-          ? or(ilike(media.alt, pattern), ilike(media.originalName, pattern))
-          : undefined,
+        filterWhere(params),
       ),
     )
     .orderBy(desc(media.createdAt), desc(media.id))
@@ -194,11 +218,29 @@ export async function listMedia(
   };
 }
 
-export async function countMedia(): Promise<number> {
-  const [r] = await getDb().select({ n: count() }).from(media);
+export async function countMedia(
+  params: Pick<MediaQuery, "query" | "usage"> = {},
+): Promise<number> {
+  const [r] = await getDb()
+    .select({ n: count() })
+    .from(media)
+    .where(filterWhere(params));
   return r.n;
 }
 
+export async function updateMedia(
+  id: string,
+  input: { alt: string; originalName: string },
+): Promise<{ ok: true } | { ok: false; reason: "not-found" }> {
+  const rows = await getDb()
+    .update(media)
+    .set({ alt: input.alt, originalName: input.originalName })
+    .where(eq(media.id, id))
+    .returning({ id: media.id });
+  return rows.length ? { ok: true } : { ok: false, reason: "not-found" };
+}
+
+// shortcut: se borra en el paso 3, cuando updateMediaAltAction pase a updateMediaAction.
 export async function updateMediaAlt(id: string, alt: string): Promise<void> {
   if (!alt.trim()) throw new Error("El alt no puede estar vacío");
   await getDb().update(media).set({ alt }).where(eq(media.id, id));
@@ -207,6 +249,10 @@ export async function updateMediaAlt(id: string, alt: string): Promise<void> {
 export async function deleteMedia(id: string): Promise<void> {
   const usage = await getMediaUsage(id);
   if (usage.length) throw new MediaInUseError(usage);
-  await getDb().delete(media).where(eq(media.id, id));
+  const rows = await getDb()
+    .delete(media)
+    .where(eq(media.id, id))
+    .returning({ id: media.id });
+  if (!rows.length) throw new MediaNotFoundError();
   await deleteMediaFile(id);
 }
