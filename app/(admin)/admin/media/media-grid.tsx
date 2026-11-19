@@ -80,7 +80,22 @@ export function MediaGrid({ initialItems, initialCursor, initialTotal, query }: 
   }
 
   if (items.length === 0) {
-    return <p className="m-0 text-base text-cms-text [overflow-wrap:anywhere]">{emptyText(query)}</p>;
+    const library = !query.q && !query.uso;
+    return (
+      <div className="flex flex-col items-start gap-3">
+        <p className="m-0 text-base text-cms-text [overflow-wrap:anywhere]">{emptyText(query)}</p>
+        {library && (
+          // El modal vive en la cabecera (UploadButton): esta grilla se remonta con cada subida.
+          <button
+            type="button"
+            className={btn}
+            onClick={() => document.getElementById("media-upload-open")?.click()}
+          >
+            Subir imágenes
+          </button>
+        )}
+      </div>
+    );
   }
 
   return (

@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/auth/dal";
 import { toCardItem } from "./card-item";
 import { MediaGrid } from "./media-grid";
 import { MediaToolbar } from "./media-toolbar";
-import { UploadForm } from "./upload-form";
+import { UploadButton } from "./upload-button";
 
 export const metadata: Metadata = { title: "Medios" };
 
@@ -23,7 +23,6 @@ async function Library({ searchParams }: Pick<PageProps<"/admin/media">, "search
   const key = `${query.q}|${query.uso}|${items.map((i) => i.id).join(",")}`;
   return (
     <>
-      <UploadForm />
       {(filtered || total > 0) && <MediaToolbar query={query} />}
       <MediaGrid
         key={key}
@@ -60,6 +59,7 @@ export default function MediosPage(props: PageProps<"/admin/media">) {
       <AdminPageHeader
         title="Medios"
         description="Subí y organizá las imágenes del blog."
+        actions={<UploadButton />}
       />
       <Suspense fallback={<Skeleton />}>
         <Library searchParams={props.searchParams} />
