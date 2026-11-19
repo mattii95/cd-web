@@ -59,7 +59,7 @@ const Summary = Node.create({
   },
 });
 
-// Atómico: se muestra, se selecciona y se mueve, pero no se inserta ni se edita.
+// Atómico: se muestra, se selecciona y se mueve.
 export type EditorImages = Record<string, { src: string; alt: string }>;
 
 const BlogImage = Node.create<{ images: EditorImages }>({
