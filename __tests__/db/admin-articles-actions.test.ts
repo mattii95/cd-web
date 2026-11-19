@@ -2,7 +2,8 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { closeDb, getDb } from "@/db/client";
 import { getPublishedPosts } from "@/db/blog";
-import { authorProfile, category, post, user } from "@/db/schema";
+import { getMediaUsage } from "@/db/media";
+import { authorProfile, category, media, post, user } from "@/db/schema";
 import { nuevaCategoria, nuevoPost, nuevoUsuario, resetBlog } from "./blog-helpers";
 
 vi.mock("next/cache", () => ({ updateTag: vi.fn(), revalidatePath: vi.fn() }));
@@ -229,6 +230,38 @@ describe("saveArticleAction", () => {
       await saveArticleAction(idle, await articleForm({ id: crypto.randomUUID(), updatedAt: c.updatedAt })),
     ).toEqual(GONE);
     expect(await saveArticleAction(idle, await articleForm({ id: "no-es-uuid" }))).toEqual(GONE);
+  });
+
+  it("al guardar bien revalida /admin/media", async () => {
+    await saveArticleAction(idle, await articleForm());
+    expect(revalidatePath).toHaveBeenCalledWith("/admin/media");
+  });
+
+  it("con una portada que no existe devuelve el toast, no guarda ni revalida", async () => {
+    const r = await saveArticleAction(
+      idle,
+      await articleForm({ coverMediaId: crypto.randomUUID() }),
+    );
+    expect(r).toEqual({
+      status: "error",
+      message: "Una de las imágenes ya no está en Medios. Elegí otra.",
+    });
+    expect(await getDb().select().from(post)).toHaveLength(0);
+    expect(revalidatePath).not.toHaveBeenCalled();
+    expect(updateTag).not.toHaveBeenCalled();
+  });
+
+  it("guardar una portada la deja en cover_media_id y en el uso de la imagen", async () => {
+    const [m] = await getDb()
+      .insert(media)
+      .values({ sha256: "u", alt: "Alt", width: 1, height: 1, bytes: 1, originalName: "u.png" })
+      .returning();
+    const r = await saveArticleAction(idle, await articleForm({ coverMediaId: m.id }));
+    if (r.status !== "success") throw new Error("setup");
+    expect((await filaPost(r.id)).coverMediaId).toBe(m.id);
+    expect(await getMediaUsage(m.id)).toEqual([
+      { postId: r.id, slug: "mi-articulo", title: "Mi artículo", as: "portada" },
+    ]);
   });
 
   it("errores de validación vuelven por campo y no escriben", async () => {
