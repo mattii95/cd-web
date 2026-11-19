@@ -1,4 +1,5 @@
 import type { ReactNode, SVGProps } from "react";
+import type { CategoryIcon } from "@/lib/blog-posts";
 
 // Íconos SVG inline del artboard Main. Son decorativos (aria-hidden) salvo
 // que el llamador pase un `aria-label` / `aria-hidden={false}`.
@@ -197,3 +198,16 @@ export const Trash = (p: IconProps) => (
 export const Spinner = (p: IconProps) => (
   <Icon size={16} strokeWidth={2.4} className="motion-safe:animate-spin" {...p}><path d="M12 3a9 9 0 109 9" /></Icon>
 );
+
+// Ícono de la miniatura de cada categoría del blog (SPEC 21)
+export const categoryIcons: Record<
+  CategoryIcon,
+  { Icon: (p: IconProps) => ReactNode; label: string }
+> = {
+  code: { Icon: Code, label: "Código" },
+  layers: { Icon: Layers, label: "Capas" },
+  cloud: { Icon: Cloud, label: "Nube" },
+  sparkles: { Icon: Sparkles, label: "Destellos" },
+  bolt: { Icon: Bolt, label: "Rayo" },
+  chat: { Icon: Chat, label: "Chat" },
+};

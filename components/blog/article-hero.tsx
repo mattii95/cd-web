@@ -91,6 +91,7 @@ export function ArticleHero({
         <div className="fx-rise d4 mt-6 overflow-hidden rounded-t-3xl border border-b-0 border-white/12">
           <PostThumb
             category={post.category.slug}
+            icon={post.category.icon}
             cover={post.cover}
             variant="banner"
           />

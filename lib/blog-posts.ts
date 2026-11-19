@@ -1,21 +1,16 @@
 // Tipos compartidos y formateadores del blog. Los datos viven en la base (db/blog.ts).
 
-export type BlogCategoryTag = "desarrollo-web" | "sistemas" | "saas" | "ia";
+export const CATEGORY_ICONS = [
+  "code",
+  "layers",
+  "cloud",
+  "sparkles",
+  "bolt",
+  "chat",
+] as const;
+export type CategoryIcon = (typeof CATEGORY_ICONS)[number];
 
-export type BlogTagSlug =
-  | "atencion-al-cliente"
-  | "automatizacion"
-  | "chatbots"
-  | "gestion"
-  | "landing-page"
-  | "mvp"
-  | "pymes"
-  | "rendimiento"
-  | "seo"
-  | "validacion"
-  | "ventas";
-
-export type BlogTag = { slug: BlogTagSlug; name: string };
+export type BlogTag = { slug: string; name: string };
 
 export type BlogImage = {
   src: string; // "/media/<id>" o "/blog/senales-portada.webp" en el mock

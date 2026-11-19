@@ -1,14 +1,6 @@
 import Image from "next/image";
-import { Cloud, Code, Layers, Sparkles } from "@/components/icons";
-import type { BlogCategoryTag, BlogImage } from "@/lib/blog-posts";
-
-// Ícono de la miniatura según la categoría del post.
-const thumbIcons = {
-  sistemas: Layers,
-  saas: Cloud,
-  ia: Sparkles,
-  "desarrollo-web": Code,
-};
+import { categoryIcons } from "@/components/icons";
+import type { BlogImage, CategoryIcon } from "@/lib/blog-posts";
 
 const coverSizes = {
   card: "(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw",
@@ -18,14 +10,16 @@ const coverSizes = {
 
 export function PostThumb({
   category,
+  icon,
   cover,
   variant = "card",
 }: {
-  category: BlogCategoryTag;
+  category: string; // slug, se muestra como "// sistemas"
+  icon: CategoryIcon;
   cover?: BlogImage | null;
   variant?: "card" | "featured" | "banner";
 }) {
-  const Icon = thumbIcons[category];
+  const { Icon } = categoryIcons[icon];
   const large = variant !== "card";
   const height = {
     card: "aspect-video",

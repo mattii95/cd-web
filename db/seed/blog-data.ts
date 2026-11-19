@@ -1,7 +1,6 @@
 import type {
-  BlogCategoryTag,
+  CategoryIcon,
   BlogTag,
-  BlogTagSlug,
   BlogImage,
   BlogBlock,
   BlogRating,
@@ -11,10 +10,11 @@ import type { ServiceSlug } from "@/lib/services";
 // Datos mock que solo usa el seed (SPEC 13). La app lee de la base.
 
 export type BlogCategory = {
-  tag: BlogCategoryTag; // se muestra como "// sistemas"
+  tag: string; // se muestra como "// sistemas"
   label: string; // badge de la card
   filterLabel: string; // botón de filtro
   service: ServiceSlug; // servicio del CTA del artículo
+  icon: CategoryIcon; // ícono de la miniatura sin portada
 };
 
 // En el orden de los filtros.
@@ -24,24 +24,28 @@ export const blogCategories: BlogCategory[] = [
     label: "Desarrollo web",
     filterLabel: "Desarrollo web",
     service: "desarrollo-web",
+    icon: "code",
   },
   {
     tag: "sistemas",
     label: "Sistemas",
     filterLabel: "Sistemas",
     service: "sistemas-a-medida",
+    icon: "layers",
   },
   {
     tag: "saas",
     label: "SaaS",
     filterLabel: "SaaS",
     service: "desarrollo-saas",
+    icon: "cloud",
   },
   {
     tag: "ia",
     label: "Inteligencia artificial",
     filterLabel: "IA",
     service: "inteligencia-artificial",
+    icon: "sparkles",
   },
 ];
 
@@ -77,8 +81,8 @@ export type BlogReviews = {
 
 export type BlogPost = {
   slug: string;
-  category: BlogCategoryTag;
-  tags: BlogTagSlug[]; // ordenado por slug ascendente
+  category: string;
+  tags: string[]; // ordenado por slug ascendente
   readingMinutes: number;
   publishedAt: string; // ISO sin hora
   title: string;

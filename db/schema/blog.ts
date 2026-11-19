@@ -23,16 +23,37 @@ export const commentStatus = pgEnum("comment_status", [
   "oculto",
 ]);
 
-export const category = pgTable("category", {
-  id: id(),
-  slug: text().notNull().unique(), // BlogCategoryTag
-  label: text().notNull(), // badge
-  filterLabel: text().notNull(), // botón de filtro
-  serviceSlug: text().notNull(), // ServiceSlug del CTA; sin FK, los servicios viven en código
-  position: integer().notNull(), // orden de los filtros
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-});
+export const categoryIcon = pgEnum("category_icon", [
+  "code",
+  "layers",
+  "cloud",
+  "sparkles",
+  "bolt",
+  "chat",
+]);
+
+export const category = pgTable(
+  "category",
+  {
+    id: id(),
+    slug: text().notNull().unique(),
+    label: text().notNull(), // badge
+    filterLabel: text().notNull(), // botón de filtro
+    serviceSlug: text().notNull(), // ServiceSlug del CTA; sin FK, los servicios viven en código
+    icon: categoryIcon().notNull(), // ícono de la miniatura sin portada
+    position: integer().notNull(), // orden de los filtros
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check("category_slug_check", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    check("category_label_check", sql`length(trim(${t.label})) > 0`),
+    check(
+      "category_filter_label_check",
+      sql`length(trim(${t.filterLabel})) > 0`,
+    ),
+  ],
+);
 
 export const authorProfile = pgTable("author_profile", {
   userId: text()
