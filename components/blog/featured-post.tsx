@@ -12,6 +12,7 @@ export function FeaturedPost({ post }: { post: PostSummary }) {
     >
       <PostThumb
         category={post.category.slug}
+        icon={post.category.icon}
         cover={post.cover}
         variant="featured"
       />

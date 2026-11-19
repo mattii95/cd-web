@@ -1,11 +1,10 @@
 import "server-only";
 import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import type {
-  BlogCategoryTag,
   BlogImage,
   BlogRating,
   BlogTag,
-  BlogTagSlug,
+  CategoryIcon,
 } from "@/lib/blog-posts";
 import {
   decodeCursor,
@@ -35,10 +34,11 @@ import {
 } from "./schema";
 
 export type BlogCategoryRow = {
-  slug: BlogCategoryTag;
+  slug: string;
   label: string;
   filterLabel: string;
   serviceSlug: ServiceSlug;
+  icon: CategoryIcon;
 };
 export type PostAuthor = {
   name: string;
@@ -77,10 +77,11 @@ export type PublicComment = {
 };
 
 const toCategory = (c: typeof category.$inferSelect): BlogCategoryRow => ({
-  slug: c.slug as BlogCategoryTag,
+  slug: c.slug,
   label: c.label,
   filterLabel: c.filterLabel,
   serviceSlug: c.serviceSlug as ServiceSlug,
+  icon: c.icon,
 });
 
 export async function getCategories(): Promise<BlogCategoryRow[]> {
@@ -88,6 +89,18 @@ export async function getCategories(): Promise<BlogCategoryRow[]> {
     .select()
     .from(category)
     .orderBy(asc(category.position));
+  return rows.map(toCategory);
+}
+
+// Filtros de /blog: solo categorías con al menos un artículo publicado.
+export async function getPublicCategories(): Promise<BlogCategoryRow[]> {
+  const rows = await getDb()
+    .select()
+    .from(category)
+    .where(
+      sql`exists (select 1 from ${post} where ${post.categoryId} = ${category.id} and ${post.status} = 'publicado')`,
+    )
+    .orderBy(asc(category.position), asc(category.id));
   return rows.map(toCategory);
 }
 
@@ -152,7 +165,7 @@ async function getTagsByPost(postIds: string[]) {
     .where(inArray(postTag.postId, postIds));
   for (const r of rows) {
     const list = byPost.get(r.postId) ?? [];
-    list.push({ slug: r.slug as BlogTagSlug, name: r.name });
+    list.push({ slug: r.slug, name: r.name });
     byPost.set(r.postId, list);
   }
   for (const list of byPost.values()) list.sort(bySlug);
@@ -265,7 +278,6 @@ export async function getTags(): Promise<TagRow[]> {
     .where(eq(post.status, "publicado"))
     .groupBy(tag.id);
   return rows
-    .map((r) => ({ ...r, slug: r.slug as BlogTagSlug }))
     .sort((a, b) => b.count - a.count || bySlug(a, b));
 }
 

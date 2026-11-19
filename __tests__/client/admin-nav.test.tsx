@@ -29,12 +29,23 @@ describe("AdminNav", () => {
     expect(current().map((l) => l.textContent)).toEqual(["Artículos"]);
   });
 
-  it("lista Inicio, Artículos, Medios y Usuarios en ese orden", () => {
+  it.each([
+    ["/admin/categories", "Categorías"],
+    ["/admin/tags", "Etiquetas"],
+  ])("en %s marca %s", (path, name) => {
+    pathname.mockReturnValue(path);
+    render(<AdminNav />);
+    expect(current().map((l) => l.textContent)).toEqual([name]);
+  });
+
+  it("lista Inicio, Artículos, Categorías, Etiquetas, Medios y Usuarios en ese orden", () => {
     pathname.mockReturnValue("/admin");
     render(<AdminNav />);
     expect(screen.getAllByRole("link").map((l) => l.textContent)).toEqual([
       "Inicio",
       "Artículos",
+      "Categorías",
+      "Etiquetas",
       "Medios",
       "Usuarios",
     ]);

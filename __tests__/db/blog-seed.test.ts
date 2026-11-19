@@ -12,6 +12,7 @@ import {
   vi,
 } from "vitest";
 import { count, eq, like } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   getApprovedComments,
   getCategories,
@@ -95,6 +96,49 @@ describe("seedBlog", () => {
       name: "autor",
       jobTitle: "Fundador de Courroux Digital",
     });
+  });
+
+  it("cada categoría queda con su ícono", async () => {
+    await seedBlog(getDb(), { authorEmail: AUTOR });
+    expect(
+      (await getCategories()).map((c) => [c.slug, c.icon]),
+    ).toEqual([
+      ["desarrollo-web", "code"],
+      ["sistemas", "layers"],
+      ["saas", "cloud"],
+      ["ia", "sparkles"],
+    ]);
+  });
+
+  it("volver a sembrar no pisa lo que editó el admin", async () => {
+    const db = getDb();
+    await seedBlog(db, { authorEmail: AUTOR });
+    await db
+      .update(category)
+      .set({ label: "Editada", position: 9 })
+      .where(eq(category.slug, "sistemas"));
+    await db.update(tag).set({ name: "Posicionamiento" }).where(eq(tag.slug, "seo"));
+    await seedBlog(db, { authorEmail: AUTOR });
+
+    const [c] = await db.select().from(category).where(eq(category.slug, "sistemas"));
+    expect(c).toMatchObject({ label: "Editada", position: 9 });
+    const [t] = await db.select().from(tag).where(eq(tag.slug, "seo"));
+    expect(t.name).toBe("Posicionamiento");
+  });
+
+  it("los CHECK de category rechazan slug, label o ícono inválidos", async () => {
+    const db = getDb();
+    const base = { label: "x", filterLabel: "x", serviceSlug: "sistemas-a-medida", position: 1 };
+    await expect(
+      db.insert(category).values({ ...base, slug: "Mal Slug", icon: "code" }),
+    ).rejects.toThrow();
+    await expect(
+      db.insert(category).values({ ...base, slug: "ok", label: " ", icon: "code" }),
+    ).rejects.toThrow();
+    await expect(
+      db.execute(sql`INSERT INTO category (id, slug, label, filter_label, service_slug, icon, position)
+        VALUES ('x', 'ok2', 'x', 'x', 's', 'star', 1)`),
+    ).rejects.toThrow();
   });
 
   it("carga valoraciones, comentarios, votos y respuestas del mock", async () => {
@@ -216,13 +260,13 @@ describe("seedBlog", () => {
     expect((await db.select({ n: count() }).from(postTag))[0].n).toBe(19);
   });
 
-  it("actualiza el name de una etiqueta existente", async () => {
+  it("no pisa el name de una etiqueta existente", async () => {
     const db = getDb();
     await seedBlog(db, { authorEmail: AUTOR });
     await db.update(tag).set({ name: "viejo" }).where(eq(tag.slug, "seo"));
     await seedBlog(db, { authorEmail: AUTOR });
     const [t] = await db.select().from(tag).where(eq(tag.slug, "seo"));
-    expect(t.name).toBe("SEO");
+    expect(t.name).toBe("viejo");
   });
 
   it("no borra una fila post_tag agregada a mano", async () => {

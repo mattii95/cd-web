@@ -51,11 +51,11 @@ test("el panel no tiene el header ni el footer del sitio y es noindex con títul
 test("barra lateral: orden, ítem activo y sin ítems futuros", async ({ page }) => {
   await entrarComoAdmin(page);
   await page.goto("/admin/media");
-  await expect(nav(page).getByRole("link")).toHaveText(["Inicio", "Artículos", "Medios", "Usuarios"]);
+  await expect(nav(page).getByRole("link")).toHaveText(["Inicio", "Artículos", "Categorías", "Etiquetas", "Medios", "Usuarios"]);
   await expect(nav(page).getByRole("link", { name: "Medios" })).toHaveAttribute("aria-current", "page");
   await expect(nav(page).getByRole("link", { name: "Inicio" })).not.toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("link", { name: "Ver el blog" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Categorías|SEO|Ajustes/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /SEO|Ajustes/ })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Abrir menú" })).toBeHidden();
 });
 

@@ -1,9 +1,15 @@
 import type { ReactNode } from "react";
-import { Article, Home, Photos, Users } from "@/components/icons";
+import { Article, Folder, Home, Photos, Tag, Users } from "@/components/icons";
 
 export type AdminNavItem = {
   label: string;
-  href: "/admin" | "/admin/articles" | "/admin/media" | "/admin/users";
+  href:
+    | "/admin"
+    | "/admin/articles"
+    | "/admin/categories"
+    | "/admin/tags"
+    | "/admin/media"
+    | "/admin/users";
   icon: (props: { className?: string }) => ReactNode;
   exact?: boolean; // true solo en Inicio
 };
@@ -15,6 +21,8 @@ export const adminNav: AdminNavGroup[] = [
     label: "Contenido del blog",
     items: [
       { label: "Artículos", href: "/admin/articles", icon: Article },
+      { label: "Categorías", href: "/admin/categories", icon: Folder },
+      { label: "Etiquetas", href: "/admin/tags", icon: Tag },
       { label: "Medios", href: "/admin/media", icon: Photos },
     ],
   },

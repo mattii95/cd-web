@@ -147,13 +147,18 @@ export async function seedBlog(
         label: c.label,
         filterLabel: c.filterLabel,
         serviceSlug: c.service,
+        icon: c.icon,
         position,
       };
-      const [row] = await tx
+      // Solo inserta lo que falta: no pisa lo que editó el admin (SPEC 21).
+      await tx
         .insert(category)
         .values({ slug: c.tag, ...values })
-        .onConflictDoUpdate({ target: category.slug, set: values })
-        .returning({ id: category.id });
+        .onConflictDoNothing({ target: category.slug });
+      const [row] = await tx
+        .select({ id: category.id })
+        .from(category)
+        .where(eq(category.slug, c.tag));
       categoryIds.set(c.tag, row.id);
     }
 
@@ -189,11 +194,11 @@ export async function seedBlog(
     // Etiquetas: clave natural slug. Las filas post_tag solo se agregan: no pisan asignaciones a mano.
     const tagIds = new Map<string, string>();
     for (const t of blogTags) {
+      await tx.insert(tag).values(t).onConflictDoNothing({ target: tag.slug });
       const [row] = await tx
-        .insert(tag)
-        .values(t)
-        .onConflictDoUpdate({ target: tag.slug, set: { name: t.name } })
-        .returning({ id: tag.id });
+        .select({ id: tag.id })
+        .from(tag)
+        .where(eq(tag.slug, t.slug));
       tagIds.set(t.slug, row.id);
     }
     for (const p of blogPosts) {

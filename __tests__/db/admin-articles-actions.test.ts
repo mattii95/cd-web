@@ -140,7 +140,8 @@ async function articleForm(fields: Record<string, string | string[]> = {}) {
       type: "doc",
       content: [{ type: "paragraph", content: [{ type: "text", text: "Hola" }] }],
     }),
-    tags: [],
+    tagSlugs: [],
+    newTags: [],
     ...fields,
   };
   const f = new FormData();
@@ -157,10 +158,19 @@ describe("saveArticleAction", () => {
   });
 
   it("sin id e intent draft crea el borrador con el autor admin", async () => {
-    const r = await saveArticleAction(idle, await articleForm({ tags: ["SEO"] }));
+    const r = await saveArticleAction(idle, await articleForm({ newTags: ["SEO"] }));
     expect(r).toMatchObject({ status: "success", message: "Borrador guardado.", postStatus: "borrador" });
     if (r.status !== "success") return;
     expect(await filaPost(r.id)).toMatchObject({ status: "borrador", authorId: "admin" });
+  });
+
+  it("tagSlugs inexistente responde el toast de etiqueta y no crea nada", async () => {
+    const r = await saveArticleAction(idle, await articleForm({ tagSlugs: ["borrada"] }));
+    expect(r).toMatchObject({
+      status: "error",
+      message: "Una de las etiquetas ya no existe. Recargá la página.",
+    });
+    expect(await getDb().select().from(post)).toHaveLength(0);
   });
 
   it("publish publica, sale en getPublishedPosts e invalida cachés", async () => {

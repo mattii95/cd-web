@@ -13,6 +13,7 @@ import { InvalidCursorError } from "@/lib/pagination";
 import {
   getApprovedComments,
   getCategories,
+  getPublicCategories,
   getPublishedPostBySlug,
   getPublishedPosts,
   getRatingSummary,
@@ -68,6 +69,27 @@ describe("funciones de lectura del blog", () => {
     ]);
     const slugs = (await getCategories()).map((c) => c.slug);
     expect(slugs).toEqual(["saas", "ia"]);
+  });
+
+  it("getPublicCategories omite las sin artículos publicados y ordena por position", async () => {
+    const db = getDb();
+    await db.insert(user).values(nuevoUsuario("autor"));
+    const [ia, saas, , soloBorrador] = await db
+      .insert(category)
+      .values([
+        { ...nuevaCategoria("ia"), position: 2 },
+        { ...nuevaCategoria("saas"), position: 1 },
+        { ...nuevaCategoria("vacia"), position: 3 },
+        { ...nuevaCategoria("borrador"), position: 4 },
+      ])
+      .returning();
+    await db.insert(post).values([
+      nuevoPost(ia.id, "autor", "p-ia"),
+      nuevoPost(saas.id, "autor", "p-saas"),
+      { ...nuevoPost(soloBorrador.id, "autor", "p-b"), status: "borrador", publishedAt: null },
+    ]);
+    expect((await getPublicCategories()).map((c) => c.slug)).toEqual(["saas", "ia"]);
+    expect((await getCategories()).map((c) => c.slug)).toEqual(["saas", "ia", "vacia", "borrador"]);
   });
 
   it("getPublishedPosts omite borradores y ordena por fecha descendente", async () => {

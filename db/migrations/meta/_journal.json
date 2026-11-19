@@ -43,6 +43,13 @@
       "when": 1795035984507,
       "tag": "0005_cuerpo_tiptap",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795101433931,
+      "tag": "0006_categorias_y_etiquetas",
+      "breakpoints": true
     }
   ]
 }

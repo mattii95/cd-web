@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import { TagInput } from "@/components/admin/article-editor/tag-input";
+import type { ArticleTag } from "@/lib/admin/article-form";
 
 const OPTIONS = [
   { slug: "atencion-al-cliente", name: "Atención al cliente" },
@@ -10,12 +11,17 @@ const OPTIONS = [
   { slug: "web", name: "Web" },
 ];
 
-function Harness({ initial = [] as string[] }) {
+const nueva = (name: string): ArticleTag => ({ slug: null, name });
+
+function Harness({
+  initial = [] as ArticleTag[],
+  options = OPTIONS,
+}) {
   const [value, setValue] = useState(initial);
   return (
     <>
       <label htmlFor="t">Etiquetas</label>
-      <TagInput id="t" value={value} options={OPTIONS} onChange={setValue} />
+      <TagInput id="t" value={value} options={options} onChange={setValue} />
       <output data-testid="value">{JSON.stringify(value)}</output>
     </>
   );
@@ -27,7 +33,7 @@ describe("TagInput", () => {
     const user = userEvent.setup();
     render(<Harness />);
     await user.type(screen.getByRole("combobox", { name: "Etiquetas" }), "Nube{Enter}");
-    expect(value()).toEqual(["Nube"]);
+    expect(value()).toEqual([nueva("Nube")]);
     expect(screen.getByRole("button", { name: "Quitar etiqueta Nube" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Quitar etiqueta Nube" }));
     expect(value()).toEqual([]);
@@ -50,28 +56,40 @@ describe("TagInput", () => {
     render(<Harness />);
     await user.type(screen.getByRole("combobox"), "ATENCION");
     await user.click(screen.getByRole("option", { name: "Atención al cliente" }));
-    expect(value()).toEqual(["Atención al cliente"]);
+    expect(value()).toEqual([{ slug: "atencion-al-cliente", name: "Atención al cliente" }]);
     await user.type(screen.getByRole("combobox"), "web{Enter}");
-    expect(value()).toEqual(["Atención al cliente", "Web"]);
+    expect(value()).toEqual([
+      { slug: "atencion-al-cliente", name: "Atención al cliente" },
+      { slug: "web", name: "Web" },
+    ]);
   });
 
   it("ignora duplicados por slug", async () => {
     const user = userEvent.setup();
-    render(<Harness initial={["SEO"]} />);
+    render(<Harness initial={[{ slug: "seo", name: "SEO" }]} />);
     await user.type(screen.getByRole("combobox"), "seo{Enter}");
-    expect(value()).toEqual(["SEO"]);
+    expect(value()).toEqual([{ slug: "seo", name: "SEO" }]);
+  });
+
+  it("una etiqueta renombrada se elige por su nombre actual y conserva su slug", async () => {
+    const user = userEvent.setup();
+    render(<Harness options={[{ slug: "seo", name: "Posicionamiento" }]} />);
+    await user.type(screen.getByRole("combobox"), "posicionamiento");
+    expect(screen.queryByRole("option", { name: /Crear/ })).not.toBeInTheDocument();
+    await user.keyboard("{Enter}");
+    expect(value()).toEqual([{ slug: "seo", name: "Posicionamiento" }]);
   });
 
   it("Backspace con el input vacío quita la última", async () => {
     const user = userEvent.setup();
-    render(<Harness initial={["A", "B"]} />);
+    render(<Harness initial={[nueva("A"), nueva("B")]} />);
     await user.click(screen.getByRole("combobox"));
     await user.keyboard("{Backspace}");
-    expect(value()).toEqual(["A"]);
+    expect(value()).toEqual([nueva("A")]);
   });
 
   it("con 5 chips el input se deshabilita", () => {
-    render(<Harness initial={["a", "b", "c", "d", "e"]} />);
+    render(<Harness initial={["a", "b", "c", "d", "e"].map(nueva)} />);
     expect(screen.getByRole("combobox")).toBeDisabled();
   });
 });

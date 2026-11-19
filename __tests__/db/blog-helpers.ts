@@ -37,6 +37,7 @@ export const nuevaCategoria = (slug = "sistemas") => ({
   label: slug,
   filterLabel: slug,
   serviceSlug: "sistemas-a-medida",
+  icon: "layers" as const,
   position: 1,
 });
 

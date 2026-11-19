@@ -21,12 +21,14 @@ const categories: BlogCategoryRow[] = [
     label: "Sistemas",
     filterLabel: "Sistemas",
     serviceSlug: "sistemas-a-medida",
+    icon: "layers",
   },
   {
     slug: "ia",
     label: "Inteligencia artificial",
     filterLabel: "IA",
     serviceSlug: "inteligencia-artificial",
+    icon: "sparkles",
   },
 ];
 const tags: TagRow[] = [

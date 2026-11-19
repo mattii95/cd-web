@@ -1,20 +1,20 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ARTICLE_LIMITS, normalizeTagName } from "@/lib/admin/article-form";
+import { ARTICLE_LIMITS, type ArticleTag, normalizeTagName } from "@/lib/admin/article-form";
 import { slugify } from "@/lib/slug";
 
 type Option = { slug: string; name: string };
 type Props = {
   id: string;
-  value: string[]; // nombres de las etiquetas elegidas
+  value: ArticleTag[]; // etiquetas elegidas; slug null = nueva
   options: Option[]; // todas las etiquetas de la tabla `tag`
-  onChange: (names: string[]) => void;
+  onChange: (tags: ArticleTag[]) => void;
   invalid?: boolean;
   describedBy?: string;
 };
 
-type Suggestion = { kind: "existing" | "new"; name: string };
+type Suggestion = { kind: "existing" | "new"; tag: ArticleTag };
 
 // Combobox con chips: autocompleta sobre las etiquetas existentes y crea las nuevas al guardar.
 export function TagInput({ id, value, options, onChange, invalid, describedBy }: Props) {
@@ -24,22 +24,28 @@ export function TagInput({ id, value, options, onChange, invalid, describedBy }:
   const [active, setActive] = useState(0);
 
   const full = value.length >= ARTICLE_LIMITS.tags;
-  const taken = new Set(value.map(slugify));
+  // Una etiqueta elegida ocupa su slug y el slugify de su nombre.
+  const taken = new Set(value.flatMap((t) => (t.slug ? [t.slug, slugify(t.name)] : [slugify(t.name)])));
   const query = slugify(text); // sin mayúsculas ni tildes
+  // Una renombrada se busca por su nombre actual, no solo por el slug.
+  const matches = (o: Option, exact: boolean) => {
+    const keys = [o.slug, slugify(o.name)];
+    return keys.some((k) => (exact ? k === query : k.includes(query)));
+  };
 
   const suggestions: Suggestion[] = [];
   if (query) {
     for (const o of options)
-      if (!taken.has(o.slug) && o.slug.includes(query)) suggestions.push({ kind: "existing", name: o.name });
-    const exists = options.some((o) => o.slug === query) || taken.has(query);
-    if (!exists) suggestions.push({ kind: "new", name: normalizeTagName(text) });
+      if (!taken.has(o.slug) && matches(o, false)) suggestions.push({ kind: "existing", tag: o });
+    const exists = options.some((o) => matches(o, true)) || taken.has(query);
+    if (!exists) suggestions.push({ kind: "new", tag: { slug: null, name: normalizeTagName(text) } });
   }
   const current = Math.min(active, suggestions.length - 1);
 
-  const add = (name: string) => {
-    const clean = normalizeTagName(name);
-    const key = slugify(clean);
-    if (key && !taken.has(key) && !full) onChange([...value, clean]);
+  const add = (t: ArticleTag) => {
+    const name = normalizeTagName(t.name);
+    const duplicated = t.slug ? taken.has(t.slug) : taken.has(slugify(name));
+    if (slugify(name) && !duplicated && !full) onChange([...value, { slug: t.slug, name }]);
     setText("");
     setActive(0);
   };
@@ -48,10 +54,10 @@ export function TagInput({ id, value, options, onChange, invalid, describedBy }:
     if (e.key === "Enter") {
       e.preventDefault();
       if (!query) return;
-      // Sin opción resaltada, lo escrito se toma tal cual; si ya existe se usa su nombre guardado.
+      // Sin opción resaltada, lo escrito se toma tal cual; si ya existe se usa esa etiqueta.
       const picked = suggestions[current];
-      const exact = options.find((o) => o.slug === query);
-      add(picked && open ? picked.name : (exact?.name ?? text));
+      const exact = options.find((o) => matches(o, true));
+      add(picked && open ? picked.tag : (exact ?? { slug: null, name: text }));
     } else if (e.key === "ArrowDown" && suggestions.length) {
       e.preventDefault();
       setOpen(true);
@@ -74,16 +80,16 @@ export function TagInput({ id, value, options, onChange, invalid, describedBy }:
     <div className="relative flex flex-col gap-2">
       {value.length > 0 && (
         <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
-          {value.map((name) => (
+          {value.map((t) => (
             <li
-              key={slugify(name)}
+              key={t.slug ?? `new:${slugify(t.name)}`}
               className="flex min-h-11 items-center gap-1 rounded-full bg-cms-chip pr-1 pl-3.5 text-sm font-semibold text-cms-ink"
             >
-              <span className="[overflow-wrap:anywhere]">{name}</span>
+              <span className="[overflow-wrap:anywhere]">{t.name}</span>
               <button
                 type="button"
-                aria-label={`Quitar etiqueta ${name}`}
-                onClick={() => onChange(value.filter((n) => n !== name))}
+                aria-label={`Quitar etiqueta ${t.name}`}
+                onClick={() => onChange(value.filter((x) => x !== t))}
                 className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-full text-cms-text hover:bg-white hover:text-cms-ink"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
@@ -129,20 +135,20 @@ export function TagInput({ id, value, options, onChange, invalid, describedBy }:
       >
         {suggestions.map((s, i) => (
           <li
-            key={`${s.kind}-${s.name}`}
+            key={`${s.kind}-${s.tag.slug ?? s.tag.name}`}
             id={`${listId}-${i}`}
             role="option"
             aria-selected={i === current}
             // mousedown (no click): el input no pierde el foco antes de elegir.
             onMouseDown={(e) => {
               e.preventDefault();
-              add(s.name);
+              add(s.tag);
             }}
             className={`flex min-h-11 cursor-pointer items-center rounded-lg px-3 text-sm font-semibold text-cms-ink ${
               i === current ? "bg-cms-chip" : ""
             }`}
           >
-            {s.kind === "new" ? `Crear «${s.name}»` : s.name}
+            {s.kind === "new" ? `Crear «${s.tag.name}»` : s.tag.name}
           </li>
         ))}
       </ul>
