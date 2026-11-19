@@ -41,7 +41,7 @@ test.beforeEach(async ({ page, context }) => {
   await sql("update \"user\" set role = 'admin' where email = $1", [email]);
   await login(page, email);
   await expect(page).toHaveURL(/\/cuenta\/perfil$/);
-  await page.goto("/admin/medios");
+  await page.goto("/admin/media");
   await page.waitForLoadState("networkidle");
 });
 
@@ -115,16 +115,18 @@ test("editar el alt persiste al recargar y no acepta uno vacío", async ({ page 
   await expect(cards(page).first()).toContainText("Alt nuevo");
 });
 
-test("una imagen sin usar se borra con Borrar y Sí", async ({ page }) => {
+test("una imagen sin usar se borra desde el modal de confirmación", async ({ page }) => {
   await subir(page, "Para borrar");
   const card = cards(page).filter({ hasText: "Para borrar" });
   await card.getByRole("button", { name: "Borrar" }).click();
-  await expect(card.getByText("¿Borrar?")).toBeVisible();
-  await card.getByRole("button", { name: "No" }).click();
-  await expect(card.getByRole("button", { name: "Borrar" })).toBeVisible();
+  const modal = page.getByRole("dialog", { name: "¿Borrar la imagen?" });
+  await expect(modal).toBeVisible();
+  await modal.getByRole("button", { name: "Cancelar" }).click();
+  await expect(modal).toBeHidden();
+  await expect(card).toHaveCount(1);
 
   await card.getByRole("button", { name: "Borrar" }).click();
-  await card.getByRole("button", { name: "Sí" }).click();
+  await modal.getByRole("button", { name: "Borrar" }).click();
   await expect(cards(page)).toHaveCount(base);
 });
 
@@ -174,7 +176,7 @@ test("la barra lateral del panel lleva a Medios", async ({ page }) => {
     .getByRole("navigation", { name: "Navegación del panel" })
     .getByRole("link", { name: "Medios" })
     .click();
-  await expect(page).toHaveURL(/\/admin\/medios$/);
+  await expect(page).toHaveURL(/\/admin\/media$/);
   await expect(page.getByRole("heading", { name: "Medios" })).toBeVisible();
 });
 
@@ -201,7 +203,7 @@ test.describe("paginación con 30 imágenes", () => {
     await cargarMas(page);
     const card = cards(page).filter({ hasText: "Semilla 30" });
     await card.getByRole("button", { name: "Borrar" }).click();
-    await card.getByRole("button", { name: "Sí" }).click();
+    await page.getByRole("dialog", { name: "¿Borrar la imagen?" }).getByRole("button", { name: "Borrar" }).click();
     await expect(cards(page)).toHaveCount(base + 29);
     await expect(page.getByText(`${base + 29} imágenes`, { exact: true })).toBeVisible();
     await expect(cards(page).filter({ hasText: "Semilla 30" })).toHaveCount(0);

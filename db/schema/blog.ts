@@ -11,7 +11,7 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import type { StoredBlogBlock } from "../blog-body";
+import type { BlogDoc } from "../blog-body";
 import { user } from "./auth";
 import { createdAt, id, updatedAt } from "./columns";
 import { media } from "./media";
@@ -51,7 +51,7 @@ export const post = pgTable(
     slug: text().notNull().unique(),
     title: text().notNull(),
     excerpt: text().notNull(),
-    body: jsonb().$type<StoredBlogBlock[]>().notNull(),
+    body: jsonb().$type<BlogDoc>().notNull(),
     cta: text().notNull(),
     readingMinutes: integer().notNull(),
     categoryId: text()

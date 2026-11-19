@@ -204,7 +204,7 @@ test("el autor del post responde, edita y borra la respuesta", async ({
   const texto = `Pregunta del lector ${Date.now()}`;
   const [{ id }] = await sql<{ id: string }>(
     `insert into post (id, slug, title, excerpt, body, cta, reading_minutes, category_id, author_id, status, published_at)
-     values (gen_random_uuid()::text, $1, $1, 'extracto', '[{"type":"p","text":"texto"}]'::jsonb, 'cta', 3,
+     values (gen_random_uuid()::text, $1, $1, 'extracto', '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"texto"}]}]}'::jsonb, 'cta', 3,
              (select id from category where slug = 'sistemas'), (select id from "user" where email = $2),
              'publicado', make_timestamp(2026, 11, 13, 12, 0, 0))
      returning id`,
@@ -246,7 +246,7 @@ test("Mis comentarios pagina de a 20 y borrar uno publicado lo saca del artícul
   const slug = `${PREFIX}perfil`;
   const [{ id }] = await sql<{ id: string }>(
     `insert into post (id, slug, title, excerpt, body, cta, reading_minutes, category_id, author_id, status, published_at)
-     values (gen_random_uuid()::text, $1, $1, 'extracto', '[{"type":"p","text":"texto"}]'::jsonb, 'cta', 3,
+     values (gen_random_uuid()::text, $1, $1, 'extracto', '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"texto"}]}]}'::jsonb, 'cta', 3,
              (select id from category where slug = 'sistemas'), (select id from "user" where email = $2),
              'publicado', make_timestamp(2026, 11, 12, 12, 0, 0))
      returning id`,

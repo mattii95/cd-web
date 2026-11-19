@@ -4,7 +4,7 @@ import { clearRateLimit, createVerifiedUser, login, sql } from "./helpers";
 // Un solo usuario a la vez y los límites de intentos son por IP (igual que auth.spec).
 test.describe.configure({ mode: "serial" });
 
-const RUTAS = ["/admin", "/admin/articulos", "/admin/medios", "/admin/usuarios"];
+const RUTAS = ["/admin", "/admin/articles", "/admin/media", "/admin/users"];
 const nav = (page: import("@playwright/test").Page) =>
   page.getByRole("navigation", { name: "Navegación del panel" });
 
@@ -50,7 +50,7 @@ test("el panel no tiene el header ni el footer del sitio y es noindex con títul
 
 test("barra lateral: orden, ítem activo y sin ítems futuros", async ({ page }) => {
   await entrarComoAdmin(page);
-  await page.goto("/admin/medios");
+  await page.goto("/admin/media");
   await expect(nav(page).getByRole("link")).toHaveText(["Inicio", "Artículos", "Medios", "Usuarios"]);
   await expect(nav(page).getByRole("link", { name: "Medios" })).toHaveAttribute("aria-current", "page");
   await expect(nav(page).getByRole("link", { name: "Inicio" })).not.toHaveAttribute("aria-current", "page");
@@ -65,26 +65,33 @@ test("Inicio: saludo y tres accesos directos", async ({ page }) => {
   await expect(page.getByText("Hola, Ana")).toBeVisible();
   const main = page.getByRole("main");
   for (const [titulo, href] of [
-    ["Artículos", "/admin/articulos"],
-    ["Medios", "/admin/medios"],
-    ["Usuarios", "/admin/usuarios"],
+    ["Artículos", "/admin/articles"],
+    ["Medios", "/admin/media"],
+    ["Usuarios", "/admin/users"],
   ]) {
     await expect(main.getByRole("link", { name: new RegExp(`^${titulo}`) })).toHaveAttribute("href", href);
   }
 });
 
-test("Artículos: estado vacío y sin botón Nuevo artículo", async ({ page }) => {
+test("las rutas viejas en español responden 404 a un admin", async ({ page, consoleErrors }) => {
   await entrarComoAdmin(page);
-  await page.goto("/admin/articulos");
+  for (const ruta of ["/admin/articulos", "/admin/medios", "/admin/usuarios"]) {
+    expect((await page.request.get(ruta)).status()).toBe(404);
+  }
+  consoleErrors.length = 0;
+});
+
+test("Artículos: tabla del listado y enlace a Nuevo artículo", async ({ page }) => {
+  await entrarComoAdmin(page);
+  await page.goto("/admin/articles");
   await expect(page.getByRole("heading", { name: "Artículos" })).toBeVisible();
-  await expect(page.getByText("La gestión de artículos llega en el próximo spec.")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Nuevo artículo" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Nuevo artículo" })).toHaveCount(0);
+  await expect(page.getByRole("table", { name: "Listado de artículos" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Nuevo artículo" })).toHaveAttribute("href", "/admin/articles/new");
 });
 
 test("Usuarios: columnas y contador", async ({ page }) => {
   await entrarComoAdmin(page);
-  await page.goto("/admin/usuarios");
+  await page.goto("/admin/users");
   await expect(page.getByRole("columnheader")).toHaveText(["Nombre", "Email", "Rol", "Verificado", "Alta"]);
   await expect(page.getByText(/\d+ usuarios? registrados?/)).toBeVisible();
 });

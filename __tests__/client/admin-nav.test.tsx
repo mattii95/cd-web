@@ -17,14 +17,14 @@ describe("AdminNav", () => {
     expect(current().map((l) => l.textContent)).toEqual(["Inicio"]);
   });
 
-  it("en /admin/medios marca Medios y no Inicio", () => {
-    pathname.mockReturnValue("/admin/medios");
+  it("en /admin/media marca Medios y no Inicio", () => {
+    pathname.mockReturnValue("/admin/media");
     render(<AdminNav />);
     expect(current().map((l) => l.textContent)).toEqual(["Medios"]);
   });
 
   it("en una subruta marca su ítem", () => {
-    pathname.mockReturnValue("/admin/articulos/nuevo");
+    pathname.mockReturnValue("/admin/articles/nuevo");
     render(<AdminNav />);
     expect(current().map((l) => l.textContent)).toEqual(["Artículos"]);
   });

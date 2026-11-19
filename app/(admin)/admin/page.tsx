@@ -8,9 +8,9 @@ import { requireAdmin } from "@/lib/auth/dal";
 export const metadata: Metadata = { title: "Inicio" };
 
 const shortcuts = [
-  { href: "/admin/articulos", title: "Artículos", text: "Creá, editá y publicá las notas del blog.", icon: Article },
-  { href: "/admin/medios", title: "Medios", text: "Subí y organizá las imágenes del blog.", icon: Photos },
-  { href: "/admin/usuarios", title: "Usuarios", text: "Mirá quién se registró y con qué rol.", icon: Users },
+  { href: "/admin/articles", title: "Artículos", text: "Creá, editá y publicá las notas del blog.", icon: Article },
+  { href: "/admin/media", title: "Medios", text: "Subí y organizá las imágenes del blog.", icon: Photos },
+  { href: "/admin/users", title: "Usuarios", text: "Mirá quién se registró y con qué rol.", icon: Users },
 ] as const;
 
 async function Greeting() {
