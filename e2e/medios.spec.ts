@@ -138,8 +138,8 @@ test("una imagen en uso muestra dónde y no se puede borrar", async ({ page }) =
   );
   const [{ id: autor }] = await sql<{ id: string }>('select id from "user" limit 1');
   await sql(
-    `insert into category (id, slug, label, filter_label, service_slug, position)
-     values ('e2e-medios-cat', 'e2e-medios-cat', 'c', 'c', 'sistemas-a-medida', 99)
+    `insert into category (id, slug, label, filter_label, service_slug, icon, position)
+     values ('e2e-medios-cat', 'e2e-medios-cat', 'c', 'c', 'sistemas-a-medida', 'code', 99)
      on conflict do nothing`,
   );
   await sql(
