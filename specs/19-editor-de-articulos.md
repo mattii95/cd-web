@@ -1,6 +1,6 @@
 # SPEC 19 — Editor de artículos
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 09, SPEC 11, SPEC 16, SPEC 17, SPEC 18
 > **Fecha:** 2026-11-18
 > **Objetivo:** Que el admin cree artículos en `/admin/articles/new` y los edite en `/admin/articles/{id}/edit` con un editor Tiptap (título, resumen, cuerpo, categoría, CTA, slug y etiquetas), guardándolos como borrador, publicándolos o eliminándolos, con el tiempo de lectura calculado del texto.
@@ -290,80 +290,80 @@ Convenciones:
 
 **General**
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado.
-- [ ] `npm run test:e2e` pasa completo, con `blog.spec.ts` sin cambios.
-- [ ] `package.json` tiene `@tiptap/react`, `@tiptap/pm` y `@tiptap/starter-kit` con versión exacta (sin `^` ni `~`).
-- [ ] `grep -rln "@tiptap" app/\(site\) components/blog db lib` no devuelve nada.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado.
+- [x] `npm run test:e2e` pasa completo, con `blog.spec.ts` sin cambios.
+- [x] `package.json` tiene `@tiptap/react`, `@tiptap/pm` y `@tiptap/starter-kit` con versión exacta (sin `^` ni `~`).
+- [x] `grep -rln "@tiptap" app/\(site\) components/blog db lib` no devuelve nada.
 
 **Utilidades (`server`)**
 
-- [ ] `slugify("¿Qué es SaaS? Guía 2026")` devuelve `que-es-saas-guia-2026`; `slugify("Año  ñandú -- test")` devuelve `ano-nandu-test`; un texto de 200 caracteres da un slug de 80 o menos sin guion final; `slugify("¡¿?!")` devuelve `""`.
-- [ ] `isSlug` acepta `seo-local-2026` y rechaza `SEO`, `-seo`, `seo--local`, `seo_local` y uno de 81 caracteres.
-- [ ] `docReadingMinutes` de un doc vacío es 1, de uno con 450 palabras repartidas en párrafos, listas, citas y Consejo es 3, y no cuenta las imágenes.
-- [ ] `docHasText` es `false` para un doc con un párrafo vacío o solo una imagen, y `true` con una palabra en un `listItem`.
-- [ ] `parseArticleForm` con `intent=draft`, título y categoría pero sin resumen, CTA ni cuerpo con texto devuelve `ok: true`.
-- [ ] Con `intent=publish` y los mismos datos devuelve errores en `excerpt`, `cta` y `body`.
-- [ ] Con `intent=save` y `currentStatus: "publicado"` exige resumen, CTA y cuerpo con texto.
-- [ ] Sin título (o solo espacios), sin categoría, con un título de 121 caracteres, un slug `Mal Slug`, 6 etiquetas o un `body` que no pasa `blogBodySchema` devuelve el error en el campo correspondiente.
-- [ ] Un slug vacío en un borrador se reemplaza por `slugify(título)`.
-- [ ] Etiquetas `["SEO", "seo", " Seo "]` quedan como una sola.
-- [ ] Un doc armado con el editor headless de Tiptap y las extensiones del panel (H2, H3, listas anidadas, cita, Consejo, En resumen, imagen, negrita, cursiva, enlace y `hardBreak`) pasa `blogBodySchema`.
+- [x] `slugify("¿Qué es SaaS? Guía 2026")` devuelve `que-es-saas-guia-2026`; `slugify("Año  ñandú -- test")` devuelve `ano-nandu-test`; un texto de 200 caracteres da un slug de 80 o menos sin guion final; `slugify("¡¿?!")` devuelve `""`.
+- [x] `isSlug` acepta `seo-local-2026` y rechaza `SEO`, `-seo`, `seo--local`, `seo_local` y uno de 81 caracteres.
+- [x] `docReadingMinutes` de un doc vacío es 1, de uno con 450 palabras repartidas en párrafos, listas, citas y Consejo es 3, y no cuenta las imágenes.
+- [x] `docHasText` es `false` para un doc con un párrafo vacío o solo una imagen, y `true` con una palabra en un `listItem`.
+- [x] `parseArticleForm` con `intent=draft`, título y categoría pero sin resumen, CTA ni cuerpo con texto devuelve `ok: true`.
+- [x] Con `intent=publish` y los mismos datos devuelve errores en `excerpt`, `cta` y `body`.
+- [x] Con `intent=save` y `currentStatus: "publicado"` exige resumen, CTA y cuerpo con texto.
+- [x] Sin título (o solo espacios), sin categoría, con un título de 121 caracteres, un slug `Mal Slug`, 6 etiquetas o un `body` que no pasa `blogBodySchema` devuelve el error en el campo correspondiente.
+- [x] Un slug vacío en un borrador se reemplaza por `slugify(título)`.
+- [x] Etiquetas `["SEO", "seo", " Seo "]` quedan como una sola.
+- [x] Un doc armado con el editor headless de Tiptap y las extensiones del panel (H2, H3, listas anidadas, cita, Consejo, En resumen, imagen, negrita, cursiva, enlace y `hardBreak`) pasa `blogBodySchema`.
 
 **Consultas (`admin-posts.test.ts`)**
 
-- [ ] `createPost` como borrador guarda el post con `status: "borrador"`, `published_at` vacío, `author_id` del admin, `reading_minutes` calculado del cuerpo y sus etiquetas, creando las que no existían.
-- [ ] `createPost` con un slug que ya existe devuelve `reason: "slug-taken"` y no crea nada (ni etiquetas).
-- [ ] `updatePost` con el `updatedAt` correcto guarda los cambios y reemplaza las etiquetas (las que se quitaron dejan de estar en `post_tag`, la tabla `tag` las conserva).
-- [ ] `updatePost` con un `updatedAt` viejo devuelve `reason: "stale"` y no cambia nada; con un id inexistente, `reason: "not-found"`.
-- [ ] `updatePost` sobre un post con `published_at` ignora un slug distinto y devuelve `previousSlug: null`; sobre un borrador nunca publicado cambia el slug y devuelve el anterior en `previousSlug`.
-- [ ] Publicar fija `published_at` si estaba vacío y lo conserva si ya tenía; pasar a borrador no lo toca.
-- [ ] `updatePost` nunca cambia `cover_media_id` ni `author_id`.
-- [ ] `getPostForEdit` devuelve las etiquetas, la portada resuelta y en `images` la miniatura de cada `mediaId` del cuerpo; con un id inexistente o que no es UUID devuelve `null`.
+- [x] `createPost` como borrador guarda el post con `status: "borrador"`, `published_at` vacío, `author_id` del admin, `reading_minutes` calculado del cuerpo y sus etiquetas, creando las que no existían.
+- [x] `createPost` con un slug que ya existe devuelve `reason: "slug-taken"` y no crea nada (ni etiquetas).
+- [x] `updatePost` con el `updatedAt` correcto guarda los cambios y reemplaza las etiquetas (las que se quitaron dejan de estar en `post_tag`, la tabla `tag` las conserva).
+- [x] `updatePost` con un `updatedAt` viejo devuelve `reason: "stale"` y no cambia nada; con un id inexistente, `reason: "not-found"`.
+- [x] `updatePost` sobre un post con `published_at` ignora un slug distinto y devuelve `previousSlug: null`; sobre un borrador nunca publicado cambia el slug y devuelve el anterior en `previousSlug`.
+- [x] Publicar fija `published_at` si estaba vacío y lo conserva si ya tenía; pasar a borrador no lo toca.
+- [x] `updatePost` nunca cambia `cover_media_id` ni `author_id`.
+- [x] `getPostForEdit` devuelve las etiquetas, la portada resuelta y en `images` la miniatura de cada `mediaId` del cuerpo; con un id inexistente o que no es UUID devuelve `null`.
 
 **Action (`admin-articles-actions.test.ts`)**
 
-- [ ] `saveArticleAction` llama a `requireAdmin()` antes de tocar la base.
-- [ ] Sin `id` e `intent=draft` crea el borrador y devuelve "Borrador guardado." con el `id` nuevo.
-- [ ] `intent=publish` devuelve "Artículo publicado." y el post sale en `getPublishedPosts`; llama a `updateTag("blog")`, `updateTag("post:{slug}")` y `revalidatePath("/admin/articles")`.
-- [ ] `intent=unpublish` devuelve "Artículo pasado a borrador." y el post deja de salir en `getPublishedPosts`.
-- [ ] `intent=save` sobre un publicado devuelve "Cambios guardados." y no cambia `status` ni `published_at`.
-- [ ] Cambiar el slug de un borrador llama a `updateTag` con el slug nuevo y el anterior.
-- [ ] Un slug repetido devuelve `fieldErrors.slug` "Ya hay un artículo con esa URL."; un `updatedAt` viejo, "Alguien modificó este artículo. Recargá para ver los cambios."; un id inexistente, "Ese artículo ya no existe.".
-- [ ] Un `body` con un enlace `javascript:alert(1)` devuelve error y no escribe.
+- [x] `saveArticleAction` llama a `requireAdmin()` antes de tocar la base.
+- [x] Sin `id` e `intent=draft` crea el borrador y devuelve "Borrador guardado." con el `id` nuevo.
+- [x] `intent=publish` devuelve "Artículo publicado." y el post sale en `getPublishedPosts`; llama a `updateTag("blog")`, `updateTag("post:{slug}")` y `revalidatePath("/admin/articles")`.
+- [x] `intent=unpublish` devuelve "Artículo pasado a borrador." y el post deja de salir en `getPublishedPosts`.
+- [x] `intent=save` sobre un publicado devuelve "Cambios guardados." y no cambia `status` ni `published_at`.
+- [x] Cambiar el slug de un borrador llama a `updateTag` con el slug nuevo y el anterior.
+- [x] Un slug repetido devuelve `fieldErrors.slug` "Ya hay un artículo con esa URL."; un `updatedAt` viejo, "Alguien modificó este artículo. Recargá para ver los cambios."; un id inexistente, "Ese artículo ya no existe.".
+- [x] Un `body` con un enlace `javascript:alert(1)` devuelve error y no escribe.
 
 **Componentes (`client`)**
 
-- [ ] `ArticleEditor` en `/new` muestra "Guardar borrador" y "Publicar"; con un post publicado, "Pasar a borrador" y "Guardar cambios".
-- [ ] Escribir un título en `/new` llena el slug con `slugify`; editar el slug a mano corta el seguimiento.
-- [ ] Con `publishedAt`, el input del slug es de solo lectura y muestra la nota.
-- [ ] "Publicar" sin resumen muestra el error debajo del campo, mueve el foco a él y no abre el modal.
-- [ ] Los botones de la barra tienen `aria-label` y "Negrita" tiene `aria-pressed="true"` con el cursor en texto en negrita.
-- [ ] El popover de enlace rechaza `javascript:alert(1)` con el mensaje de error y acepta `/servicios`.
-- [ ] Con cambios sin guardar, "← Artículos" abre "¿Salir sin guardar?"; sin cambios, navega directo.
-- [ ] `TagInput`: `Enter` agrega un chip, "Crear «nombre»" aparece para una etiqueta nueva, `Backspace` con el input vacío quita la última y con 5 chips el input se deshabilita.
-- [ ] `RowMenu` muestra "Editar" primero, con `href="/admin/articles/{id}/edit"`, en borradores y publicados.
+- [x] `ArticleEditor` en `/new` muestra "Guardar borrador" y "Publicar"; con un post publicado, "Pasar a borrador" y "Guardar cambios".
+- [x] Escribir un título en `/new` llena el slug con `slugify`; editar el slug a mano corta el seguimiento.
+- [x] Con `publishedAt`, el input del slug es de solo lectura y muestra la nota.
+- [x] "Publicar" sin resumen muestra el error debajo del campo, mueve el foco a él y no abre el modal.
+- [x] Los botones de la barra tienen `aria-label` y "Negrita" tiene `aria-pressed="true"` con el cursor en texto en negrita.
+- [x] El popover de enlace rechaza `javascript:alert(1)` con el mensaje de error y acepta `/servicios`.
+- [x] Con cambios sin guardar, "← Artículos" abre "¿Salir sin guardar?"; sin cambios, navega directo.
+- [x] `TagInput`: `Enter` agrega un chip, "Crear «nombre»" aparece para una etiqueta nueva, `Backspace` con el input vacío quita la última y con 5 chips el input se deshabilita.
+- [x] `RowMenu` muestra "Editar" primero, con `href="/admin/articles/{id}/edit"`, en borradores y publicados.
 
 **Editor (E2E, `article-editor.spec.ts`)**
 
-- [ ] "Nuevo artículo" en `/admin/articles` lleva a `/admin/articles/new`.
-- [ ] Completar título, categoría y una línea de cuerpo y tocar "Guardar borrador" muestra "Borrador guardado.", deja la URL en `/admin/articles/{id}/edit` y el artículo aparece en "Borradores" de la tabla.
-- [ ] En el cuerpo, `## ` crea un H2, Ctrl/Cmd+B pone negrita, "Lista con viñetas" crea una lista, "Consejo" crea un recuadro y "Enlace" con `https://ejemplo.com` crea un enlace; después de guardar y recargar, todo sigue ahí.
-- [ ] Publicar ese artículo pide confirmación, muestra "Artículo publicado." y `/blog/{slug}` muestra el H2 con `01`, la negrita, la lista, el Consejo y el enlace con `target="_blank"`.
-- [ ] Después de publicar, el slug es de solo lectura; cambiar el título y "Guardar cambios" actualiza `/blog/{slug}` sin cambiar la URL.
-- [ ] El tiempo de lectura del panel lateral cambia al pegar un texto largo, y el de `/blog/{slug}` coincide después de guardar.
-- [ ] Una etiqueta nueva agregada en el editor aparece en el artículo publicado y en el filtro de etiquetas de `/blog`.
-- [ ] Editar `senales-sistema-a-medida` (que tiene imágenes en el cuerpo) muestra sus miniaturas y, al guardar sin tocar nada, `/blog/senales-sistema-a-medida` se ve igual.
-- [ ] Un slug repetido muestra "Ya hay un artículo con esa URL." debajo del campo.
-- [ ] Guardar en una pestaña y después en otra abierta antes muestra "Alguien modificó este artículo. Recargá para ver los cambios." y no pisa el cambio.
-- [ ] "Pasar a borrador" desde el editor pide confirmación y `/blog/{slug}` da 404.
-- [ ] "Eliminar artículo" pide confirmación; "Eliminar" lleva a `/admin/articles` con el toast y el artículo ya no está.
-- [ ] Editar desde "Más acciones → Editar" y desde el título de la fila abre el editor del artículo correcto.
-- [ ] `/admin/articles/no-existe/edit` y `/admin/articles/{uuid-inexistente}/edit` responden 404; sin sesión, `/admin/articles/new` redirige a `/cuenta/login`.
-- [ ] A 390 px el editor no tiene scroll horizontal de página y los botones de la cabecera siguen visibles.
-- [ ] El texto, los botones, los errores y el popover cumplen 4.5:1 de contraste y todos los controles miden 44 px o más (revisado con `/frontend-design`).
+- [x] "Nuevo artículo" en `/admin/articles` lleva a `/admin/articles/new`.
+- [x] Completar título, categoría y una línea de cuerpo y tocar "Guardar borrador" muestra "Borrador guardado.", deja la URL en `/admin/articles/{id}/edit` y el artículo aparece en "Borradores" de la tabla.
+- [x] En el cuerpo, `## ` crea un H2, Ctrl/Cmd+B pone negrita, "Lista con viñetas" crea una lista, "Consejo" crea un recuadro y "Enlace" con `https://ejemplo.com` crea un enlace; después de guardar y recargar, todo sigue ahí.
+- [x] Publicar ese artículo pide confirmación, muestra "Artículo publicado." y `/blog/{slug}` muestra el H2 con `01`, la negrita, la lista, el Consejo y el enlace con `target="_blank"`.
+- [x] Después de publicar, el slug es de solo lectura; cambiar el título y "Guardar cambios" actualiza `/blog/{slug}` sin cambiar la URL.
+- [x] El tiempo de lectura del panel lateral cambia al pegar un texto largo, y el de `/blog/{slug}` coincide después de guardar.
+- [x] Una etiqueta nueva agregada en el editor aparece en el artículo publicado y en el filtro de etiquetas de `/blog`.
+- [x] Editar `senales-sistema-a-medida` (que tiene imágenes en el cuerpo) muestra sus miniaturas y, al guardar sin tocar nada, `/blog/senales-sistema-a-medida` se ve igual.
+- [x] Un slug repetido muestra "Ya hay un artículo con esa URL." debajo del campo.
+- [x] Guardar en una pestaña y después en otra abierta antes muestra "Alguien modificó este artículo. Recargá para ver los cambios." y no pisa el cambio.
+- [x] "Pasar a borrador" desde el editor pide confirmación y `/blog/{slug}` da 404.
+- [x] "Eliminar artículo" pide confirmación; "Eliminar" lleva a `/admin/articles` con el toast y el artículo ya no está.
+- [x] Editar desde "Más acciones → Editar" y desde el título de la fila abre el editor del artículo correcto.
+- [ ] `/admin/articles/no-existe/edit` y `/admin/articles/{uuid-inexistente}/edit` responden 404; sin sesión, `/admin/articles/new` redirige a `/cuenta/login`. _(Pendiente: el contenido «Esta página no existe» se muestra, pero el código HTTP es 200 por el streaming de Cache Components; corregir el criterio o la implementación.)_
+- [x] A 390 px el editor no tiene scroll horizontal de página y los botones de la cabecera siguen visibles.
+- [ ] El texto, los botones, los errores y el popover cumplen 4.5:1 de contraste y todos los controles miden 44 px o más (revisado con `/frontend-design`). _(Pendiente: los 44 px están verificados por E2E; el contraste falta medirlo.)_
 
 ## Decisiones
 
