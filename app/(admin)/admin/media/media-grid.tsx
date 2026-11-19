@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Spinner } from "@/components/icons";
-import { notify } from "@/components/admin/toast";
 import { loadMoreMediaAction } from "@/actions/admin/media";
+import { notify } from "@/components/admin/toast";
+import { Spinner } from "@/components/icons";
+import { type AdminMediaQuery, toUsage } from "@/lib/admin/media-params";
 import type { CardItem } from "./card-item";
-import { MediaCard } from "./media-card";
+import { MediaTile } from "./media-tile";
 import { btn } from "./styles";
 
 type Props = {
   initialItems: CardItem[];
   initialCursor: string | null;
   initialTotal: number;
+  query: AdminMediaQuery;
 };
 
 const loadError = {
@@ -19,21 +21,28 @@ const loadError = {
   message: "No pudimos cargar más imágenes.",
 } as const;
 
-export function MediaGrid({
-  initialItems,
-  initialCursor,
-  initialTotal,
-}: Props) {
+function emptyText({ q, uso }: AdminMediaQuery) {
+  if (q) return `No hay imágenes que coincidan con «${q}».`;
+  if (uso === "en-uso") return "No hay imágenes en uso.";
+  if (uso === "sin-usar") return "No hay imágenes sin usar.";
+  return "Todavía no hay imágenes.";
+}
+
+// La página la remonta (key) cuando cambia la búsqueda, el filtro o la primera tanda.
+export function MediaGrid({ initialItems, initialCursor, initialTotal, query }: Props) {
   const [items, setItems] = useState(initialItems);
   const [cursor, setCursor] = useState(initialCursor);
-  const [total, setTotal] = useState(initialTotal);
   const [loading, setLoading] = useState(false);
 
   async function loadMore() {
     if (!cursor || loading) return;
     setLoading(true);
     try {
-      const result = await loadMoreMediaAction({ cursor, query: "", usage: null });
+      const result = await loadMoreMediaAction({
+        cursor,
+        query: query.q ?? "",
+        usage: toUsage(query.uso),
+      });
       if (result.status === "success") {
         setItems((prev) => [...prev, ...result.items]);
         setCursor(result.nextCursor);
@@ -47,35 +56,20 @@ export function MediaGrid({
     }
   }
 
-  if (items.length === 0 && !cursor) {
-    return (
-      <p className="m-0 text-base text-cms-text">
-        Todavía no hay imágenes. Subí la primera con el formulario.
-      </p>
-    );
+  if (items.length === 0) {
+    return <p className="m-0 text-base text-cms-text [overflow-wrap:anywhere]">{emptyText(query)}</p>;
   }
 
   return (
     <>
       <p className="m-0 text-base text-cms-text">
-        {total === 1 ? "1 imagen" : `${total} imágenes`}
+        {initialTotal === 1 ? "1 imagen" : `${initialTotal} imágenes`}
       </p>
-      <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 p-0">
-        {items.map(({ date, ...item }) => (
-          <MediaCard
-            key={item.id}
-            item={item}
-            date={date}
-            onDeleted={() => {
-              setItems((prev) => prev.filter((i) => i.id !== item.id));
-              setTotal((n) => n - 1);
-            }}
-            onAltSaved={(alt) =>
-              setItems((prev) =>
-                prev.map((i) => (i.id === item.id ? { ...i, alt } : i)),
-              )
-            }
-          />
+      <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 p-0">
+        {items.map((item) => (
+          <li key={item.id}>
+            <MediaTile item={item} />
+          </li>
         ))}
       </ul>
       {cursor && (

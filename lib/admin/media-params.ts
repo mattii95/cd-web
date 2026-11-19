@@ -20,6 +20,10 @@ export function parseMediaParams(
   };
 }
 
+// "en-uso" / "sin-usar" de la URL → el filtro `usage` de listMedia y countMedia.
+export const toUsage = (uso: MediaUsageFilter | null): "used" | "unused" | null =>
+  uso === "en-uso" ? "used" : uso === "sin-usar" ? "unused" : null;
+
 // Omite de la URL los valores por defecto.
 export function mediaQueryHref({ q, uso }: AdminMediaQuery): string {
   const params = new URLSearchParams();
