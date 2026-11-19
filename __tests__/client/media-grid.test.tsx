@@ -12,7 +12,7 @@ const { loadMoreMediaAction, deleteMediaAction } = vi.hoisted(() => ({
 
 vi.mock("@/actions/admin/media", () => ({
   loadMoreMediaAction,
-  updateMediaAltAction: vi.fn(),
+  updateMediaAction: vi.fn(),
   deleteMediaAction,
 }));
 
@@ -20,10 +20,11 @@ const card = (n: number): CardItem => ({
   id: `id-${n}`,
   src: `/media/id-${n}`,
   alt: `Alt ${n}`,
+  originalName: `f${n}.webp`,
   width: 640,
   height: 360,
   bytes: 2048,
-  titles: [],
+  usage: [],
   date: "16 nov 2026",
 });
 
@@ -87,7 +88,7 @@ describe("MediaGrid", () => {
     const busy = screen.getByRole("button", { name: "Cargando…" });
     expect(busy).toBeDisabled();
     expect(busy).toHaveAttribute("aria-busy", "true");
-    expect(loadMoreMediaAction).toHaveBeenCalledWith("c1");
+    expect(loadMoreMediaAction).toHaveBeenCalledWith({ cursor: "c1", query: "", usage: null });
 
     resolve({ status: "success", items: cards(3, 4), nextCursor: null });
     await waitFor(() =>

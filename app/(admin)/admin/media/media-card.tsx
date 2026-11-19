@@ -7,7 +7,8 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { notify } from "@/components/admin/toast";
 import {
   deleteMediaAction,
-  updateMediaAltAction,
+  type MediaFormState,
+  updateMediaAction,
 } from "@/actions/admin/media";
 import type { CardItem } from "./card-item";
 import { Copy, Pencil, Spinner, Trash } from "@/components/icons";
@@ -63,21 +64,28 @@ function AltEditor({
   onDone: () => void;
   onSaved: (alt: string) => void;
 }) {
-  const [, action, pending] = useActionState<FormState, FormData>(
+  const [, action, pending] = useActionState<MediaFormState, FormData>(
     async (prev, data) => {
-      const next = await updateMediaAltAction(prev, data);
-      notify(next);
+      const next = await updateMediaAction(prev, data);
+      // Parche temporal: este componente se borra en el paso 5.
+      if (next.status === "success") notify(next);
+      else if (next.status === "error")
+        notify({
+          status: "error",
+          message: next.message ?? next.fieldErrors?.alt ?? next.fieldErrors?.originalName ?? "",
+        });
       if (next.status === "success") {
         onSaved(String(data.get("alt")).trim());
         onDone();
       }
       return next;
     },
-    idle,
+    { status: "idle" },
   );
   return (
     <form action={action} className="flex flex-col gap-2">
       <input type="hidden" name="id" value={item.id} />
+      <input type="hidden" name="originalName" value={item.originalName} />
       <input
         type="text"
         name="alt"
@@ -110,7 +118,7 @@ function DeleteControl({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
-  const inUse = item.titles.length > 0;
+  const inUse = item.usage.length > 0;
 
   const confirm = () =>
     start(async () => {
@@ -161,6 +169,7 @@ export function MediaCard({
   onAltSaved: (alt: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const titles = [...new Set(item.usage.map((u) => u.title))];
   return (
     <li className="flex flex-col overflow-hidden rounded-2xl border border-cms-line bg-cms-panel shadow-[0_8px_24px_rgba(11,16,32,0.08)]">
       <Image
@@ -190,11 +199,9 @@ export function MediaCard({
           {date}
         </p>
         <p
-          className={`m-0 pt-1 text-[13px] ${item.titles.length ? "text-cms-link" : "text-cms-muted"}`}
+          className={`m-0 pt-1 text-[13px] ${titles.length ? "text-cms-link" : "text-cms-muted"}`}
         >
-          {item.titles.length
-            ? `En uso en: ${item.titles.join(", ")}`
-            : "Sin usar"}
+          {titles.length ? `En uso en: ${titles.join(", ")}` : "Sin usar"}
         </p>
         <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
           <CopyId id={item.id} />

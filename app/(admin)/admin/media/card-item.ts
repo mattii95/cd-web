@@ -1,16 +1,17 @@
 import type { MediaItem } from "@/db/media";
 import { formatDate } from "@/lib/format-date";
 
-// Datos de una MediaCard. La página y la acción de "Cargar más" arman las
-// tarjetas con esta misma función para que rendericen igual.
+// Lo único que viaja a la grilla y al modal de detalle: ambos se arman con esta
+// misma función para que la página y "Cargar más" rendericen igual.
 export type CardItem = {
   id: string;
   src: string;
   alt: string;
+  originalName: string;
   width: number;
   height: number;
   bytes: number;
-  titles: string[]; // posts donde se usa
+  usage: { postId: string; title: string; as: "portada" | "cuerpo" }[];
   date: string;
 };
 
@@ -19,10 +20,11 @@ export function toCardItem(item: MediaItem): CardItem {
     id: item.id,
     src: item.src,
     alt: item.alt,
+    originalName: item.originalName,
     width: item.width,
     height: item.height,
     bytes: item.bytes,
-    titles: [...new Set(item.usage.map((u) => u.title))],
+    usage: item.usage.map(({ postId, title, as }) => ({ postId, title, as })),
     date: formatDate(item.createdAt),
   };
 }

@@ -26,7 +26,6 @@ import {
   MediaInUseError,
   MediaNotFoundError,
   updateMedia,
-  updateMediaAlt,
 } from "@/db/media";
 import { InvalidCursorError } from "@/lib/pagination";
 import { authorProfile, category, media, post, user } from "@/db/schema";
@@ -173,7 +172,7 @@ describe("tabla media", () => {
   });
 });
 
-describe("listMedia y updateMediaAlt", () => {
+describe("listMedia", () => {
   it("lista de la más nueva a la más vieja con su uso", async () => {
     const a = await subir("red");
     const b = await subir("blue");
@@ -184,12 +183,6 @@ describe("listMedia y updateMediaAlt", () => {
     expect(list[1].usage.map((u) => u.title)).toEqual(["Con portada"]);
   });
 
-  it("cambia el alt y rechaza uno vacío", async () => {
-    const { item } = await subir("red");
-    await updateMediaAlt(item.id, "Nuevo alt");
-    expect((await listMedia()).items[0].alt).toBe("Nuevo alt");
-    await expect(updateMediaAlt(item.id, "  ")).rejects.toThrow();
-  });
 });
 
 // Inserta n filas de media con created_at separado por un segundo (la 0 es la más nueva).
@@ -475,9 +468,14 @@ describe("updateMedia", () => {
     const { item } = await subir("red");
     expect(await updateMedia(item.id, { alt: "Nuevo", originalName: "nuevo.png" })).toEqual({
       ok: true,
+      altChanged: true,
+    });
+    expect(await updateMedia(item.id, { alt: "Nuevo", originalName: "otro.png" })).toEqual({
+      ok: true,
+      altChanged: false,
     });
     const [row] = (await listMedia()).items;
-    expect(row).toMatchObject({ alt: "Nuevo", originalName: "nuevo.png" });
+    expect(row).toMatchObject({ alt: "Nuevo", originalName: "otro.png" });
   });
 
   it("con id inexistente devuelve not-found y no cambia nada", async () => {

@@ -33,7 +33,7 @@ export function MediaGrid({
     if (!cursor || loading) return;
     setLoading(true);
     try {
-      const result = await loadMoreMediaAction(cursor);
+      const result = await loadMoreMediaAction({ cursor, query: "", usage: null });
       if (result.status === "success") {
         setItems((prev) => [...prev, ...result.items]);
         setCursor(result.nextCursor);

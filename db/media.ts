@@ -231,19 +231,20 @@ export async function countMedia(
 export async function updateMedia(
   id: string,
   input: { alt: string; originalName: string },
-): Promise<{ ok: true } | { ok: false; reason: "not-found" }> {
-  const rows = await getDb()
+): Promise<
+  { ok: true; altChanged: boolean } | { ok: false; reason: "not-found" }
+> {
+  const db = getDb();
+  const [prev] = await db
+    .select({ alt: media.alt })
+    .from(media)
+    .where(eq(media.id, id));
+  if (!prev) return { ok: false, reason: "not-found" };
+  await db
     .update(media)
     .set({ alt: input.alt, originalName: input.originalName })
-    .where(eq(media.id, id))
-    .returning({ id: media.id });
-  return rows.length ? { ok: true } : { ok: false, reason: "not-found" };
-}
-
-// shortcut: se borra en el paso 3, cuando updateMediaAltAction pase a updateMediaAction.
-export async function updateMediaAlt(id: string, alt: string): Promise<void> {
-  if (!alt.trim()) throw new Error("El alt no puede estar vacío");
-  await getDb().update(media).set({ alt }).where(eq(media.id, id));
+    .where(eq(media.id, id));
+  return { ok: true, altChanged: prev.alt !== input.alt };
 }
 
 export async function deleteMedia(id: string): Promise<void> {
