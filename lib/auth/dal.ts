@@ -48,7 +48,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 });
 
 export type LoginMethod = "credential" | SocialProvider;
-const METHOD_ORDER: LoginMethod[] = ["credential", "google", "github", "microsoft"];
+export const METHOD_ORDER: LoginMethod[] = ["credential", "google", "github", "microsoft"];
 
 // Solo devuelve el providerId de cada fila de `account`: nunca tokens ni el hash de la contraseña.
 export async function getLoginMethods(userId: string): Promise<LoginMethod[]> {
