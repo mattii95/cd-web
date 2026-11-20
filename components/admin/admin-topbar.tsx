@@ -1,14 +1,15 @@
 import { Suspense } from "react";
 import { AccountMenu } from "./account-menu";
 import { AdminDrawer } from "./admin-drawer";
+import type { AdminNavBadges } from "./admin-nav";
 import { AdminLogo } from "./admin-sidebar";
 
-export function AdminTopbar() {
+export function AdminTopbar({ badges }: { badges?: AdminNavBadges }) {
   return (
     <header className="flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b border-cms-line pb-5">
       {/* Debajo de lg la barra lateral no se ve: el cajón y el logo ocupan su lugar */}
       <div className="flex items-center gap-1 lg:hidden">
-        <AdminDrawer />
+        <AdminDrawer badges={badges} />
         <AdminLogo className="text-cms-ink" />
       </div>
       <div className="ml-auto">

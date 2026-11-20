@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AdminPageHeader } from "@/components/admin/page-header";
-import { Article, Photos, Users } from "@/components/icons";
+import { Article, Chat, Photos, Users } from "@/components/icons";
 import { requireAdmin } from "@/lib/auth/dal";
 
 export const metadata: Metadata = { title: "Inicio" };
@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: "Inicio" };
 const shortcuts = [
   { href: "/admin/articles", title: "Artículos", text: "Creá, editá y publicá las notas del blog.", icon: Article },
   { href: "/admin/media", title: "Medios", text: "Subí y organizá las imágenes del blog.", icon: Photos },
+  { href: "/admin/comments", title: "Comentarios", text: "Aprobá u ocultá lo que comentan los lectores.", icon: Chat },
   { href: "/admin/users", title: "Usuarios", text: "Mirá quién se registró y con qué rol.", icon: Users },
 ] as const;
 
@@ -32,7 +33,7 @@ export default function AdminHomePage() {
       <Suspense fallback={<div className="h-8" />}>
         <Greeting />
       </Suspense>
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {shortcuts.map(({ href, title, text, icon: Icon }) => (
           <Link
             key={href}

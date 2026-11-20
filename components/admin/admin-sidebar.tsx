@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink } from "@/components/icons";
 import { site } from "@/lib/site";
-import { AdminNav } from "./admin-nav";
+import { AdminNav, type AdminNavBadges } from "./admin-nav";
 
 // El texto toma su color de className: blanco en la barra, tinta en la superior.
 export function AdminLogo({ className = "text-white" }: { className?: string }) {
@@ -20,11 +20,11 @@ export function AdminLogo({ className = "text-white" }: { className?: string }) 
   );
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({ badges }: { badges?: AdminNavBadges }) {
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-[264px] flex-col gap-8 overflow-y-auto bg-cms-nav px-5 py-7 lg:flex">
       <AdminLogo />
-      <AdminNav />
+      <AdminNav badges={badges} />
       <Link
         href="/blog"
         className="mt-auto flex min-h-11 items-center gap-2.5 rounded-[10px] border border-cms-nav-line px-3 font-medium text-cms-nav-text no-underline transition-colors hover:text-white"

@@ -38,7 +38,13 @@ describe("AdminNav", () => {
     expect(current().map((l) => l.textContent)).toEqual([name]);
   });
 
-  it("lista Inicio, Artículos, Categorías, Etiquetas, Medios y Usuarios en ese orden", () => {
+  it("en /admin/comments marca Comentarios", () => {
+    pathname.mockReturnValue("/admin/comments");
+    render(<AdminNav />);
+    expect(current().map((l) => l.textContent)).toEqual(["Comentarios"]);
+  });
+
+  it("lista Inicio, Artículos, Categorías, Etiquetas, Medios, Comentarios y Usuarios en ese orden", () => {
     pathname.mockReturnValue("/admin");
     render(<AdminNav />);
     expect(screen.getAllByRole("link").map((l) => l.textContent)).toEqual([
@@ -47,7 +53,25 @@ describe("AdminNav", () => {
       "Categorías",
       "Etiquetas",
       "Medios",
+      "Comentarios",
       "Usuarios",
     ]);
+  });
+
+  it("con badges muestra la insignia junto a Comentarios, sin cambiar el nombre del enlace", () => {
+    pathname.mockReturnValue("/admin");
+    render(
+      <AdminNav
+        badges={{ "/admin/comments": <span role="img" aria-label="3 pendientes">3</span> }}
+      />,
+    );
+    expect(screen.getByRole("img", { name: "3 pendientes" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Comentarios" })).toBeInTheDocument();
+  });
+
+  it("sin badges no muestra insignia", () => {
+    pathname.mockReturnValue("/admin");
+    render(<AdminNav />);
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 });
