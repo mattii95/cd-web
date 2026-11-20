@@ -4,7 +4,7 @@ import { type DragEvent, useEffect, useId, useRef, useState } from "react";
 import { uploadMediaAction } from "@/actions/admin/media";
 import { Close, Spinner } from "@/components/icons";
 import { checkUploadFile, MEDIA_FORM_LIMITS, UPLOAD_LIMITS } from "@/lib/admin/media-form";
-import { btn } from "./styles";
+import { btn, btnDangerSolid, btnPrimary, iconBtn } from "./styles";
 
 type Status = "pending" | "uploading" | "done" | "duplicate" | "error";
 type Row = {
@@ -20,7 +20,6 @@ type Row = {
 const DUPLICATE = "Esa imagen ya estaba subida."; // lo que devuelve uploadMediaAction
 const FAILED = "No pudimos subir la imagen. Intentá de nuevo en unos minutos.";
 const LIMIT_NOTE = `Podés subir hasta ${UPLOAD_LIMITS.maxFiles} imágenes a la vez.`;
-const primary = `${btn} border-accent bg-accent text-white hover:bg-accent-hover disabled:hover:bg-accent`;
 
 const kb = (bytes: number) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
 const plural = (n: number) => (n === 1 ? "1 imagen" : `${n} imágenes`);
@@ -149,7 +148,7 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
           aria-label="Cerrar"
           disabled={uploading}
           onClick={requestClose}
-          className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-cms-control bg-cms-panel text-cms-ink transition-colors hover:bg-cms-chip disabled:cursor-not-allowed disabled:opacity-50"
+          className={iconBtn}
         >
           <Close />
         </button>
@@ -169,7 +168,7 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
         >
           <p className="m-0 text-[15px] text-cms-text">Arrastrá imágenes acá o elegí archivos</p>
           <label
-            className={`${btn} has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-cms-link ${
+            className={`${btnPrimary} has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-cms-link ${
               uploading ? "pointer-events-none opacity-50" : ""
             }`}
           >
@@ -243,7 +242,7 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
                       aria-label={`Quitar ${row.file.name}`}
                       disabled={uploading}
                       onClick={() => remove(row)}
-                      className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-cms-control bg-cms-panel text-cms-ink transition-colors hover:bg-cms-chip disabled:cursor-not-allowed disabled:opacity-50"
+                      className={iconBtn}
                     >
                       <Close />
                     </button>
@@ -267,7 +266,7 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
                 ? "Tenés 1 imagen sin subir. ¿Descartarla?"
                 : `Tenés ${unsent} imágenes sin subir. ¿Descartarlas?`}
             </p>
-            <button type="button" onClick={onClose} className={`${btn} border-red-700 bg-red-700 text-white hover:bg-red-800`}>
+            <button type="button" onClick={onClose} className={btnDangerSolid}>
               Descartar
             </button>
             <button ref={keepRef} type="button" onClick={() => setConfirming(false)} className={btn}>
@@ -280,7 +279,7 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
               Cancelar
             </button>
             {finished ? (
-              <button type="button" onClick={requestClose} className={primary}>
+              <button type="button" onClick={requestClose} className={btnPrimary}>
                 Listo
               </button>
             ) : (
@@ -288,7 +287,7 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
                 type="button"
                 disabled={uploading || queue.length === 0 || missingAlt}
                 onClick={sendAll}
-                className={primary}
+                className={btnPrimary}
               >
                 {uploading && <Spinner />}
                 {uploading ? "Subiendo…" : `Subir ${plural(queue.length)}`}

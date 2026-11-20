@@ -10,7 +10,7 @@ export function MediaTile({ item, onOpen }: { item: CardItem; onOpen: () => void
       data-media-id={item.id}
       onClick={onOpen}
       aria-label={`Ver detalles de ${item.alt}`}
-      className="group flex w-full cursor-pointer flex-col overflow-hidden rounded-xl border border-cms-line bg-cms-panel p-0 text-left transition-shadow hover:shadow-[0_8px_24px_rgba(11,16,32,0.12)]"
+      className="group flex w-full cursor-pointer flex-col overflow-hidden rounded-xl border border-cms-line bg-cms-panel p-0 text-left transition-[border-color,box-shadow] hover:border-cms-link hover:shadow-[0_8px_24px_rgba(11,16,32,0.14)] focus-visible:border-cms-link"
     >
       <Image
         src={item.src}

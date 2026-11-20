@@ -286,75 +286,75 @@ Convenciones:
 
 **General**
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado.
 - [ ] `npm run test:e2e` pasa completo, con `media-picker.spec.ts` y `article-editor.spec.ts` sin cambios en sus casos.
-- [ ] `package.json` no suma dependencias.
-- [ ] `grep -rn "updateMediaAlt\|UploadForm\|MediaCard" app components actions db lib __tests__ e2e` no devuelve nada.
+- [x] `package.json` no suma dependencias.
+- [x] `grep -rn "updateMediaAlt\|UploadForm\|MediaCard" app components actions db lib __tests__ e2e` no devuelve nada.
 
 **Utilidades (`server`)**
 
-- [ ] `parseMediaParams({ q: "  equipo ", uso: "sin-usar" })` devuelve `{ q: "equipo", uso: "sin-usar" }`; `uso: "otro"` devuelve `uso: null`; una `q` de 101 caracteres se recorta a 100; `q: "   "` devuelve `q: null`.
-- [ ] `mediaQueryHref({ q: null, uso: null })` devuelve `/admin/media`; con los dos, `/admin/media?q=equipo&uso=sin-usar`.
-- [ ] `parseMediaForm` con `alt` vacío, `alt` de 301, `originalName` vacío, `originalName` de 201 o `id` que no es UUID devuelve el error en el campo correspondiente.
-- [ ] `checkUploadFile` con `image/gif` devuelve el mensaje de formato; con 10 MB + 1 byte, el de tamaño; con un PNG de 1 MB, `null`.
-- [ ] `UPLOAD_LIMITS.maxBytes` es igual a `MEDIA_LIMITS.maxBytes` y `UPLOAD_LIMITS.types` cubre los 4 formatos de `MEDIA_LIMITS.formats`.
+- [x] `parseMediaParams({ q: "  equipo ", uso: "sin-usar" })` devuelve `{ q: "equipo", uso: "sin-usar" }`; `uso: "otro"` devuelve `uso: null`; una `q` de 101 caracteres se recorta a 100; `q: "   "` devuelve `q: null`.
+- [x] `mediaQueryHref({ q: null, uso: null })` devuelve `/admin/media`; con los dos, `/admin/media?q=equipo&uso=sin-usar`.
+- [x] `parseMediaForm` con `alt` vacío, `alt` de 301, `originalName` vacío, `originalName` de 201 o `id` que no es UUID devuelve el error en el campo correspondiente.
+- [x] `checkUploadFile` con `image/gif` devuelve el mensaje de formato; con 10 MB + 1 byte, el de tamaño; con un PNG de 1 MB, `null`.
+- [x] `UPLOAD_LIMITS.maxBytes` es igual a `MEDIA_LIMITS.maxBytes` y `UPLOAD_LIMITS.types` cubre los 4 formatos de `MEDIA_LIMITS.formats`.
 
 **Consultas y actions (`db`)**
 
-- [ ] Con una imagen de portada, una en el cuerpo de un borrador y una sin usar, `listMedia({ usage: "used" })` devuelve las dos primeras y `listMedia({ usage: "unused" })` la tercera.
-- [ ] `listMedia({ query: "equipo", usage: "unused" })` aplica los dos filtros a la vez.
-- [ ] Con más de 24 imágenes sin usar, la segunda tanda con el `nextCursor` y `usage: "unused"` sigue filtrada y no repite.
-- [ ] `countMedia` con `query` y `usage` devuelve la misma cantidad que recorrer todas las tandas de `listMedia` con esos filtros.
-- [ ] `updateMedia` cambia `alt` y `original_name`; con un id inexistente devuelve `not-found` y no cambia nada.
-- [ ] `updateMediaAction` llama a `requireAdmin()` antes de tocar la base, devuelve "Cambios guardados." y llama a `updateTag("blog")`.
-- [ ] `updateMediaAction` que cambia el alt de la portada de `senales-sistema-a-medida` devuelve "Cambios guardados. El texto alternativo cambió en: {título del artículo}."; si solo cambia el nombre, devuelve "Cambios guardados.".
-- [ ] `updateMediaAction` con alt vacío devuelve `fieldErrors.alt` "El texto alternativo no puede estar vacío."; con un id inexistente, "Esa imagen ya no existe.".
-- [ ] `deleteMediaAction` con un id inexistente devuelve "Esa imagen ya no existe.".
-- [ ] `loadMoreMediaAction` con `query` y `usage` devuelve la tanda filtrada y `CardItem` con `originalName` y `usage[].postId`.
-- [ ] Cambiar el `alt` de Medios de la imagen del cuerpo de `senales-sistema-a-medida` (sin alt propio en el nodo) cambia el `alt` que devuelve `getPublishedPostBySlug`.
+- [x] Con una imagen de portada, una en el cuerpo de un borrador y una sin usar, `listMedia({ usage: "used" })` devuelve las dos primeras y `listMedia({ usage: "unused" })` la tercera.
+- [x] `listMedia({ query: "equipo", usage: "unused" })` aplica los dos filtros a la vez.
+- [x] Con más de 24 imágenes sin usar, la segunda tanda con el `nextCursor` y `usage: "unused"` sigue filtrada y no repite.
+- [x] `countMedia` con `query` y `usage` devuelve la misma cantidad que recorrer todas las tandas de `listMedia` con esos filtros.
+- [x] `updateMedia` cambia `alt` y `original_name`; con un id inexistente devuelve `not-found` y no cambia nada.
+- [x] `updateMediaAction` llama a `requireAdmin()` antes de tocar la base, devuelve "Cambios guardados." y llama a `updateTag("blog")`.
+- [x] `updateMediaAction` que cambia el alt de la portada de `senales-sistema-a-medida` devuelve "Cambios guardados. El texto alternativo cambió en: {título del artículo}."; si solo cambia el nombre, devuelve "Cambios guardados.".
+- [x] `updateMediaAction` con alt vacío devuelve `fieldErrors.alt` "El texto alternativo no puede estar vacío."; con un id inexistente, "Esa imagen ya no existe.".
+- [x] `deleteMediaAction` con un id inexistente devuelve "Esa imagen ya no existe.".
+- [x] `loadMoreMediaAction` con `query` y `usage` devuelve la tanda filtrada y `CardItem` con `originalName` y `usage[].postId`.
+- [x] Cambiar el `alt` de Medios de la imagen del cuerpo de `senales-sistema-a-medida` (sin alt propio en el nodo) cambia el `alt` que devuelve `getPublishedPostBySlug`.
 
 **Componentes (`client`)**
 
-- [ ] `MediaToolbar`: escribir en la búsqueda llama a `router.replace` una sola vez 300 ms después de la última tecla, con `?q=…`; elegir "Sin usar" lo hace con `?uso=sin-usar`; elegir "Todas" lo quita.
-- [ ] `MediaGrid` muestra "Todavía no hay imágenes.", "No hay imágenes que coincidan con «x».", "No hay imágenes en uso." y "No hay imágenes sin usar." en cada caso.
-- [ ] Cada miniatura es un botón con nombre "Ver detalles de {alt}" y muestra "En uso" o "Sin usar".
-- [ ] `MediaDetailDialog` muestra alt, nombre, medidas, peso, fecha y "En uso en" con enlaces a `/admin/articles/{postId}/edit` y "· portada" / "· cuerpo".
-- [ ] Con uso, "Borrar" está deshabilitado y se lee "Está en uso: quitala de esos artículos para borrarla.".
-- [ ] "Editar" sobre una imagen en uso muestra "Esta imagen está en uso en: {títulos}…"; sobre una sin usar no lo muestra.
-- [ ] "Editar" con alt vacío muestra el error, pone el foco en "Texto alternativo" y no llama a la action.
-- [ ] `→` pasa a la imagen siguiente y `←` a la anterior; con el foco en un input no navegan; en la primera, "Imagen anterior" está deshabilitado.
-- [ ] `Escape` cierra el detalle y el foco vuelve a la miniatura que lo abrió.
-- [ ] `UploadDialog`: agregar 12 archivos deja 10 filas y muestra "Podés subir hasta 10 imágenes a la vez.".
-- [ ] Un `.gif` entra como fila con "Formato no soportado…" y no cuenta en "Subir {N} imágenes".
-- [ ] "Subir {N} imágenes" está deshabilitado mientras falte un alt.
-- [ ] Con 3 archivos donde la action falla en el segundo, se suben el primero y el tercero, el segundo queda con su mensaje y "Reintentar", y el resumen dice "Se subieron 2. 1 con error.".
-- [ ] Mientras sube, `Escape` y "Cancelar" no cierran el modal.
-- [ ] Con 2 filas pendientes, "Cancelar", el botón de cierre y `Escape` no cierran: el pie muestra "Tenés 2 imágenes sin subir. ¿Descartarlas?" con "Descartar" y "Seguir editando", y el foco queda en "Seguir editando".
-- [ ] "Seguir editando" (o un segundo `Escape`) vuelve al pie normal con las 2 filas intactas; "Descartar" llama a `onClose` y libera las vistas previas.
-- [ ] Con la cola vacía, o después de "Listo" con todo subido, cerrar no muestra la confirmación.
+- [x] `MediaToolbar`: escribir en la búsqueda llama a `router.replace` una sola vez 300 ms después de la última tecla, con `?q=…`; elegir "Sin usar" lo hace con `?uso=sin-usar`; elegir "Todas" lo quita.
+- [x] `MediaGrid` muestra "Todavía no hay imágenes.", "No hay imágenes que coincidan con «x».", "No hay imágenes en uso." y "No hay imágenes sin usar." en cada caso.
+- [x] Cada miniatura es un botón con nombre "Ver detalles de {alt}" y muestra "En uso" o "Sin usar".
+- [x] `MediaDetailDialog` muestra alt, nombre, medidas, peso, fecha y "En uso en" con enlaces a `/admin/articles/{postId}/edit` y "· portada" / "· cuerpo".
+- [x] Con uso, "Borrar" está deshabilitado y se lee "Está en uso: quitala de esos artículos para borrarla.".
+- [x] "Editar" sobre una imagen en uso muestra "Esta imagen está en uso en: {títulos}…"; sobre una sin usar no lo muestra.
+- [x] "Editar" con alt vacío muestra el error, pone el foco en "Texto alternativo" y no llama a la action.
+- [x] `→` pasa a la imagen siguiente y `←` a la anterior; con el foco en un input no navegan; en la primera, "Imagen anterior" está deshabilitado.
+- [x] `Escape` cierra el detalle y el foco vuelve a la miniatura que lo abrió.
+- [x] `UploadDialog`: agregar 12 archivos deja 10 filas y muestra "Podés subir hasta 10 imágenes a la vez.".
+- [x] Un `.gif` entra como fila con "Formato no soportado…" y no cuenta en "Subir {N} imágenes".
+- [x] "Subir {N} imágenes" está deshabilitado mientras falte un alt.
+- [x] Con 3 archivos donde la action falla en el segundo, se suben el primero y el tercero, el segundo queda con su mensaje y "Reintentar", y el resumen dice "Se subieron 2. 1 con error.".
+- [x] Mientras sube, `Escape` y "Cancelar" no cierran el modal.
+- [x] Con 2 filas pendientes, "Cancelar", el botón de cierre y `Escape` no cierran: el pie muestra "Tenés 2 imágenes sin subir. ¿Descartarlas?" con "Descartar" y "Seguir editando", y el foco queda en "Seguir editando".
+- [x] "Seguir editando" (o un segundo `Escape`) vuelve al pie normal con las 2 filas intactas; "Descartar" llama a `onClose` y libera las vistas previas.
+- [x] Con la cola vacía, o después de "Listo" con todo subido, cerrar no muestra la confirmación.
 
 **Medios (E2E, `medios.spec.ts`)**
 
-- [ ] "Subir imágenes" con 3 archivos y sus alts los sube, muestra "Se subieron 3." y, al tocar "Listo", aparecen primeros en la grilla; cada uno se sirve como `image/webp`.
-- [ ] Subir un archivo que ya estaba muestra "Esa imagen ya estaba subida." en su fila y no suma miniaturas.
-- [ ] Un `.txt` muestra el mensaje de formato no soportado en su fila y no se sube.
-- [ ] Elegir 2 archivos y tocar "Cancelar" pide confirmación; "Seguir editando" los conserva y "Descartar" cierra sin subir nada.
-- [ ] Editar el alt de la portada del seed muestra el aviso con el título del artículo y, al guardar, el toast lo nombra; `/blog/senales-sistema-a-medida` muestra el alt nuevo en el hero.
-- [ ] Buscar parte del alt de una imagen deja solo las que coinciden, la URL queda con `?q=` y recargar mantiene la búsqueda.
-- [ ] "Sin usar" oculta las imágenes del seed que usa `senales-sistema-a-medida` y "En uso" las muestra.
-- [ ] El detalle de la portada del seed lista "{título} · portada" y el enlace abre el editor de ese artículo.
-- [ ] Editar el alt y el nombre en el detalle muestra "Cambios guardados.", la miniatura cambia sin recargar y los datos persisten al recargar.
-- [ ] Una imagen sin usar se borra desde el detalle con confirmación y sale de la grilla; una en uso tiene "Borrar" deshabilitado.
-- [ ] "Copiar URL" deja `{origen}/media/{id}` en el portapapeles y "Copiar id" deja el id.
-- [ ] "Abrir original" apunta a `/media/{id}` con `target="_blank"`.
-- [ ] Con 30 imágenes, "Cargar más" deja 30 miniaturas y el botón desaparece; `→` desde la miniatura 24 llega a la 25.
-- [ ] Con 30 imágenes, borrar una de la segunda tanda la saca y conserva las demás.
-- [ ] Sin sesión, `/admin/media` redirige a `/cuenta/login`; la barra lateral lleva a Medios.
-- [ ] A 390 px la grilla tiene 2 columnas, los dos modales ocupan la pantalla y no hay scroll horizontal.
-- [ ] La grilla, la barra y los dos modales cumplen 4.5:1 de contraste y todos sus controles miden 44 px o más (revisado con `/frontend-design`).
+- [x] "Subir imágenes" con 3 archivos y sus alts los sube, muestra "Se subieron 3." y, al tocar "Listo", aparecen primeros en la grilla; cada uno se sirve como `image/webp`.
+- [x] Subir un archivo que ya estaba muestra "Esa imagen ya estaba subida." en su fila y no suma miniaturas.
+- [x] Un `.txt` muestra el mensaje de formato no soportado en su fila y no se sube.
+- [x] Elegir 2 archivos y tocar "Cancelar" pide confirmación; "Seguir editando" los conserva y "Descartar" cierra sin subir nada.
+- [x] Editar el alt de la portada del seed muestra el aviso con el título del artículo y, al guardar, el toast lo nombra; `/blog/senales-sistema-a-medida` muestra el alt nuevo en el hero.
+- [x] Buscar parte del alt de una imagen deja solo las que coinciden, la URL queda con `?q=` y recargar mantiene la búsqueda.
+- [x] "Sin usar" oculta las imágenes del seed que usa `senales-sistema-a-medida` y "En uso" las muestra.
+- [x] El detalle de la portada del seed lista "{título} · portada" y el enlace abre el editor de ese artículo.
+- [x] Editar el alt y el nombre en el detalle muestra "Cambios guardados.", la miniatura cambia sin recargar y los datos persisten al recargar.
+- [x] Una imagen sin usar se borra desde el detalle con confirmación y sale de la grilla; una en uso tiene "Borrar" deshabilitado.
+- [x] "Copiar URL" deja `{origen}/media/{id}` en el portapapeles y "Copiar id" deja el id.
+- [x] "Abrir original" apunta a `/media/{id}` con `target="_blank"`.
+- [x] Con 30 imágenes, "Cargar más" deja 30 miniaturas y el botón desaparece; `→` desde la miniatura 24 llega a la 25.
+- [x] Con 30 imágenes, borrar una de la segunda tanda la saca y conserva las demás.
+- [x] Sin sesión, `/admin/media` redirige a `/cuenta/login`; la barra lateral lleva a Medios.
+- [x] A 390 px la grilla tiene 2 columnas, los dos modales ocupan la pantalla y no hay scroll horizontal.
+- [x] La grilla, la barra y los dos modales cumplen 4.5:1 de contraste y todos sus controles miden 44 px o más (revisado con `/frontend-design`).
 
 ## Decisiones
 

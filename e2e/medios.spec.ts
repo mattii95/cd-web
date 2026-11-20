@@ -495,5 +495,18 @@ test.describe("a 390 px", () => {
       d.getByRole("link", { name: "Abrir original" }),
       d.getByRole("button", { name: "Borrar" }),
     ]);
+    await d.getByRole("button", { name: "Cerrar" }).click();
+
+    await page.getByRole("button", { name: "Subir imágenes" }).first().click();
+    const u = uploadDialog(page);
+    await u.getByLabel("Elegir archivos").setInputFiles({ name: "e2e-medios-a.png", mimeType: "image/png", buffer: Buffer.from("x") });
+    await tall([
+      u.getByRole("button", { name: "Cerrar" }),
+      u.getByText("Elegir archivos", { exact: true }),
+      u.getByLabel("Texto alternativo de e2e-medios-a.png"),
+      u.getByRole("button", { name: "Quitar e2e-medios-a.png" }),
+      u.getByRole("button", { name: "Cancelar" }),
+      u.getByRole("button", { name: "Subir 1 imagen" }),
+    ]);
   });
 });

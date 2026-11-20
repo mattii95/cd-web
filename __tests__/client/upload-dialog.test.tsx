@@ -202,11 +202,17 @@ describe("UploadDialog", () => {
     });
 
     it("'Descartar' llama a onClose y libera las vistas previas", async () => {
-      const { user, onClose } = await setup();
+      const user = userEvent.setup();
+      const onClose = vi.fn();
+      const { unmount } = render(<UploadDialog onClose={onClose} />);
+      pick(png("a.png"), png("b.png"));
       await user.click(screen.getByRole("button", { name: "Cancelar" }));
       await user.click(screen.getByRole("button", { name: "Descartar" }));
       expect(onClose).toHaveBeenCalledTimes(1);
       expect(uploadMediaAction).not.toHaveBeenCalled();
+      unmount(); // lo que hace el padre al cerrar
+      expect(revokeObjectURL).toHaveBeenCalledWith("blob:a.png");
+      expect(revokeObjectURL).toHaveBeenCalledWith("blob:b.png");
     });
 
     it("al desmontar libera las vistas previas", async () => {

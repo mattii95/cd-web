@@ -72,7 +72,7 @@ export function MediaToolbar({ query }: { query: AdminMediaQuery }) {
               }}
               className="peer sr-only"
             />
-            <span className="inline-flex min-h-11 items-center rounded-full border border-cms-control bg-cms-panel px-4 text-[13px] font-semibold text-cms-ink transition-colors hover:bg-cms-chip peer-checked:border-cms-ink peer-checked:bg-cms-ink peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-cms-link">
+            <span className="inline-flex min-h-11 items-center rounded-full border border-cms-control bg-cms-panel px-4 text-sm font-semibold text-cms-ink transition-colors hover:border-cms-link hover:bg-cms-chip hover:text-cms-link peer-checked:border-cms-ink peer-checked:bg-cms-ink peer-checked:text-white peer-checked:hover:border-cms-ink peer-checked:hover:bg-cms-ink peer-checked:hover:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-cms-link">
               {label}
             </span>
           </label>

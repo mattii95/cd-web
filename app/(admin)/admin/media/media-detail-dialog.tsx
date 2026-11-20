@@ -10,7 +10,7 @@ import { notify } from "@/components/admin/toast";
 import { ArrowLeft, ArrowRight, Close, Spinner } from "@/components/icons";
 import { parseMediaForm } from "@/lib/admin/media-form";
 import type { CardItem } from "./card-item";
-import { btn } from "./styles";
+import { btn, btnDanger, btnPrimary, iconBtn } from "./styles";
 
 type Props = {
   items: CardItem[]; // las cargadas en la grilla, con la búsqueda y el filtro aplicados
@@ -22,9 +22,6 @@ type Props = {
 };
 
 type Errors = Partial<Record<"alt" | "originalName", string>>;
-
-const iconBtn =
-  "flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-cms-control bg-cms-panel text-cms-ink transition-colors hover:bg-cms-chip disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-cms-panel";
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -196,7 +193,7 @@ export function MediaDetailDialog({ items, id, onNavigate, onClose, onSaved, onD
                 </p>
               )}
               <div className="flex flex-wrap gap-2">
-                <button type="submit" disabled={pending} className={`${btn} border-accent bg-accent text-white hover:bg-accent-hover`}>
+                <button type="submit" disabled={pending} className={btnPrimary}>
                   {pending && <Spinner />}
                   {pending ? "Guardando…" : "Guardar cambios"}
                 </button>
@@ -258,7 +255,7 @@ export function MediaDetailDialog({ items, id, onNavigate, onClose, onSaved, onD
                     disabled={inUse}
                     aria-describedby={inUse ? hintId : undefined}
                     onClick={() => setConfirming(true)}
-                    className={`${btn} border-red-300 bg-red-50 text-red-700 hover:bg-red-100 disabled:hover:bg-red-50`}
+                    className={btnDanger}
                   >
                     Borrar
                   </button>

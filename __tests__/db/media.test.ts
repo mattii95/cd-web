@@ -450,6 +450,8 @@ describe("filtro de uso", () => {
     expect(p2.nextCursor).toBeNull();
     const all = new Set([...p1.items, ...p2.items].map((m) => m.id));
     expect(all.size).toBe(30);
+    // countMedia cuenta lo mismo que recorrer todas las tandas con ese filtro.
+    expect(await countMedia({ usage: "unused" })).toBe(all.size);
   });
 
   it("countMedia coincide con recorrer todas las tandas", async () => {
