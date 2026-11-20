@@ -270,19 +270,19 @@ Convenciones:
 
 **General**
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
 - [ ] `npm run test:db` pasa con Docker levantado.
 - [ ] `npm run test:e2e` pasa completo, con `comunidad.spec.ts` sin cambios en sus casos.
-- [ ] No hay migraciones nuevas: `npm run db:generate` no crea archivos.
-- [ ] `package.json` no suma dependencias.
+- [x] No hay migraciones nuevas: `npm run db:generate` no crea archivos.
+- [x] `package.json` no suma dependencias.
 
 **Parámetros (`server`)**
 
-- [ ] `parseCommentParams({})` devuelve `{ estado: "pendientes", articulo: null, q: null, page: 1 }`.
-- [ ] `parseCommentParams({ estado: "ocultos", articulo: "<uuid>", q: "  spam ", page: "2" })` devuelve esos valores con `q: "spam"`; `estado: "otro"` cae a `"pendientes"`, `articulo: "abc"` a `null`, `page: "0"` a `1`, y una `q` de 101 caracteres se recorta a 100.
-- [ ] `commentQueryHref` con los valores por defecto devuelve `/admin/comments`; con todo, `/admin/comments?estado=ocultos&articulo=<uuid>&q=spam&page=2`.
+- [x] `parseCommentParams({})` devuelve `{ estado: "pendientes", articulo: null, q: null, page: 1 }`.
+- [x] `parseCommentParams({ estado: "ocultos", articulo: "<uuid>", q: "  spam ", page: "2" })` devuelve esos valores con `q: "spam"`; `estado: "otro"` cae a `"pendientes"`, `articulo: "abc"` a `null`, `page: "0"` a `1`, y una `q` de 101 caracteres se recorta a 100.
+- [x] `commentQueryHref` con los valores por defecto devuelve `/admin/comments`; con todo, `/admin/comments?estado=ocultos&articulo=<uuid>&q=spam&page=2`.
 
 **Consultas (`admin-comments.test.ts`)**
 
@@ -310,14 +310,14 @@ Convenciones:
 
 **Componentes (`client`)**
 
-- [ ] `CommentsToolbar`: escribir llama a `router.replace` una sola vez 300 ms después de la última tecla, con `?q=…` y sin `page`; elegir un artículo lo hace con `?articulo=<id>`; elegir "Todos los artículos" lo quita y mantiene `estado`.
-- [ ] `CommentCard` muestra "Aprobar" y "Ocultar" en un pendiente, solo "Ocultar" en un aprobado y solo "Aprobar" en un oculto.
-- [ ] `CommentCard` de un artículo no publicado muestra "Artículo no publicado" y el título sin enlace; de uno publicado, enlace a `/blog/{slug}#valoraciones`.
-- [ ] `CommentCard` muestra "Respuesta del autor" solo si hay respuesta, y "Útil · N" solo si N > 0.
-- [ ] "Borrar" abre la confirmación con la cantidad de votos y no llama a la action hasta confirmar.
-- [ ] `CommentsList`: tildar 2 tarjetas muestra "2 seleccionados" con "Aprobar" y "Ocultar"; "Seleccionar todos los de esta página" tilda todas; "Quitar selección" oculta la barra.
-- [ ] Al aprobar, se muestra el toast con "Deshacer", y "Deshacer" llama a `undoCommentStatusAction` con el `undo` recibido.
-- [ ] `AdminNav` con `badges` muestra la insignia junto a "Comentarios" con el nombre accesible "{N} pendientes"; sin `badges` no muestra nada.
+- [x] `CommentsToolbar`: escribir llama a `router.replace` una sola vez 300 ms después de la última tecla, con `?q=…` y sin `page`; elegir un artículo lo hace con `?articulo=<id>`; elegir "Todos los artículos" lo quita y mantiene `estado`.
+- [x] `CommentCard` muestra "Aprobar" y "Ocultar" en un pendiente, solo "Ocultar" en un aprobado y solo "Aprobar" en un oculto.
+- [x] `CommentCard` de un artículo no publicado muestra "Artículo no publicado" y el título sin enlace; de uno publicado, enlace a `/blog/{slug}#valoraciones`.
+- [x] `CommentCard` muestra "Respuesta del autor" solo si hay respuesta, y "Útil · N" solo si N > 0.
+- [x] "Borrar" abre la confirmación con la cantidad de votos y no llama a la action hasta confirmar.
+- [x] `CommentsList`: tildar 2 tarjetas muestra "2 seleccionados" con "Aprobar" y "Ocultar"; "Seleccionar todos los de esta página" tilda todas; "Quitar selección" oculta la barra.
+- [x] Al aprobar, se muestra el toast con "Deshacer", y "Deshacer" llama a `undoCommentStatusAction` con el `undo` recibido.
+- [x] `AdminNav` con `badges` muestra la insignia junto a "Comentarios" con el nombre accesible "{N} pendientes"; sin `badges` no muestra nada.
 
 **Comentarios (E2E, `comentarios.spec.ts`)**
 

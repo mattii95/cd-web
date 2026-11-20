@@ -280,15 +280,25 @@ test("Ver usuario lleva a /admin/users?q={email} con ese usuario en la tabla", a
   await expect(page.getByRole("row").filter({ hasText: lector.email })).toHaveCount(1);
 });
 
-test("sin sesión redirige a /cuenta/login y un lector recibe 404", async ({ page, browser }) => {
-  await page.goto("/admin/comments");
-  await expect(page).toHaveURL(/\/cuenta\/login/);
+test("sin sesión redirige a /cuenta/login y un lector recibe 404", async ({
+  page,
+  browser,
+  consoleErrors,
+}) => {
+  const anonimo = await browser.newContext();
+  const anon = await anonimo.newPage();
+  await anon.goto("/admin/comments");
+  await expect(anon).toHaveURL(/\/cuenta\/login\?volver=%2Fadmin%2Fcomments$/);
+  await anonimo.close();
 
+  // La página se transmite por streaming: el estado HTTP ya salió en 200 cuando se llama a
+  // notFound(), así que se comprueba la página de error (igual que usuarios.spec).
   const lector = await crearLector();
-  const { ctx, page: logueado } = await conSesion(browser, lector.email);
-  const res = await logueado.goto("/admin/comments");
-  expect(res?.status()).toBe(404);
-  await ctx.close();
+  await login(page, lector.email);
+  await expect(page).toHaveURL(/\/cuenta\/perfil$/);
+  await page.goto("/admin/comments");
+  await expect(page.getByRole("heading", { name: "Esta página no existe" })).toBeVisible();
+  consoleErrors.length = 0; // el navegador loguea el 404 esperado
 });
 
 test("a 390 px las tarjetas apilan sus datos, no hay scroll horizontal y el cajón muestra la insignia", async ({
