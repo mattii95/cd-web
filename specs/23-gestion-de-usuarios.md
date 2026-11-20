@@ -1,6 +1,6 @@
 # SPEC 23 — Gestión de usuarios
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 07, SPEC 08, SPEC 14, SPEC 16, SPEC 21
 > **Fecha:** 2026-11-19
 > **Objetivo:** Que el admin busque y filtre usuarios en `/admin/users` y pueda bloquearlos, desbloquearlos, cerrarles las sesiones, reenviarles la verificación y borrar su cuenta.
@@ -288,74 +288,74 @@ Convenciones:
 
 **General**
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado.
-- [ ] `npm run test:e2e` pasa completo, con `auth.spec.ts` y `oauth.spec.ts` sin cambios en sus casos.
-- [ ] `package.json` no suma dependencias y `lib/auth/auth.ts` no suma el plugin `admin` de Better Auth.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado.
+- [x] `npm run test:e2e` pasa completo, con `auth.spec.ts` y `oauth.spec.ts` sin cambios en sus casos.
+- [x] `package.json` no suma dependencias y `lib/auth/auth.ts` no suma el plugin `admin` de Better Auth.
 
 **Autenticación (`db`, `server`, `client`)**
 
-- [ ] Insertar un usuario con `banned_at` y sin `ban_reason`, o con un `ban_reason` de solo espacios, falla por la base.
-- [ ] Con `banned_at` puesto, `signInEmail` con la contraseña correcta lanza un `APIError` con código `ACCOUNT_SUSPENDED` y no crea filas en `session`.
-- [ ] Con `banned_at` puesto, `signInEmail` con una contraseña incorrecta sigue dando `INVALID_EMAIL_OR_PASSWORD`.
-- [ ] `getCurrentUser` devuelve `null` para una sesión válida de un usuario con `bannedAt`.
-- [ ] `signInAction` de un usuario bloqueado devuelve "Tu cuenta está suspendida. Escribinos a {site.email}.".
-- [ ] `LoginContext` con `?error=ACCOUNT_SUSPENDED` muestra el mensaje de cuenta suspendida y no el de proveedor; con `?error=access_denied` sigue mostrando el de proveedor.
+- [x] Insertar un usuario con `banned_at` y sin `ban_reason`, o con un `ban_reason` de solo espacios, falla por la base.
+- [x] Con `banned_at` puesto, `signInEmail` con la contraseña correcta lanza un `APIError` con código `ACCOUNT_SUSPENDED` y no crea filas en `session`.
+- [x] Con `banned_at` puesto, `signInEmail` con una contraseña incorrecta sigue dando `INVALID_EMAIL_OR_PASSWORD`.
+- [x] `getCurrentUser` devuelve `null` para una sesión válida de un usuario con `bannedAt`.
+- [x] `signInAction` de un usuario bloqueado devuelve "Tu cuenta está suspendida. Escribinos a {site.email}.".
+- [x] `LoginContext` con `?error=ACCOUNT_SUSPENDED` muestra el mensaje de cuenta suspendida y no el de proveedor; con `?error=access_denied` sigue mostrando el de proveedor.
 
 **Utilidades (`server`)**
 
-- [ ] `parseUserParams({ q: "  ana ", estado: "bloqueados", rol: "lectores", page: "2" })` devuelve esos valores con `q: "ana"`; `estado: "otro"`, `rol: "otro"`, `page: "0"` y `page: "abc"` caen a `null` o `1`; una `q` de 101 caracteres se recorta a 100.
-- [ ] `userQueryHref` con todo en `null` y `page: 1` devuelve `/admin/users`; con todo, `/admin/users?q=ana&estado=bloqueados&rol=lectores&page=2`.
-- [ ] `parseBanForm` con motivo vacío, de solo espacios o de 301 caracteres, o con un `id` vacío, devuelve el error en el campo correspondiente.
-- [ ] `isDeleteConfirmed(" Ana@Mail.com ", "ana@mail.com")` es `true`; con `"ana@mail.co"` es `false`.
+- [x] `parseUserParams({ q: "  ana ", estado: "bloqueados", rol: "lectores", page: "2" })` devuelve esos valores con `q: "ana"`; `estado: "otro"`, `rol: "otro"`, `page: "0"` y `page: "abc"` caen a `null` o `1`; una `q` de 101 caracteres se recorta a 100.
+- [x] `userQueryHref` con todo en `null` y `page: 1` devuelve `/admin/users`; con todo, `/admin/users?q=ana&estado=bloqueados&rol=lectores&page=2`.
+- [x] `parseBanForm` con motivo vacío, de solo espacios o de 301 caracteres, o con un `id` vacío, devuelve el error en el campo correspondiente.
+- [x] `isDeleteConfirmed(" Ana@Mail.com ", "ana@mail.com")` es `true`; con `"ana@mail.co"` es `false`.
 
 **Consultas (`admin-users.test.ts`)**
 
-- [ ] `listAdminUsers` ordena por alta descendente, pagina de a 25 y busca por nombre o email; `q: "50%"` no devuelve todos.
-- [ ] Los filtros `activos`, `bloqueados` y `sin-verificar` devuelven conjuntos disjuntos que suman el total; un bloqueado sin verificar solo sale en `bloqueados`.
-- [ ] `rol: "admins"` combinado con `estado` y `q` aplica los tres filtros a la vez.
-- [ ] Cada fila trae `methods`, `sessions`, `lastActiveAt` (o `null` sin sesiones), `posts`, `comments`, `ratings`, `votes` y `bannedByName` correctos.
-- [ ] `banUser` sobre un lector con 2 sesiones guarda `banned_at`, `ban_reason` y `banned_by`, borra las 2 sesiones y devuelve `revoked: 2`.
-- [ ] `banUser` sobre un admin devuelve `protected`; sobre un bloqueado, `already`; con un id inexistente, `not-found`; en los tres casos no cambia nada.
-- [ ] `unbanUser` pone las tres columnas en `NULL`; sobre uno no bloqueado devuelve `not-banned`.
-- [ ] `revokeUserSessions` borra solo las sesiones de ese usuario y devuelve cuántas.
-- [ ] `deleteUser` de un lector con comentarios, votos, puntuaciones y una imagen subida borra al usuario, sus comentarios, votos, puntuaciones, sesiones y cuentas, y deja la imagen con `uploaded_by` en `NULL`.
-- [ ] `deleteUser` de un autor devuelve `author` con su cantidad de artículos; de un admin, `protected`; con un email que no coincide, `mismatch`; en los tres casos no borra nada.
+- [x] `listAdminUsers` ordena por alta descendente, pagina de a 25 y busca por nombre o email; `q: "50%"` no devuelve todos.
+- [x] Los filtros `activos`, `bloqueados` y `sin-verificar` devuelven conjuntos disjuntos que suman el total; un bloqueado sin verificar solo sale en `bloqueados`.
+- [x] `rol: "admins"` combinado con `estado` y `q` aplica los tres filtros a la vez.
+- [x] Cada fila trae `methods`, `sessions`, `lastActiveAt` (o `null` sin sesiones), `posts`, `comments`, `ratings`, `votes` y `bannedByName` correctos.
+- [x] `banUser` sobre un lector con 2 sesiones guarda `banned_at`, `ban_reason` y `banned_by`, borra las 2 sesiones y devuelve `revoked: 2`.
+- [x] `banUser` sobre un admin devuelve `protected`; sobre un bloqueado, `already`; con un id inexistente, `not-found`; en los tres casos no cambia nada.
+- [x] `unbanUser` pone las tres columnas en `NULL`; sobre uno no bloqueado devuelve `not-banned`.
+- [x] `revokeUserSessions` borra solo las sesiones de ese usuario y devuelve cuántas.
+- [x] `deleteUser` de un lector con comentarios, votos, puntuaciones y una imagen subida borra al usuario, sus comentarios, votos, puntuaciones, sesiones y cuentas, y deja la imagen con `uploaded_by` en `NULL`.
+- [x] `deleteUser` de un autor devuelve `author` con su cantidad de artículos; de un admin, `protected`; con un email que no coincide, `mismatch`; en los tres casos no borra nada.
 
 **Actions (`users-actions.test.ts`)**
 
-- [ ] Cada action llama a `requireAdmin()` antes de tocar la base y, si cambió algo, a `revalidatePath("/admin/users")`.
-- [ ] `deleteUserAction` llama a `updateTag("blog")`; las demás no.
-- [ ] `revokeUserSessionsAction` sobre el admin que la llama devuelve "Para cerrar tu sesión usá «Cerrar sesión»." y no borra su sesión.
-- [ ] `resendUserVerificationAction` sobre un usuario sin verificar llama a `sendVerificationEmail` con su email; sobre uno verificado o bloqueado devuelve "Ese usuario ya no necesita verificar su email." sin enviar.
-- [ ] Las actions devuelven los mensajes de la tabla de mensajes para cada caso de éxito y de error.
-- [ ] Después de `banUserAction`, una sesión que el usuario tenía abierta deja de valer: `getSession` con su cookie devuelve `null`.
-- [ ] Borrar un lector que comentó un artículo publicado hace que `getPublishedPostBySlug` y los comentarios de ese artículo ya no lo incluyan.
+- [x] Cada action llama a `requireAdmin()` antes de tocar la base y, si cambió algo, a `revalidatePath("/admin/users")`.
+- [x] `deleteUserAction` llama a `updateTag("blog")`; las demás no.
+- [x] `revokeUserSessionsAction` sobre el admin que la llama devuelve "Para cerrar tu sesión usá «Cerrar sesión»." y no borra su sesión.
+- [x] `resendUserVerificationAction` sobre un usuario sin verificar llama a `sendVerificationEmail` con su email; sobre uno verificado o bloqueado devuelve "Ese usuario ya no necesita verificar su email." sin enviar.
+- [x] Las actions devuelven los mensajes de la tabla de mensajes para cada caso de éxito y de error.
+- [x] Después de `banUserAction`, una sesión que el usuario tenía abierta deja de valer: `getSession` con su cookie devuelve `null`.
+- [x] Borrar un lector que comentó un artículo publicado hace que `getPublishedPostBySlug` y los comentarios de ese artículo ya no lo incluyan.
 
 **Componentes (`client`)**
 
-- [ ] `UsersToolbar`: escribir llama a `router.replace` una sola vez 300 ms después de la última tecla, con `?q=…` y sin `page`; elegir "Bloqueados" lo hace con `?estado=bloqueados`; elegir "Todos" lo quita.
-- [ ] `UserRowMenu` de un admin muestra "Bloquear" y "Borrar cuenta" deshabilitados con su motivo; del admin que mira, "Cerrar sesiones" deshabilitado con "Para cerrar tu sesión usá «Cerrar sesión»."; de un autor, "Borrar cuenta" deshabilitado con "Es autor de {N} artículos…".
-- [ ] `UserRowMenu` muestra "Desbloquear" en lugar de "Bloquear" para un bloqueado, y "Reenviar verificación" solo para un sin verificar no bloqueado.
-- [ ] `BanDialog` con el motivo vacío muestra "Escribí el motivo del bloqueo.", pone el foco en el campo y no llama a la action.
-- [ ] `DeleteUserDialog` lista "{N} comentarios", "{M} puntuaciones" y "{K} votos en comentarios" omitiendo los que son 0, y "Borrar cuenta" sigue deshabilitado hasta escribir el email exacto.
+- [x] `UsersToolbar`: escribir llama a `router.replace` una sola vez 300 ms después de la última tecla, con `?q=…` y sin `page`; elegir "Bloqueados" lo hace con `?estado=bloqueados`; elegir "Todos" lo quita.
+- [x] `UserRowMenu` de un admin muestra "Bloquear" y "Borrar cuenta" deshabilitados con su motivo; del admin que mira, "Cerrar sesiones" deshabilitado con "Para cerrar tu sesión usá «Cerrar sesión»."; de un autor, "Borrar cuenta" deshabilitado con "Es autor de {N} artículos…".
+- [x] `UserRowMenu` muestra "Desbloquear" en lugar de "Bloquear" para un bloqueado, y "Reenviar verificación" solo para un sin verificar no bloqueado.
+- [x] `BanDialog` con el motivo vacío muestra "Escribí el motivo del bloqueo.", pone el foco en el campo y no llama a la action.
+- [x] `DeleteUserDialog` lista "{N} comentarios", "{M} puntuaciones" y "{K} votos en comentarios" omitiendo los que son 0, y "Borrar cuenta" sigue deshabilitado hasta escribir el email exacto.
 
 **Usuarios (E2E, `usuarios.spec.ts`)**
 
-- [ ] "Usuarios" en la barra lateral lleva a `/admin/users` con la tabla, el contador y las columnas Usuario, Rol, Estado, Acceso, Última actividad y Alta.
-- [ ] Buscar parte de un email deja solo los que coinciden, la URL queda con `?q=` y recargar mantiene la búsqueda; "Limpiar filtros" en el estado vacío vuelve a `/admin/users`.
-- [ ] Bloquear un lector con motivo muestra el toast, la fila pasa a "Bloqueado" y, en otro contexto del navegador donde ese lector tenía sesión, recargar `/cuenta/perfil` lleva a `/cuenta/login`.
-- [ ] Ese lector bloqueado intenta entrar con su contraseña y ve "Tu cuenta está suspendida. Escribinos a {site.email}."; con una contraseña incorrecta ve "El email o la contraseña no son correctos.".
-- [ ] "Desbloquear" muestra el motivo y quién bloqueó; después el lector puede iniciar sesión.
-- [ ] "Cerrar sesiones" de un lector con sesión abierta lo deja sin sesión y puede volver a entrar.
-- [ ] "Reenviar verificación" de un usuario sin verificar muestra el toast y llega un email de verificación a su dirección.
-- [ ] "Borrar cuenta" de un lector con un comentario pide el email, borra la cuenta, la fila desaparece y el comentario ya no sale en el artículo.
-- [ ] En la fila del admin del seed, "Bloquear" y "Borrar cuenta" están deshabilitados.
-- [ ] Sin sesión, `/admin/users` redirige a `/cuenta/login`; con un lector, da 404.
-- [ ] A 390 px la tabla pasa a tarjetas, los modales ocupan la pantalla y no hay scroll horizontal.
-- [ ] La barra, la tabla, el menú y los modales cumplen 4.5:1 de contraste y todos sus controles miden 44 px o más (revisado con `/frontend-design`).
+- [x] "Usuarios" en la barra lateral lleva a `/admin/users` con la tabla, el contador y las columnas Usuario, Rol, Estado, Acceso, Última actividad y Alta.
+- [x] Buscar parte de un email deja solo los que coinciden, la URL queda con `?q=` y recargar mantiene la búsqueda; "Limpiar filtros" en el estado vacío vuelve a `/admin/users`.
+- [x] Bloquear un lector con motivo muestra el toast, la fila pasa a "Bloqueado" y, en otro contexto del navegador donde ese lector tenía sesión, recargar `/cuenta/perfil` lleva a `/cuenta/login`.
+- [x] Ese lector bloqueado intenta entrar con su contraseña y ve "Tu cuenta está suspendida. Escribinos a {site.email}."; con una contraseña incorrecta ve "El email o la contraseña no son correctos.".
+- [x] "Desbloquear" muestra el motivo y quién bloqueó; después el lector puede iniciar sesión.
+- [x] "Cerrar sesiones" de un lector con sesión abierta lo deja sin sesión y puede volver a entrar.
+- [x] "Reenviar verificación" de un usuario sin verificar muestra el toast y llega un email de verificación a su dirección.
+- [x] "Borrar cuenta" de un lector con un comentario pide el email, borra la cuenta, la fila desaparece y el comentario ya no sale en el artículo.
+- [x] En la fila del admin del seed, "Bloquear" y "Borrar cuenta" están deshabilitados.
+- [x] Sin sesión, `/admin/users` redirige a `/cuenta/login`; con un lector, da 404.
+- [x] A 390 px la tabla pasa a tarjetas, los modales ocupan la pantalla y no hay scroll horizontal.
+- [x] La barra, la tabla, el menú y los modales cumplen 4.5:1 de contraste y todos sus controles miden 44 px o más (revisado con `/frontend-design`).
 
 ## Decisiones
 
