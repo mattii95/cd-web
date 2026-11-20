@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { AdminNav } from "./admin-nav";
+import { AdminNav, type AdminNavBadges } from "./admin-nav";
 
 const FOCUSABLE = "a[href], button:not([disabled])";
 
-export function AdminDrawer() {
+export function AdminDrawer({ badges }: { badges?: AdminNavBadges }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const openRef = useRef<HTMLButtonElement>(null);
@@ -76,7 +76,7 @@ export function AdminDrawer() {
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
-          <AdminNav onNavigate={close} />
+          <AdminNav onNavigate={close} badges={badges} />
         </div>
       </div>
     </div>
