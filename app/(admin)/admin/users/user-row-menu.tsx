@@ -1,9 +1,16 @@
 "use client";
 
 import { type ReactNode, useEffect, useId, useRef, useState, useTransition } from "react";
-import { resendUserVerificationAction } from "@/actions/admin/users";
+import {
+  resendUserVerificationAction,
+  revokeUserSessionsAction,
+  unbanUserAction,
+} from "@/actions/admin/users";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { notify } from "@/components/admin/toast";
 import type { AdminUserRow } from "@/db/admin-users";
+import { formatDate } from "@/lib/format-date";
+import { BanDialog } from "./ban-dialog";
 
 type Kind = "ban" | "unban" | "revoke" | "delete";
 const idle = { status: "idle" } as const;
@@ -47,7 +54,7 @@ function MenuEntry({
 
 export function UserRowMenu({ user, isSelf }: { user: AdminUserRow; isSelf: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [, setKind] = useState<Kind | null>(null);
+  const [kind, setKind] = useState<Kind | null>(null);
   const [pending, start] = useTransition();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -87,6 +94,21 @@ export function UserRowMenu({ user, isSelf }: { user: AdminUserRow; isSelf: bool
       notify(await resendUserVerificationAction(idle, data));
     });
   };
+
+  const close = () => setKind(null);
+  const cancel = () => {
+    close();
+    trigger.current?.focus();
+  };
+
+  // Confirmar corre la action; el resultado sale en el aviso y el diálogo se cierra.
+  const confirm = (action: typeof unbanUserAction) =>
+    start(async () => {
+      const data = new FormData();
+      data.set("id", user.id);
+      notify(await action(idle, data));
+      close();
+    });
 
   const banned = user.status === "bloqueado";
   const isAdmin = user.role === "admin";
@@ -151,6 +173,29 @@ export function UserRowMenu({ user, isSelf }: { user: AdminUserRow; isSelf: bool
           />
         </div>
       )}
+      {kind === "ban" && <BanDialog user={user} onClose={cancel} />}
+      <ConfirmDialog
+        open={kind === "unban"}
+        title={`¿Desbloquear a ${user.name}?`}
+        description={`Bloqueado el ${user.bannedAt ? formatDate(user.bannedAt) : "—"} por ${
+          user.bannedByName ?? "un administrador"
+        }. Motivo: «${user.banReason ?? ""}». Va a poder volver a iniciar sesión.`}
+        confirmLabel="Desbloquear"
+        pendingLabel="Desbloqueando…"
+        pending={pending}
+        onConfirm={() => confirm(unbanUserAction)}
+        onCancel={cancel}
+      />
+      <ConfirmDialog
+        open={kind === "revoke"}
+        title={`¿Cerrar las sesiones de ${user.name}?`}
+        description={`Se ${user.sessions === 1 ? "cierra su sesión abierta" : `cierran sus ${user.sessions} sesiones abiertas`}. Puede volver a iniciar sesión.`}
+        confirmLabel="Cerrar sesiones"
+        pendingLabel="Cerrando…"
+        pending={pending}
+        onConfirm={() => confirm(revokeUserSessionsAction)}
+        onCancel={cancel}
+      />
     </div>
   );
 }

@@ -4,11 +4,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UserRowMenu } from "@/app/(admin)/admin/users/user-row-menu";
 import type { AdminUserRow } from "@/db/admin-users";
 
-const { resendUserVerificationAction, notify } = vi.hoisted(() => ({
-  resendUserVerificationAction: vi.fn(),
-  notify: vi.fn(),
+const { resendUserVerificationAction, unbanUserAction, revokeUserSessionsAction, notify } = vi.hoisted(
+  () => ({
+    resendUserVerificationAction: vi.fn(),
+    unbanUserAction: vi.fn(),
+    revokeUserSessionsAction: vi.fn(),
+    notify: vi.fn(),
+  }),
+);
+vi.mock("@/actions/admin/users", () => ({
+  resendUserVerificationAction,
+  unbanUserAction,
+  revokeUserSessionsAction,
+  banUserAction: vi.fn(),
 }));
-vi.mock("@/actions/admin/users", () => ({ resendUserVerificationAction }));
 vi.mock("@/components/admin/toast", () => ({ notify }));
 
 const lector: AdminUserRow = {
@@ -43,6 +52,8 @@ const item = (name: string) => screen.getByRole("menuitem", { name: new RegExp(`
 describe("UserRowMenu", () => {
   beforeEach(() => {
     resendUserVerificationAction.mockReset().mockResolvedValue({ status: "success", message: "ok" });
+    unbanUserAction.mockReset().mockResolvedValue({ status: "success", message: "desbloqueado" });
+    revokeUserSessionsAction.mockReset().mockResolvedValue({ status: "success", message: "cerradas" });
     notify.mockReset();
   });
 
@@ -110,5 +121,61 @@ describe("UserRowMenu", () => {
     const ui = await open({ ...lector, role: "admin" });
     await ui.click(item("Bloquear"));
     expect(screen.getByRole("menu")).toBeInTheDocument(); // sigue abierto
+  });
+
+  it("Bloquear abre el diálogo con el motivo", async () => {
+    const ui = await open(lector);
+    await ui.click(item("Bloquear"));
+    expect(await screen.findByRole("heading", { name: "Bloquear a Lola" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /Motivo/ })).toBeInTheDocument();
+  });
+
+  it("Desbloquear pide confirmar con la fecha, quién bloqueó y el motivo", async () => {
+    const ui = await open({
+      ...lector,
+      status: "bloqueado",
+      bannedAt: new Date("2026-03-05T12:00:00Z"),
+      banReason: "spam",
+      bannedByName: "Ana",
+    });
+    await ui.click(item("Desbloquear"));
+    const dialog = await screen.findByRole("dialog", { name: "¿Desbloquear a Lola?" });
+    expect(dialog).toHaveAccessibleDescription(
+      "Bloqueado el 5 de marzo de 2026 por Ana. Motivo: «spam». Va a poder volver a iniciar sesión.",
+    );
+    await ui.click(screen.getByRole("button", { name: "Desbloquear" }));
+    expect(unbanUserAction).toHaveBeenCalledOnce();
+    expect((unbanUserAction.mock.calls[0][1] as FormData).get("id")).toBe("u1");
+  });
+
+  it("Desbloquear sin admin guardado dice «un administrador»", async () => {
+    const ui = await open({
+      ...lector,
+      status: "bloqueado",
+      bannedAt: new Date("2026-03-05T12:00:00Z"),
+      banReason: "spam",
+      bannedByName: null,
+    });
+    await ui.click(item("Desbloquear"));
+    expect(await screen.findByRole("dialog", { name: "¿Desbloquear a Lola?" })).toHaveAccessibleDescription(
+      /por un administrador\./,
+    );
+  });
+
+  it("Cerrar sesiones pide confirmar con la cantidad y llama a la action", async () => {
+    const ui = await open(lector);
+    await ui.click(item("Cerrar sesiones"));
+    const dialog = await screen.findByRole("dialog", { name: "¿Cerrar las sesiones de Lola?" });
+    expect(dialog).toHaveAccessibleDescription("Se cierran sus 2 sesiones abiertas. Puede volver a iniciar sesión.");
+    await ui.click(screen.getByRole("button", { name: "Cerrar sesiones" }));
+    expect(revokeUserSessionsAction).toHaveBeenCalledOnce();
+    expect(await screen.findByRole("button", { name: /Más acciones/ })).toBeInTheDocument();
+  });
+
+  it("Cancelar en el diálogo de confirmación no llama a la action", async () => {
+    const ui = await open(lector);
+    await ui.click(item("Cerrar sesiones"));
+    await ui.click(await screen.findByRole("button", { name: "Cancelar" }));
+    expect(revokeUserSessionsAction).not.toHaveBeenCalled();
   });
 });
