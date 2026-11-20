@@ -1,6 +1,6 @@
 # SPEC 24 — Moderación de comentarios
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 09, SPEC 13, SPEC 14, SPEC 16, SPEC 23
 > **Fecha:** 2026-11-20
 > **Objetivo:** Que el admin revise en `/admin/comments` los comentarios del blog, filtrados por estado, artículo y texto, y pueda aprobarlos u ocultarlos (de a uno o en lote) y borrarlos.
