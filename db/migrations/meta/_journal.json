@@ -50,6 +50,13 @@
       "when": 1795101433931,
       "tag": "0006_categorias_y_etiquetas",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795133903011,
+      "tag": "0007_bloqueo_de_usuarios",
+      "breakpoints": true
     }
   ]
 }

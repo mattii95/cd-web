@@ -92,8 +92,16 @@ test("Artículos: tabla del listado y enlace a Nuevo artículo", async ({ page }
 test("Usuarios: columnas y contador", async ({ page }) => {
   await entrarComoAdmin(page);
   await page.goto("/admin/users");
-  await expect(page.getByRole("columnheader")).toHaveText(["Nombre", "Email", "Rol", "Verificado", "Alta"]);
-  await expect(page.getByText(/\d+ usuarios? registrados?/)).toBeVisible();
+  await expect(page.getByRole("columnheader")).toHaveText([
+    "Usuario",
+    "Rol",
+    "Estado",
+    "Acceso",
+    "Última actividad",
+    "Alta",
+    "Más acciones",
+  ]);
+  await expect(page.getByText(/^\d+ usuarios?$/)).toBeVisible();
 });
 
 test("menú de cuenta: nombre, rol, opciones y cerrar sesión", async ({ page }) => {

@@ -1,7 +1,8 @@
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/db/client";
-import { rateLimit, session, user, verification } from "@/db/schema";
+import { account, rateLimit, session, user, verification } from "@/db/schema";
+import { getAuth } from "@/lib/auth/auth";
 
 const nuevoUsuario = (id: string, email = `${id}@test.com`) => ({
   id,
@@ -61,5 +62,64 @@ describe("esquema de auth", () => {
     await db.insert(rateLimit).values({ id: "r1", key: "ip|/sign-in/email", count: 1, lastRequest: now });
     const [row] = await db.select().from(rateLimit);
     expect(row.lastRequest).toBe(now);
+  });
+
+  it("rechaza banned_at sin ban_reason, o un motivo de solo espacios", async () => {
+    const db = getDb();
+    await expect(
+      db.insert(user).values({ ...nuevoUsuario("b1"), bannedAt: new Date() }),
+    ).rejects.toThrow();
+    await expect(
+      db.insert(user).values({ ...nuevoUsuario("b2"), bannedAt: new Date(), banReason: "   " }),
+    ).rejects.toThrow();
+    await expect(
+      db.insert(user).values({ ...nuevoUsuario("b3"), banReason: "motivo sin fecha" }),
+    ).rejects.toThrow();
+  });
+});
+
+describe("bloqueo en el login", () => {
+  const password = "secreta123";
+
+  beforeEach(async () => {
+    vi.stubEnv("BETTER_AUTH_SECRET", process.env.BETTER_AUTH_SECRET ?? "x".repeat(32));
+    vi.stubEnv("BETTER_AUTH_URL", process.env.BETTER_AUTH_URL ?? "http://localhost:3000");
+    const db = getDb();
+    await db.delete(session);
+    await db.delete(rateLimit);
+    await db.delete(user);
+    const hash = await (await getAuth().$context).password.hash(password);
+    await db.insert(user).values({
+      ...nuevoUsuario("ban"),
+      emailVerified: true,
+      bannedAt: new Date(),
+      banReason: "spam",
+    });
+    await db.insert(account).values({
+      id: "ban-cred",
+      accountId: "ban",
+      providerId: "credential",
+      userId: "ban",
+      password: hash,
+    });
+  });
+
+  it("con la contraseña correcta lanza ACCOUNT_SUSPENDED y no crea sesión", async () => {
+    await expect(
+      getAuth().api.signInEmail({ body: { email: "ban@test.com", password } }),
+    ).rejects.toMatchObject({ body: { code: "ACCOUNT_SUSPENDED" } });
+    expect(await getDb().select().from(session)).toHaveLength(0);
+  });
+
+  it("con una contraseña incorrecta sigue dando INVALID_EMAIL_OR_PASSWORD", async () => {
+    await expect(
+      getAuth().api.signInEmail({ body: { email: "ban@test.com", password: "incorrecta1" } }),
+    ).rejects.toMatchObject({ body: { code: "INVALID_EMAIL_OR_PASSWORD" } });
+  });
+
+  it("al desbloquearlo puede entrar", async () => {
+    await getDb().update(user).set({ bannedAt: null, banReason: null }).where(eq(user.id, "ban"));
+    const res = await getAuth().api.signInEmail({ body: { email: "ban@test.com", password } });
+    expect(res.user.id).toBe("ban");
   });
 });

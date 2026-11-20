@@ -49,6 +49,7 @@ type Props = {
   pendingLabel: string;
   pending: boolean;
   submitDisabled?: boolean;
+  tone?: "default" | "danger";
   onSubmit: () => void;
   onClose: () => void;
   children: ReactNode;
@@ -62,6 +63,7 @@ export function FormDialog({
   pendingLabel,
   pending,
   submitDisabled,
+  tone = "default",
   onSubmit,
   onClose,
   children,
@@ -108,7 +110,11 @@ export function FormDialog({
           <button
             type="submit"
             disabled={pending || submitDisabled}
-            className={`${btn} border-accent bg-accent text-white hover:bg-accent-hover`}
+            className={`${btn} ${
+              tone === "danger"
+                ? "border-red-700 bg-red-700 text-white hover:bg-red-800"
+                : "border-accent bg-accent text-white hover:bg-accent-hover"
+            }`}
           >
             {pending && <Spinner />}
             {pending ? pendingLabel : submitLabel}

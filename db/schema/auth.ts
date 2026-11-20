@@ -1,5 +1,8 @@
+import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   bigint,
+  check,
   boolean,
   index,
   integer,
@@ -13,16 +16,29 @@ import {
 // Se escribieron a mano porque el CLI de Better Auth necesita la instancia de auth, que llega en el paso 4.
 export const userRole = pgEnum("user_role", ["lector", "admin"]);
 
-export const user = pgTable("user", {
-  id: text().primaryKey(),
-  name: text().notNull(),
-  email: text().notNull().unique(),
-  emailVerified: boolean().notNull().default(false),
-  image: text(),
-  role: userRole().notNull().default("lector"),
-  createdAt: timestamp().notNull().defaultNow(),
-  updatedAt: timestamp().notNull().defaultNow(),
-});
+export const user = pgTable(
+  "user",
+  {
+    id: text().primaryKey(),
+    name: text().notNull(),
+    email: text().notNull().unique(),
+    emailVerified: boolean().notNull().default(false),
+    image: text(),
+    role: userRole().notNull().default("lector"),
+    bannedAt: timestamp(), // null = no bloqueado
+    banReason: text(), // interno: nunca se muestra al usuario
+    bannedBy: text().references((): AnyPgColumn => user.id, { onDelete: "set null" }),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow(),
+  },
+  (t) => [
+    check("user_ban_check", sql`(${t.bannedAt} IS NULL) = (${t.banReason} IS NULL)`),
+    check(
+      "user_ban_reason_check",
+      sql`${t.banReason} IS NULL OR length(trim(${t.banReason})) BETWEEN 1 AND 300`,
+    ),
+  ],
+);
 
 export const session = pgTable(
   "session",
