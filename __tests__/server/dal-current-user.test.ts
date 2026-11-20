@@ -22,6 +22,18 @@ describe("getCurrentUser", () => {
     getAuth.mockReturnValue({ api: { getSession } });
   });
 
+  const sessionUser = { id: "u", name: "Ana", email: "a@a.com", image: null, role: "lector", createdAt: new Date() };
+
+  it("devuelve null para una sesión válida de un usuario bloqueado", async () => {
+    getSession.mockResolvedValue({ user: { ...sessionUser, bannedAt: new Date() } });
+    expect(await getCurrentUser()).toBeNull();
+  });
+
+  it("devuelve el usuario si no está bloqueado", async () => {
+    getSession.mockResolvedValue({ user: { ...sessionUser, bannedAt: null } });
+    expect(await getCurrentUser()).toMatchObject({ id: "u", role: "lector" });
+  });
+
   it("devuelve null si la base o Better Auth fallan", async () => {
     getSession.mockRejectedValue(new Error("db caída"));
     expect(await getCurrentUser()).toBeNull();

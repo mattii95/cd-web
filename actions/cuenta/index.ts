@@ -6,6 +6,8 @@ import { isAPIError } from "better-auth/api";
 import { z } from "zod";
 import { resolveAfterLogin } from "@/lib/back-href";
 import { getAuth } from "@/lib/auth/auth";
+import { SUSPENDED_MESSAGE } from "@/lib/auth/messages";
+import { SUSPENDED_CODE } from "@/lib/auth/suspension";
 import { getEnabledProviders } from "@/lib/auth/providers";
 import { isRateLimited, type RateLimitRule } from "@/lib/auth/rate-limit";
 
@@ -36,6 +38,7 @@ function toState(e: unknown): FormState {
     const code = (e.body as { code?: string } | undefined)?.code;
     if (code === "INVALID_EMAIL_OR_PASSWORD") return error(MSG.credenciales);
     if (code === "EMAIL_NOT_VERIFIED") return error(MSG.sinVerificar);
+    if (code === SUSPENDED_CODE) return error(SUSPENDED_MESSAGE);
     if (code === "INVALID_TOKEN") return error(MSG.token);
     if (e.statusCode === 400 || e.statusCode === 422) return error(MSG.datos);
   }

@@ -13,6 +13,7 @@ import {
 } from "@/lib/mail/templates";
 import { getAuthEnv } from "./env";
 import { removeUnverifiedPassword } from "./link-guard";
+import { assertNotSuspended } from "./suspension";
 import { getSocialProvidersConfig } from "./providers";
 
 function createAuth() {
@@ -57,6 +58,14 @@ function createAuth() {
       },
     },
     databaseHooks: {
+      // Cubre email y proveedores: un bloqueado no puede crear sesión.
+      session: {
+        create: {
+          before: async (s) => {
+            await assertNotSuspended(s.userId);
+          },
+        },
+      },
       account: {
         create: {
           // Corre antes de que Better Auth marque emailVerified = true al vincular.
@@ -70,6 +79,7 @@ function createAuth() {
     user: {
       additionalFields: {
         role: { type: "string", defaultValue: "lector", input: false },
+        bannedAt: { type: "date", required: false, input: false },
       },
     },
     rateLimit: {

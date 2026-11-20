@@ -31,7 +31,9 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   try {
     const session = await getAuth().api.getSession({ headers: requestHeaders });
     if (!session) return null;
-    const { id, name, email, image, role, createdAt } = session.user;
+    const { id, name, email, image, role, createdAt, bannedAt } = session.user;
+    // Segunda barrera: una sesión creada justo antes del bloqueo no sirve.
+    if (bannedAt) return null;
     return {
       id,
       name,

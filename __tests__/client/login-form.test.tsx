@@ -2,12 +2,15 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginForm } from "@/components/auth/login-form";
+import { LoginContext } from "@/components/auth/login-context";
+import { SUSPENDED_MESSAGE } from "@/lib/auth/messages";
 
 const { signInAction } = vi.hoisted(() => ({ signInAction: vi.fn() }));
 
 vi.mock("@/actions/cuenta", () => ({ signInAction }));
+let search = "volver=/admin";
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams("volver=/admin"),
+  useSearchParams: () => new URLSearchParams(search),
 }));
 
 async function fillAndSubmit() {
@@ -23,7 +26,24 @@ async function fillAndSubmit() {
 }
 
 describe("LoginForm", () => {
-  beforeEach(() => signInAction.mockReset());
+  beforeEach(() => {
+    signInAction.mockReset();
+    search = "volver=/admin";
+  });
+
+  it("LoginContext muestra el mensaje de cuenta suspendida, no el de proveedor", () => {
+    search = "error=ACCOUNT_SUSPENDED";
+    render(<LoginContext />);
+    expect(screen.getByText(SUSPENDED_MESSAGE)).toBeInTheDocument();
+    expect(screen.queryByText(/con ese proveedor/)).not.toBeInTheDocument();
+  });
+
+  it("LoginContext con otro error muestra el de proveedor", () => {
+    search = "error=access_denied";
+    render(<LoginContext />);
+    expect(screen.getByText(/con ese proveedor/)).toBeInTheDocument();
+    expect(screen.queryByText(SUSPENDED_MESSAGE)).not.toBeInTheDocument();
+  });
 
   it("no ofrece Google ni avisa que las cuentas no están disponibles", () => {
     render(<LoginForm />);

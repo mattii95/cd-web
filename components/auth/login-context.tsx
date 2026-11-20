@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { FormMessage } from "./form-message";
+import { SUSPENDED_MESSAGE } from "@/lib/auth/messages";
 
 function Context() {
   const params = useSearchParams();
@@ -14,7 +15,10 @@ function Context() {
         <FormMessage
           state={{
             status: "error",
-            message: "No pudimos iniciar sesión con ese proveedor. Probá de nuevo o usá tu email.",
+            message:
+              params.get("error") === "ACCOUNT_SUSPENDED"
+                ? SUSPENDED_MESSAGE
+                : "No pudimos iniciar sesión con ese proveedor. Probá de nuevo o usá tu email.",
           }}
         />
       )}
