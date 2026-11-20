@@ -186,3 +186,11 @@ export async function deleteUser(
     return { ok: true as const, name: target.name };
   });
 }
+
+export async function getUserForVerification(id: string) {
+  const [row] = await getDb()
+    .select({ email: user.email, emailVerified: user.emailVerified, bannedAt: user.bannedAt })
+    .from(user)
+    .where(eq(user.id, id));
+  return row ?? null;
+}
