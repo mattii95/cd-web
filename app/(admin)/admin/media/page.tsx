@@ -1,46 +1,73 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AdminPageHeader } from "@/components/admin/page-header";
-import { countMedia, listMedia } from "@/db/media";
+import { countMedia, listMedia, type MediaQuery } from "@/db/media";
+import { parseMediaParams, toUsage } from "@/lib/admin/media-params";
 import { requireAdmin } from "@/lib/auth/dal";
 import { toCardItem } from "./card-item";
 import { MediaGrid } from "./media-grid";
-import { UploadForm } from "./upload-form";
+import { MediaToolbar } from "./media-toolbar";
+import { UploadButton } from "./upload-button";
 
 export const metadata: Metadata = { title: "Medios" };
 
-async function Library() {
+const SKELETONS = Array.from({ length: 12 }, (_, i) => i);
+
+async function Library({ searchParams }: Pick<PageProps<"/admin/media">, "searchParams">) {
   await requireAdmin();
-  const [{ items, nextCursor }, total] = await Promise.all([
-    listMedia(),
-    countMedia(),
-  ]);
-  // Una imagen nueva cambia el primer id y reinicia la grilla a la primera página.
-  const key = items.map((i) => i.id).join(",");
+  const query = parseMediaParams(await searchParams);
+  const filter: MediaQuery = { query: query.q ?? undefined, usage: toUsage(query.uso) ?? undefined };
+  const [{ items, nextCursor }, total] = await Promise.all([listMedia(filter), countMedia(filter)]);
+  const filtered = query.q !== null || query.uso !== null;
+  // Una subida (o otra búsqueda o filtro) reinicia la grilla a la primera tanda. La clave sale de la
+  // biblioteca entera y no de los resultados: editar un alt refresca la página, y si ya no coincide con
+  // la búsqueda los resultados cambian, pero la grilla (y el modal abierto) tienen que seguir.
+  const [newest, library] = filtered
+    ? await Promise.all([listMedia({ limit: 1 }), countMedia()])
+    : [{ items }, total];
+  const key = `${query.q}|${query.uso}|${newest.items[0]?.id}|${library}`;
   return (
     <>
-      <UploadForm />
+      {(filtered || total > 0) && <MediaToolbar query={query} />}
       <MediaGrid
         key={key}
         initialItems={items.map(toCardItem)}
         initialCursor={nextCursor}
         initialTotal={total}
+        query={query}
       />
     </>
   );
 }
 
-export default function MediosPage() {
+function Skeleton() {
+  return (
+    <ul
+      role="status"
+      aria-label="Cargando medios"
+      className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 p-0"
+    >
+      {SKELETONS.map((i) => (
+        <li
+          key={i}
+          aria-hidden="true"
+          className="aspect-[4/5] animate-pulse rounded-xl bg-cms-head motion-reduce:animate-none"
+        />
+      ))}
+    </ul>
+  );
+}
+
+export default function MediosPage(props: PageProps<"/admin/media">) {
   return (
     <>
       <AdminPageHeader
         title="Medios"
         description="Subí y organizá las imágenes del blog."
+        actions={<UploadButton />}
       />
-      <Suspense
-        fallback={<p className="m-0 text-cms-text">Cargando medios…</p>}
-      >
-        <Library />
+      <Suspense fallback={<Skeleton />}>
+        <Library searchParams={props.searchParams} />
       </Suspense>
     </>
   );

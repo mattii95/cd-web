@@ -1,17 +1,20 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import type { FormState } from "@/actions/cuenta";
 import {
   createMedia,
   deleteMedia,
+  getMediaUsage,
   listMedia,
   MediaError,
   type MediaItem,
   MediaInUseError,
-  updateMediaAlt,
+  MediaNotFoundError,
+  updateMedia,
 } from "@/db/media";
+import { parseMediaForm } from "@/lib/admin/media-form";
 import { requireAdmin } from "@/lib/auth/dal";
 import { type CardItem, toCardItem } from "@/app/(admin)/admin/media/card-item";
 
@@ -142,28 +145,55 @@ const pickerError = (): PickerPage => ({
   message: "No pudimos cargar las imágenes.",
 });
 
-const alt = z.string().trim().min(1).max(300);
+export type MediaFormState =
+  | { status: "idle" }
+  | { status: "success"; message: string }
+  | {
+      status: "error";
+      message?: string;
+      fieldErrors?: Partial<Record<"alt" | "originalName", string>>;
+    };
 
-export async function updateMediaAltAction(
-  _: FormState,
+const GONE = "Esa imagen ya no existe.";
+
+export async function updateMediaAction(
+  _: MediaFormState,
   data: FormData,
-): Promise<FormState> {
+): Promise<MediaFormState> {
   await requireAdmin();
-  const parsed = z
-    .object({ id: z.uuid(), alt })
-    .safeParse({ id: data.get("id"), alt: data.get("alt") });
-  if (!parsed.success)
-    return error("El texto alternativo no puede estar vacío.");
-
-  try {
-    await updateMediaAlt(parsed.data.id, parsed.data.alt);
-  } catch {
-    return error(
-      "No pudimos guardar el cambio. Intentá de nuevo en unos minutos.",
-    );
+  const parsed = parseMediaForm(data);
+  if (!parsed.ok) {
+    const { id, ...fieldErrors } = parsed.fieldErrors;
+    return id
+      ? { status: "error", message: id }
+      : { status: "error", fieldErrors };
   }
+
+  let result: Awaited<ReturnType<typeof updateMedia>>;
+  try {
+    result = await updateMedia(parsed.id, parsed.input);
+  } catch {
+    return {
+      status: "error",
+      message: "No pudimos guardar el cambio. Intentá de nuevo en unos minutos.",
+    };
+  }
+  if (!result.ok) return { status: "error", message: GONE };
+
+  // El alt de Medios sale en el blog cuando el nodo no tiene uno propio (SPEC 20).
+  updateTag("blog");
   // Sin revalidatePath: MediaGrid actualiza su estado local.
-  return { status: "success", message: "Texto alternativo guardado." };
+  if (!result.altChanged) return { status: "success", message: "Cambios guardados." };
+
+  // El cambio ya está guardado: si falla la búsqueda de uso, solo se omite el aviso.
+  const usage = await getMediaUsage(parsed.id).catch(() => []);
+  const titles = [...new Set(usage.map((u) => u.title))];
+  return {
+    status: "success",
+    message: titles.length
+      ? `Cambios guardados. El texto alternativo cambió en: ${titles.join(", ")}.`
+      : "Cambios guardados.",
+  };
 }
 
 export async function deleteMediaAction(
@@ -177,6 +207,7 @@ export async function deleteMediaAction(
   try {
     await deleteMedia(parsed.data);
   } catch (e) {
+    if (e instanceof MediaNotFoundError) return error(GONE);
     if (e instanceof MediaInUseError) {
       const titles = [...new Set(e.usage.map((u) => u.title))].join(", ");
       return error(`No se puede borrar: está en uso en ${titles}.`);
@@ -193,7 +224,11 @@ export type LoadMoreState =
   | { status: "success"; items: CardItem[]; nextCursor: string | null }
   | { status: "error"; message: string };
 
-const cursorSchema = z.string().min(1).max(200);
+const loadMoreInput = z.object({
+  cursor: z.string().min(1).max(200),
+  query: z.string().max(100), // "" = sin filtro
+  usage: z.enum(["used", "unused"]).nullable(),
+});
 
 const loadError = (): LoadMoreState => ({
   status: "error",
@@ -201,15 +236,21 @@ const loadError = (): LoadMoreState => ({
 });
 
 // Sin revalidatePath: el cliente conserva las páginas ya cargadas.
-export async function loadMoreMediaAction(
-  cursor: string,
-): Promise<LoadMoreState> {
+export async function loadMoreMediaAction(input: {
+  cursor: string;
+  query: string;
+  usage: "used" | "unused" | null;
+}): Promise<LoadMoreState> {
   await requireAdmin();
-  const parsed = cursorSchema.safeParse(cursor);
+  const parsed = loadMoreInput.safeParse(input);
   if (!parsed.success) return loadError();
   try {
     // Un cursor inválido (InvalidCursorError) cae acá igual que cualquier otro fallo.
-    const { items, nextCursor } = await listMedia({ cursor: parsed.data });
+    const { items, nextCursor } = await listMedia({
+      cursor: parsed.data.cursor,
+      query: parsed.data.query,
+      usage: parsed.data.usage ?? undefined,
+    });
     return { status: "success", items: items.map(toCardItem), nextCursor };
   } catch {
     return loadError();

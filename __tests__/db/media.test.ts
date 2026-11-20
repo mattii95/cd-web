@@ -24,7 +24,8 @@ import {
   listMedia,
   MediaError,
   MediaInUseError,
-  updateMediaAlt,
+  MediaNotFoundError,
+  updateMedia,
 } from "@/db/media";
 import { InvalidCursorError } from "@/lib/pagination";
 import { authorProfile, category, media, post, user } from "@/db/schema";
@@ -171,7 +172,7 @@ describe("tabla media", () => {
   });
 });
 
-describe("listMedia y updateMediaAlt", () => {
+describe("listMedia", () => {
   it("lista de la más nueva a la más vieja con su uso", async () => {
     const a = await subir("red");
     const b = await subir("blue");
@@ -182,12 +183,6 @@ describe("listMedia y updateMediaAlt", () => {
     expect(list[1].usage.map((u) => u.title)).toEqual(["Con portada"]);
   });
 
-  it("cambia el alt y rechaza uno vacío", async () => {
-    const { item } = await subir("red");
-    await updateMediaAlt(item.id, "Nuevo alt");
-    expect((await listMedia()).items[0].alt).toBe("Nuevo alt");
-    await expect(updateMediaAlt(item.id, "  ")).rejects.toThrow();
-  });
 });
 
 // Inserta n filas de media con created_at separado por un segundo (la 0 es la más nueva).
@@ -415,6 +410,85 @@ describe("countMedia", () => {
   });
 });
 
+describe("filtro de uso", () => {
+  async function conUsos() {
+    const portada = await subir("red");
+    const cuerpo = await subir("blue");
+    const libre = await subir("green");
+    await crearPost({ coverMediaId: portada.item.id, title: "A", slug: "a" });
+    await crearPost({
+      status: "borrador",
+      publishedAt: null,
+      title: "B",
+      slug: "b",
+      body: docWith(img(cuerpo.item.id)),
+    });
+    return { portada, cuerpo, libre };
+  }
+
+  it("used devuelve portada y cuerpo de borrador; unused la libre", async () => {
+    const { portada, cuerpo, libre } = await conUsos();
+    const ids = async (usage: "used" | "unused") =>
+      (await listMedia({ usage })).items.map((m) => m.id).sort();
+    expect(await ids("used")).toEqual([portada.item.id, cuerpo.item.id].sort());
+    expect(await ids("unused")).toEqual([libre.item.id]);
+  });
+
+  it("combina query y usage", async () => {
+    const { libre } = await conUsos();
+    const r = await listMedia({ query: "green", usage: "unused" });
+    expect(r.items.map((m) => m.id)).toEqual([libre.item.id]);
+    expect((await listMedia({ query: "red", usage: "unused" })).items).toEqual([]);
+  });
+
+  it("la segunda tanda sigue filtrada y no repite", async () => {
+    await sembrar(30);
+    const p1 = await listMedia({ usage: "unused" });
+    expect(p1.items).toHaveLength(24);
+    const p2 = await listMedia({ usage: "unused", cursor: p1.nextCursor! });
+    expect(p2.items).toHaveLength(6);
+    expect(p2.nextCursor).toBeNull();
+    const all = new Set([...p1.items, ...p2.items].map((m) => m.id));
+    expect(all.size).toBe(30);
+    // countMedia cuenta lo mismo que recorrer todas las tandas con ese filtro.
+    expect(await countMedia({ usage: "unused" })).toBe(all.size);
+  });
+
+  it("countMedia coincide con recorrer todas las tandas", async () => {
+    await conUsos();
+    for (const usage of ["used", "unused"] as const) {
+      expect(await countMedia({ usage })).toBe(
+        (await listMedia({ usage })).items.length,
+      );
+    }
+    expect(await countMedia({ query: "red", usage: "used" })).toBe(1);
+  });
+});
+
+describe("updateMedia", () => {
+  it("cambia alt y nombre", async () => {
+    const { item } = await subir("red");
+    expect(await updateMedia(item.id, { alt: "Nuevo", originalName: "nuevo.png" })).toEqual({
+      ok: true,
+      altChanged: true,
+    });
+    expect(await updateMedia(item.id, { alt: "Nuevo", originalName: "otro.png" })).toEqual({
+      ok: true,
+      altChanged: false,
+    });
+    const [row] = (await listMedia()).items;
+    expect(row).toMatchObject({ alt: "Nuevo", originalName: "otro.png" });
+  });
+
+  it("con id inexistente devuelve not-found y no cambia nada", async () => {
+    const { item } = await subir("red");
+    expect(
+      await updateMedia(crypto.randomUUID(), { alt: "X", originalName: "x.png" }),
+    ).toEqual({ ok: false, reason: "not-found" });
+    expect((await listMedia()).items[0].alt).toBe(item.alt);
+  });
+});
+
 describe("deleteMedia", () => {
   it("de una portada lanza MediaInUseError con el título del post", async () => {
     const { item } = await subir("red");
@@ -457,6 +531,12 @@ describe("deleteMedia", () => {
     await rm(path.join(dir, `${item.id}.webp`));
     await expect(deleteMedia(item.id)).resolves.toBeUndefined();
     expect(await getDb().select().from(media)).toHaveLength(0);
+  });
+
+  it("con un id inexistente lanza MediaNotFoundError", async () => {
+    await expect(deleteMedia(crypto.randomUUID())).rejects.toBeInstanceOf(
+      MediaNotFoundError,
+    );
   });
 
   it("al borrar un post su imagen queda sin usar", async () => {

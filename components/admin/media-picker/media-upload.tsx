@@ -13,7 +13,7 @@ const field =
 const label = "text-sm font-semibold text-cms-ink";
 const hint = "text-[13px] text-cms-muted";
 
-// Mismos campos y límites que UploadForm de Medios. Al subir, avisa al selector con el item.
+// Mismos campos y límites que el modal de subida de Medios, pero con un archivo. Al subir, avisa al selector con el item.
 export function MediaUpload({
   onUploaded,
 }: {
