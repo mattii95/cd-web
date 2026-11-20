@@ -1,6 +1,6 @@
 # SPEC 22 — Galería de Medios
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 10, SPEC 12, SPEC 16, SPEC 20, SPEC 21
 > **Fecha:** 2026-11-19
 > **Objetivo:** Que `/admin/media` sea una galería de miniaturas con búsqueda y filtro de uso, un modal de detalle para ver, editar, copiar y borrar cada imagen, y un modal para subir hasta 10 imágenes a la vez.
@@ -187,9 +187,7 @@ export const MEDIA_FORM_LIMITS = {
   query: 100,
 } as const;
 export type MediaEditInput = { alt: string; originalName: string };
-export function parseMediaForm(
-  data: FormData,
-):
+export function parseMediaForm(data: FormData):
   | { ok: true; id: string; input: MediaEditInput }
   | {
       ok: false;
