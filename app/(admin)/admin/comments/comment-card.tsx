@@ -3,6 +3,7 @@ import { UserAvatar } from "@/components/auth/user-avatar";
 import type { AdminCommentRow, CommentStatus } from "@/db/admin-comments";
 import { avatarSrc } from "@/lib/auth/avatar";
 import { formatDate } from "@/lib/format-date";
+import { CommentRowMenu } from "./comment-row-menu";
 
 const BADGE: Record<CommentStatus, { label: string; className: string }> = {
   pendiente: { label: "Pendiente", className: "bg-amber-100 text-amber-900" },
@@ -11,7 +12,7 @@ const BADGE: Record<CommentStatus, { label: string; className: string }> = {
 };
 
 const action =
-  "inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg border px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 md:w-auto";
+  "inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-lg border px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 md:flex-none";
 
 export function CommentCard({
   comment: c,
@@ -105,7 +106,7 @@ export function CommentCard({
         </div>
       )}
 
-      <div className="flex flex-col gap-2 md:flex-row md:justify-end">
+      <div className="flex items-center gap-2 md:justify-end">
         {c.status !== "aprobado" && (
           <button
             type="button"
@@ -126,6 +127,7 @@ export function CommentCard({
             Ocultar
           </button>
         )}
+        <CommentRowMenu comment={c} />
       </div>
     </article>
   );

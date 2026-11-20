@@ -4,6 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { CommentCard } from "@/app/(admin)/admin/comments/comment-card";
 import type { AdminCommentRow } from "@/db/admin-comments";
 
+const { deleteAction } = vi.hoisted(() => ({ deleteAction: vi.fn() }));
+vi.mock("@/actions/admin/comments", () => ({ deleteCommentAsAdminAction: deleteAction }));
+
 const row = (extra: Partial<AdminCommentRow> = {}): AdminCommentRow => ({
   id: "c1",
   text: "Muy útil, gracias.",
@@ -22,7 +25,12 @@ const setup = (extra: Partial<AdminCommentRow> = {}, onSetStatus = vi.fn()) => {
   );
   return { onSetStatus };
 };
-const names = () => screen.queryAllByRole("button").map((b) => b.textContent);
+// Solo los botones de moderación: el del menú "Más acciones" no tiene texto.
+const names = () =>
+  screen
+    .queryAllByRole("button")
+    .map((b) => b.textContent)
+    .filter((t) => t === "Aprobar" || t === "Ocultar");
 
 describe("CommentCard: botones por estado", () => {
   it("un pendiente muestra Aprobar y Ocultar", () => {
@@ -100,5 +108,67 @@ describe("CommentCard: contenido", () => {
     expect(
       screen.getByRole("checkbox", { name: "Seleccionar el comentario de Lía Lectora" }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("CommentCard: menú y borrar", () => {
+  const openMenu = () =>
+    userEvent.click(screen.getByRole("button", { name: "Más acciones: Lía Lectora" }));
+  const openDelete = async () => {
+    await openMenu();
+    await userEvent.click(screen.getByRole("menuitem", { name: "Borrar" }));
+  };
+
+  it("el menú tiene 'Ver usuario' hacia /admin/users?q={email} y 'Borrar'", async () => {
+    setup();
+    await openMenu();
+    expect(screen.getByRole("menuitem", { name: "Ver usuario" })).toHaveAttribute(
+      "href",
+      "/admin/users?q=lia%40demo.invalid",
+    );
+    expect(screen.getByRole("menuitem", { name: "Borrar" })).toBeInTheDocument();
+  });
+
+  it("Borrar abre la confirmación con la cantidad de votos y no llama a la action hasta confirmar", async () => {
+    deleteAction.mockReset();
+    deleteAction.mockResolvedValue({ status: "success", message: "Comentario borrado." });
+    setup({
+      usefulCount: 3,
+      reply: { text: "Gracias", repliedAt: new Date("2026-11-12T12:00:00Z") },
+    });
+    await openDelete();
+    expect(
+      screen.getByRole("heading", { name: "¿Borrar el comentario de Lía Lectora?" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Se borran el comentario, su respuesta y sus 3 votos. No se puede deshacer."),
+    ).toBeInTheDocument();
+    expect(deleteAction).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Borrar" }));
+    expect(deleteAction).toHaveBeenCalledTimes(1);
+    expect((deleteAction.mock.calls[0][1] as FormData).get("id")).toBe("c1");
+  });
+
+  it("sin votos ni respuesta, la confirmación solo nombra el comentario", async () => {
+    setup();
+    await openDelete();
+    expect(screen.getByText("Se borra el comentario. No se puede deshacer.")).toBeInTheDocument();
+  });
+
+  it("sin votos y con respuesta: 'el comentario y su respuesta'", async () => {
+    setup({ reply: { text: "Gracias", repliedAt: new Date("2026-11-12T12:00:00Z") } });
+    await openDelete();
+    expect(
+      screen.getByText("Se borran el comentario y su respuesta. No se puede deshacer."),
+    ).toBeInTheDocument();
+  });
+
+  it("Cancelar no llama a la action", async () => {
+    deleteAction.mockReset();
+    setup();
+    await openDelete();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(deleteAction).not.toHaveBeenCalled();
   });
 });
