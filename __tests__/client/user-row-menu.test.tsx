@@ -17,6 +17,7 @@ vi.mock("@/actions/admin/users", () => ({
   unbanUserAction,
   revokeUserSessionsAction,
   banUserAction: vi.fn(),
+  deleteUserAction: vi.fn(),
 }));
 vi.mock("@/components/admin/toast", () => ({ notify }));
 
@@ -177,5 +178,12 @@ describe("UserRowMenu", () => {
     await ui.click(item("Cerrar sesiones"));
     await ui.click(await screen.findByRole("button", { name: "Cancelar" }));
     expect(revokeUserSessionsAction).not.toHaveBeenCalled();
+  });
+
+  it("Borrar cuenta abre el diálogo que pide el email", async () => {
+    const ui = await open({ ...lector, email: "lola@mail.com", comments: 1 });
+    await ui.click(item("Borrar cuenta"));
+    expect(await screen.findByRole("heading", { name: "Borrar la cuenta de Lola" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Escribí lola@mail.com para confirmar" })).toBeInTheDocument();
   });
 });

@@ -11,6 +11,7 @@ import { notify } from "@/components/admin/toast";
 import type { AdminUserRow } from "@/db/admin-users";
 import { formatDate } from "@/lib/format-date";
 import { BanDialog } from "./ban-dialog";
+import { DeleteUserDialog } from "./delete-user-dialog";
 
 type Kind = "ban" | "unban" | "revoke" | "delete";
 const idle = { status: "idle" } as const;
@@ -174,6 +175,7 @@ export function UserRowMenu({ user, isSelf }: { user: AdminUserRow; isSelf: bool
         </div>
       )}
       {kind === "ban" && <BanDialog user={user} onClose={cancel} />}
+      {kind === "delete" && <DeleteUserDialog user={user} onClose={cancel} />}
       <ConfirmDialog
         open={kind === "unban"}
         title={`¿Desbloquear a ${user.name}?`}
