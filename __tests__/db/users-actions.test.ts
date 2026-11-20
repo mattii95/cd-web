@@ -6,7 +6,6 @@ import { account, category, comment, post, session, user } from "@/db/schema";
 import { nuevaCategoria, nuevoPost, resetBlog } from "./blog-helpers";
 
 vi.mock("next/cache", () => ({ updateTag: vi.fn(), revalidatePath: vi.fn() }));
-vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("@/lib/auth/dal", () => ({ requireAdmin: vi.fn() }));
 
 import { revalidatePath, updateTag } from "next/cache";
@@ -234,11 +233,10 @@ describe("resendUserVerificationAction", () => {
     expect(await resendUserVerificationAction(idle, form({ id: "c" }))).toEqual(
       ok("Le reenviamos el email de verificación a c@demo.invalid."),
     );
-    expect(send).toHaveBeenCalledWith(
-      expect.objectContaining({
-        body: { email: "c@demo.invalid", callbackURL: "/cuenta/verificar?estado=ok" },
-      }),
-    );
+    // Sin headers: con la cookie del admin, Better Auth rechaza el pedido por EMAIL_MISMATCH.
+    expect(send).toHaveBeenCalledWith({
+      body: { email: "c@demo.invalid", callbackURL: "/cuenta/verificar?estado=ok" },
+    });
   });
 
   it("verificado o bloqueado: no envía", async () => {

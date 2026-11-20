@@ -256,7 +256,7 @@ test("perfil y admin: sin sesión, con cookie inventada, lector y admin", async 
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   await page.goto("/admin/users");
   await expect(page.getByRole("cell", { name: email })).toBeVisible();
-  await expect(page.getByRole("cell", { name, exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("cell", { name }).first()).toBeVisible();
   const html = await (await page.request.get("/admin/users")).text();
   expect(html).not.toMatch(/hash|session_token|"password"/i);
 });

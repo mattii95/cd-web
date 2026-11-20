@@ -24,7 +24,7 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     {
       name: "mobile",
-      testIgnore: /(auth|oauth|avatar|medios|comunidad|admin|articles|article-editor|media-picker|categories|tags)\.spec/,
+      testIgnore: /(auth|oauth|avatar|medios|comunidad|admin|articles|article-editor|media-picker|categories|tags|usuarios)\.spec/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 375, height: 812 } },
     },
   ],

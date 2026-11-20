@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
-import { headers } from "next/headers";
 import { z } from "zod";
 import {
   banUser,
@@ -116,9 +115,10 @@ export async function resendUserVerificationAction(
     const target = await getUserForVerification(id.data);
     if (!target) return error(MSG.gone);
     if (target.emailVerified || target.bannedAt) return error(MSG.verified);
+    // Sin headers: con la cookie del admin, Better Auth lo toma como una sesión y rechaza
+    // el pedido porque el email del destino no es el suyo.
     await getAuth().api.sendVerificationEmail({
       body: { email: target.email, callbackURL: "/cuenta/verificar?estado=ok" },
-      headers: await headers(),
     });
     return ok(MSG.resent(target.email));
   } catch {
