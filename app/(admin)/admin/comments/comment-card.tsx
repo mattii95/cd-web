@@ -10,12 +10,38 @@ const BADGE: Record<CommentStatus, { label: string; className: string }> = {
   oculto: { label: "Oculto", className: "bg-cms-chip text-cms-text" },
 };
 
-export function CommentCard({ comment: c }: { comment: AdminCommentRow }) {
+const action =
+  "inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg border px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 md:w-auto";
+
+export function CommentCard({
+  comment: c,
+  selected,
+  onSelect,
+  onSetStatus,
+  busy = false,
+}: {
+  comment: AdminCommentRow;
+  selected: boolean;
+  onSelect: (checked: boolean) => void;
+  onSetStatus: (status: "aprobado" | "oculto") => void;
+  busy?: boolean;
+}) {
   const badge = BADGE[c.status];
   return (
-    <article className="flex flex-col gap-4 px-4 py-5 md:px-6">
+    <article
+      className={`flex flex-col gap-4 px-4 py-5 md:px-6 ${selected ? "bg-cms-panel-alt" : ""}`}
+    >
       <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 items-center gap-1">
+          <label className="flex size-11 flex-none cursor-pointer items-center justify-center">
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={(e) => onSelect(e.target.checked)}
+              aria-label={`Seleccionar el comentario de ${c.author.name}`}
+              className="size-5 cursor-pointer accent-[var(--color-cms-link)]"
+            />
+          </label>
           <span
             aria-hidden="true"
             className="flex size-8 flex-none items-center justify-center overflow-hidden rounded-full bg-cms-chip text-sm font-bold text-cms-ink"
@@ -78,6 +104,29 @@ export function CommentCard({ comment: c }: { comment: AdminCommentRow }) {
           </p>
         </div>
       )}
+
+      <div className="flex flex-col gap-2 md:flex-row md:justify-end">
+        {c.status !== "aprobado" && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onSetStatus("aprobado")}
+            className={`${action} border-cms-link bg-cms-link text-white hover:bg-cms-ink hover:border-cms-ink`}
+          >
+            Aprobar
+          </button>
+        )}
+        {c.status !== "oculto" && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onSetStatus("oculto")}
+            className={`${action} border-cms-control bg-cms-panel text-cms-ink hover:bg-cms-chip`}
+          >
+            Ocultar
+          </button>
+        )}
+      </div>
     </article>
   );
 }

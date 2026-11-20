@@ -5,9 +5,9 @@ import { AdminPageHeader } from "@/components/admin/page-header";
 import { listAdminComments, listCommentedPosts } from "@/db/admin-comments";
 import { commentQueryHref, parseCommentParams } from "@/lib/admin/comment-params";
 import { requireAdmin } from "@/lib/auth/dal";
-import { CommentCard } from "./comment-card";
 import { CommentStatusTabs } from "./comment-status-tabs";
 import { CommentsFooter } from "./comments-footer";
+import { CommentsList } from "./comments-list";
 import { CommentsToolbar } from "./comments-toolbar";
 
 export const metadata: Metadata = { title: "Comentarios" };
@@ -54,11 +54,10 @@ async function Comments({ searchParams }: Pick<PageProps<"/admin/comments">, "se
           </div>
         ) : (
           <>
-            <div className="divide-y divide-cms-line-soft">
-              {list.items.map((c) => (
-                <CommentCard key={c.id} comment={c} />
-              ))}
-            </div>
+            <CommentsList
+              key={commentQueryHref({ ...query, page: list.page })}
+              items={list.items}
+            />
             <CommentsFooter query={{ ...query, page: list.page }} list={list} />
           </>
         )}
