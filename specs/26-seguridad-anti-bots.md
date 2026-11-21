@@ -1,6 +1,6 @@
 # SPEC 26 — Seguridad contra ataques y bots
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 04, SPEC 07, SPEC 08, SPEC 14
 > **Fecha:** 2026-11-21
 > **Objetivo:** Endurecer el sitio con headers de seguridad, Cloudflare Turnstile en los formularios de cuenta y rate limit por IP real en las acciones públicas y de comunidad.
@@ -178,51 +178,51 @@ Un `TRUSTED_IP_HEADER` con un valor que no está en `TRUSTED_IP_HEADERS` hace fa
 
 **Headers (`server` + E2E)**
 
-- [ ] `securityHeaders(true)` incluye `Strict-Transport-Security` y `upgrade-insecure-requests`. `securityHeaders(false)` no los incluye y su `script-src` tiene `'unsafe-eval'`.
-- [ ] La CSP de producción no tiene `'unsafe-eval'` y tiene `frame-ancestors 'none'`, `object-src 'none'` y `https://challenges.cloudflare.com` en `script-src` y `frame-src`.
-- [ ] En E2E, la respuesta de `/`, `/blog` y `/cuenta/login` trae `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` y `Permissions-Policy`, y no trae `X-Powered-By`.
-- [ ] En E2E, home, un artículo, login, `/admin`, el editor de artículos y la galería de medios cargan sin mensajes `Content Security Policy` en la consola.
+- [x] `securityHeaders(true)` incluye `Strict-Transport-Security` y `upgrade-insecure-requests`. `securityHeaders(false)` no los incluye y su `script-src` tiene `'unsafe-eval'`.
+- [x] La CSP de producción no tiene `'unsafe-eval'` y tiene `frame-ancestors 'none'`, `object-src 'none'` y `https://challenges.cloudflare.com` en `script-src` y `frame-src`.
+- [x] En E2E, la respuesta de `/`, `/blog` y `/cuenta/login` trae `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` y `Permissions-Policy`, y no trae `X-Powered-By`.
+- [x] En E2E, home, un artículo, login, `/admin`, el editor de artículos y la galería de medios cargan sin mensajes `Content Security Policy` en la consola.
 
 **IP real (`server`)**
 
-- [ ] Con `TRUSTED_IP_HEADER=x-forwarded-for` y `x-forwarded-for: 1.1.1.1, 2.2.2.2`, `getClientIp` devuelve `2.2.2.2`.
-- [ ] Con `TRUSTED_IP_HEADER=cf-connecting-ip`, ignora `x-forwarded-for` y devuelve el valor de `cf-connecting-ip`.
-- [ ] Sin `TRUSTED_IP_HEADER` devuelve `"local"` aunque venga `x-forwarded-for`.
-- [ ] Sin `TRUSTED_IP_HEADER` y con `NODE_ENV=production`, `console.warn` se llama una sola vez en dos llamadas seguidas.
-- [ ] `TRUSTED_IP_HEADER=x-foo` hace lanzar a `getClientIp` un error que nombra la variable.
+- [x] Con `TRUSTED_IP_HEADER=x-forwarded-for` y `x-forwarded-for: 1.1.1.1, 2.2.2.2`, `getClientIp` devuelve `2.2.2.2`.
+- [x] Con `TRUSTED_IP_HEADER=cf-connecting-ip`, ignora `x-forwarded-for` y devuelve el valor de `cf-connecting-ip`.
+- [x] Sin `TRUSTED_IP_HEADER` devuelve `"local"` aunque venga `x-forwarded-for`.
+- [x] Sin `TRUSTED_IP_HEADER` y con `NODE_ENV=production`, `console.warn` se llama una sola vez en dos llamadas seguidas.
+- [x] `TRUSTED_IP_HEADER=x-foo` hace lanzar a `getClientIp` un error que nombra la variable.
 
 **Turnstile (`server`)**
 
-- [ ] `verifyTurnstile` devuelve `true` con `{ success: true }` y manda `secret`, `response` y `remoteip` al endpoint de `siteverify`.
-- [ ] Con IP `"local"` no manda `remoteip`.
-- [ ] Devuelve `false` con token vacío (sin llamar a `fetch`), con `{ success: false }`, con status 500, con `fetch` que lanza y con timeout.
-- [ ] Sin claves y con `NODE_ENV=test` usa las claves de prueba. Sin claves y con `NODE_ENV=production`, `getTurnstileEnv()` lanza un error que nombra las dos variables.
-- [ ] `signUpAction` con `verifyTurnstile` mockeado a `false` devuelve el mensaje "No pudimos verificar que no sos un bot. Probá de nuevo." y no llama a `auth.api.signUpEmail`.
-- [ ] `signInAction`, `requestResetAction` y `resendVerificationAction` tampoco llaman a `auth.api` si el captcha falla.
+- [x] `verifyTurnstile` devuelve `true` con `{ success: true }` y manda `secret`, `response` y `remoteip` al endpoint de `siteverify`.
+- [x] Con IP `"local"` no manda `remoteip`.
+- [x] Devuelve `false` con token vacío (sin llamar a `fetch`), con `{ success: false }`, con status 500, con `fetch` que lanza y con timeout.
+- [x] Sin claves y con `NODE_ENV=test` usa las claves de prueba. Sin claves y con `NODE_ENV=production`, `getTurnstileEnv()` lanza un error que nombra las dos variables.
+- [x] `signUpAction` con `verifyTurnstile` mockeado a `false` devuelve el mensaje "No pudimos verificar que no sos un bot. Probá de nuevo." y no llama a `auth.api.signUpEmail`.
+- [x] `signInAction`, `requestResetAction` y `resendVerificationAction` tampoco llaman a `auth.api` si el captcha falla.
 
 **Widget (`client`)**
 
-- [ ] `LoginForm`, `RegisterForm`, `RecoverForm` y `VerifyView` llaman a `turnstile.render` con la site key.
-- [ ] El botón de submit está deshabilitado hasta que el widget llama a `callback` con un token, y vuelve a deshabilitarse con `expired-callback`.
-- [ ] Cuando la action devuelve `status: "error"`, se llama a `turnstile.reset` del widget.
+- [x] `LoginForm`, `RegisterForm`, `RecoverForm` y `VerifyView` llaman a `turnstile.render` con la site key.
+- [x] El botón de submit está deshabilitado hasta que el widget llama a `callback` con un token, y vuelve a deshabilitarse con `expired-callback`.
+- [x] Cuando la action devuelve `status: "error"`, se llama a `turnstile.reset` del widget.
 
 **Endpoints cerrados (E2E)**
 
-- [ ] `POST /api/auth/sign-up/email`, `/api/auth/sign-in/email`, `/api/auth/request-password-reset` y `/api/auth/send-verification-email` responden 404.
-- [ ] `GET /api/auth/get-session` sigue respondiendo 200.
-- [ ] Con las claves de prueba, un usuario se registra, verifica el email desde Mailpit e inicia sesión desde los formularios.
+- [x] `POST /api/auth/sign-up/email`, `/api/auth/sign-in/email`, `/api/auth/request-password-reset` y `/api/auth/send-verification-email` responden 404.
+- [x] `GET /api/auth/get-session` sigue respondiendo 200.
+- [x] Con las claves de prueba, un usuario se registra, verifica el email desde Mailpit e inicia sesión desde los formularios.
 
 **Rate limit (`db`)**
 
-- [ ] El voto número 61 de un usuario dentro de 60 s devuelve "Demasiadas acciones seguidas. Probá de nuevo en un minuto." y no cambia el voto.
-- [ ] La valoración número 21 de un usuario en 60 s se rechaza, y la de otro usuario en el mismo momento pasa.
-- [ ] La respuesta número 11 en 600 s se rechaza. El borrado número 21 de comentarios o respuestas en 60 s se rechaza.
-- [ ] La llamada número 61 a `loadMorePostsAction` desde una misma IP en 60 s devuelve error. `loadMoreCommentsAction` y `loadMoreUserCommentsAction` comparten ese contador.
-- [ ] Pasada la ventana, la acción vuelve a funcionar.
+- [x] El voto número 61 de un usuario dentro de 60 s devuelve "Demasiadas acciones seguidas. Probá de nuevo en un minuto." y no cambia el voto.
+- [x] La valoración número 21 de un usuario en 60 s se rechaza, y la de otro usuario en el mismo momento pasa.
+- [x] La respuesta número 11 en 600 s se rechaza. El borrado número 21 de comentarios o respuestas en 60 s se rechaza.
+- [x] La llamada número 61 a `loadMorePostsAction` desde una misma IP en 60 s devuelve error. `loadMoreCommentsAction` y `loadMoreUserCommentsAction` comparten ese contador.
+- [x] Pasada la ventana, la acción vuelve a funcionar.
 
 **robots**
 
-- [ ] `GET /robots.txt` devuelve `Disallow: /admin`, `Disallow: /cuenta` y `Disallow: /api`, y no incluye `Sitemap`.
+- [x] `GET /robots.txt` devuelve `Disallow: /admin`, `Disallow: /cuenta` y `Disallow: /api`, y no incluye `Sitemap`.
 
 ## Decisiones
 
