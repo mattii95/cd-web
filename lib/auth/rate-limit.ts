@@ -47,6 +47,15 @@ export async function isRateLimited(rule: RateLimitRule): Promise<boolean> {
   return hit(`actions|${getClientIp(h)}|${rule}`, max, window);
 }
 
+// Si la base falla al contar, se deja pasar: el límite no puede tumbar la acción.
+export async function isRateLimitedFailOpen(rule: RateLimitRule): Promise<boolean> {
+  try {
+    return await isRateLimited(rule);
+  } catch {
+    return false;
+  }
+}
+
 // Por usuario, no por IP: sin proxy configurado todos comparten el bucket "local".
 export async function isUserRateLimited(rule: RateLimitRule, userId: string): Promise<boolean> {
   const { max, window } = RULES[rule];

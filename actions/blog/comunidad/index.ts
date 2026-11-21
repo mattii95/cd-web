@@ -14,7 +14,11 @@ import {
 } from "@/db/blog-community";
 import type { UserComment } from "@/db/blog-community";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth/dal";
-import { isUserRateLimited, type RateLimitRule } from "@/lib/auth/rate-limit";
+import {
+  isRateLimitedFailOpen,
+  isUserRateLimited,
+  type RateLimitRule,
+} from "@/lib/auth/rate-limit";
 import type { BlogRating } from "@/lib/blog-posts";
 
 type Fail = { status: "error"; message: string };
@@ -168,6 +172,8 @@ export async function loadMoreUserCommentsAction(
   return run(message, async (user) => {
     const c = z.string().min(1).max(200).safeParse(cursor);
     if (!c.success) return fail(message);
+    // Por IP y con el mismo contador que las otras dos acciones de "cargar más".
+    if (await isRateLimitedFailOpen("load-more")) return fail(LIMITE);
     // Un cursor inválido (InvalidCursorError) cae en el catch de run.
     const { items, nextCursor } = await getUserComments(user.id, {
       cursor: c.data,

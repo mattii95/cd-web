@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { cachedApprovedComments, cachedPublishedPosts } from "@/db/blog-cache";
 import type { PostFilters, PostSummary, PublicComment } from "@/db/blog";
+import { isRateLimitedFailOpen } from "@/lib/auth/rate-limit";
 
 export type LoadMorePostsState =
   | { status: "success"; items: PostSummary[]; nextCursor: string | null }
@@ -11,6 +12,8 @@ export type LoadMorePostsState =
 export type LoadMoreCommentsState =
   | { status: "success"; items: PublicComment[]; nextCursor: string | null }
   | { status: "error"; message: string };
+
+const LIMITE = "Demasiadas acciones seguidas. Probá de nuevo en un minuto.";
 
 const cursorSchema = z.string().min(1).max(200);
 const slugSchema = z
@@ -29,6 +32,7 @@ export async function loadMorePostsAction(
   if (!c.success || !f.success) {
     return { status: "error", message: "No pudimos cargar más artículos." };
   }
+  if (await isRateLimitedFailOpen("load-more")) return { status: "error", message: LIMITE };
   try {
     // Un cursor inválido (InvalidCursorError) cae acá igual que cualquier otro fallo.
     const { items, nextCursor } = await cachedPublishedPosts({
@@ -50,6 +54,7 @@ export async function loadMoreCommentsAction(
   if (!id.success || !c.success) {
     return { status: "error", message: "No pudimos cargar más comentarios." };
   }
+  if (await isRateLimitedFailOpen("load-more")) return { status: "error", message: LIMITE };
   try {
     const { items, nextCursor } = await cachedApprovedComments(id.data, {
       cursor: c.data,
