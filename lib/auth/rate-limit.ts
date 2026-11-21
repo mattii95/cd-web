@@ -14,6 +14,11 @@ const RULES = {
   "send-verification": { max: 3, window: 60 },
   "sign-in-social": { max: 10, window: 60 },
   comment: { max: 5, window: 600 },
+  rate: { max: 20, window: 60 },
+  vote: { max: 60, window: 60 },
+  reply: { max: 10, window: 600 },
+  "delete-content": { max: 20, window: 60 },
+  "load-more": { max: 60, window: 60 },
 } as const;
 
 export type RateLimitRule = keyof typeof RULES;
