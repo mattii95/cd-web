@@ -1,18 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import { AdminPageHeader } from "@/components/admin/page-header";
-import { Article, Chat, Photos, Users } from "@/components/icons";
+import { parseDashboardParams } from "@/lib/admin/dashboard-params";
 import { requireAdmin } from "@/lib/auth/dal";
+import { PeriodTabs } from "./_inicio/period-tabs";
+import { SectionCard, SectionEmpty } from "./_inicio/section-card";
+import { ChartSkeleton, KpiCardsSkeleton, ListSkeleton } from "./_inicio/skeletons";
 
 export const metadata: Metadata = { title: "Inicio" };
 
-const shortcuts = [
-  { href: "/admin/articles", title: "Artículos", text: "Creá, editá y publicá las notas del blog.", icon: Article },
-  { href: "/admin/media", title: "Medios", text: "Subí y organizá las imágenes del blog.", icon: Photos },
-  { href: "/admin/comments", title: "Comentarios", text: "Aprobá u ocultá lo que comentan los lectores.", icon: Chat },
-  { href: "/admin/users", title: "Usuarios", text: "Mirá quién se registró y con qué rol.", icon: Users },
-] as const;
+type Search = Pick<PageProps<"/admin">, "searchParams">;
 
 async function Greeting() {
   const { name } = await requireAdmin();
@@ -23,30 +20,72 @@ async function Greeting() {
   );
 }
 
-export default function AdminHomePage() {
+async function Period({ searchParams }: Search) {
+  await requireAdmin();
+  return <PeriodTabs query={parseDashboardParams(await searchParams)} />;
+}
+
+// Provisoria: cada sección real (KPIs, gráficos, listas) reemplaza a esta en los pasos 4 a 6.
+async function Pending({
+  title,
+  scope,
+  searchParams,
+}: Search & { title: string; scope: "period" | string; className?: string }) {
+  await requireAdmin();
+  const { periodo } = parseDashboardParams(await searchParams);
+  return (
+    <SectionCard title={title} scope={scope === "period" ? `Últimos ${periodo} días` : scope}>
+      <SectionEmpty text="Próximamente." className="h-40" />
+    </SectionCard>
+  );
+}
+
+export default function AdminHomePage({ searchParams }: PageProps<"/admin">) {
   return (
     <>
-      <AdminPageHeader
-        title="Inicio"
-        description="Gestioná el contenido y los usuarios del sitio."
-      />
-      <Suspense fallback={<div className="h-8" />}>
-        <Greeting />
+      <AdminPageHeader title="Inicio" description="Cómo vienen el blog y la comunidad." />
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <Suspense fallback={<div className="h-8" />}>
+          <Greeting />
+        </Suspense>
+        <Suspense fallback={<div className="h-13" />}>
+          <Period searchParams={searchParams} />
+        </Suspense>
+      </div>
+
+      <Suspense fallback={<KpiCardsSkeleton />}>
+        <Pending title="Indicadores" scope="period" searchParams={searchParams} />
       </Suspense>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {shortcuts.map(({ href, title, text, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="group flex flex-col gap-3 rounded-2xl border border-cms-line bg-cms-panel p-6 no-underline shadow-[0_8px_24px_rgba(11,16,32,0.08)] transition-colors hover:border-accent"
-          >
-            <span className="flex size-11 items-center justify-center rounded-xl bg-cms-chip text-accent">
-              <Icon className="size-[22px]" />
-            </span>
-            <span className="font-display text-xl font-semibold text-cms-ink">{title}</span>
-            <span className="text-[15px] text-cms-text">{text}</span>
-          </Link>
-        ))}
+
+      <Suspense fallback={<ChartSkeleton title="Actividad" />}>
+        <Pending title="Actividad" scope="period" searchParams={searchParams} />
+      </Suspense>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Suspense fallback={<ChartSkeleton title="Comentarios por estado" />}>
+          <Pending title="Comentarios por estado" scope="period" searchParams={searchParams} />
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton title="Distribución de estrellas" />}>
+          <Pending title="Distribución de estrellas" scope="period" searchParams={searchParams} />
+        </Suspense>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Suspense fallback={<ChartSkeleton title="Artículos por categoría" />}>
+          <Pending title="Artículos por categoría" scope="En total" searchParams={searchParams} />
+        </Suspense>
+        <Suspense fallback={<ListSkeleton title="Top artículos" />}>
+          <Pending title="Top artículos" scope="period" searchParams={searchParams} />
+        </Suspense>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Suspense fallback={<ListSkeleton title="Pendientes más viejos" />}>
+          <Pending title="Pendientes más viejos" scope="Ahora" searchParams={searchParams} />
+        </Suspense>
+        <Suspense fallback={<ListSkeleton title="Últimos registrados" />}>
+          <Pending title="Últimos registrados" scope="Ahora" searchParams={searchParams} />
+        </Suspense>
       </div>
     </>
   );
