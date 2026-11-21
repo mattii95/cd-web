@@ -77,6 +77,18 @@ describe("AuthForm con captcha", () => {
     expect(screen.getByRole("button", { name: "Enviar" })).toBeDisabled();
   });
 
+  it("resetea el widget también tras un éxito: el token ya se gastó", async () => {
+    action.mockResolvedValue({ status: "success", message: "ok" });
+    renderForm();
+    await waitFor(() => expect(turnstile.render).toHaveBeenCalled());
+    act(() => options().callback("tok"));
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "Enviar" }));
+
+    await waitFor(() => expect(turnstile.reset).toHaveBeenCalledWith("widget-1"));
+    expect(screen.getByRole("button", { name: "Enviar" })).toBeDisabled();
+  });
+
   it("sin captcha no monta el widget", () => {
     render(
       <AuthForm action={action} title="t" subtitle="s" submitLabel="Enviar" footer="f">

@@ -7,6 +7,7 @@ import {
   login,
   sql,
   uniqueEmail,
+  waitForCaptcha,
 } from "./helpers";
 
 // Un solo usuario a la vez y los límites de intentos son por IP (igual que usuarios.spec).
@@ -97,7 +98,7 @@ test("un lector comenta, el admin aprueba y el comentario se ve en el artículo 
 
   // El lector comenta: nace pendiente.
   await page.goto(`/cuenta/login?volver=${encodeURIComponent(`/blog/${SLUG}`)}`);
-  await page.waitForLoadState("networkidle");
+  await waitForCaptcha(page);
   await page.getByLabel("Email").fill(lector.email);
   await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Ingresar" }).click();

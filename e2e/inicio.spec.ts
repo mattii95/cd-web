@@ -7,6 +7,7 @@ import {
   login,
   sql,
   uniqueEmail,
+  waitForCaptcha,
 } from "./helpers";
 
 // Un solo usuario a la vez y los límites de intentos son por IP (igual que comentarios.spec).
@@ -126,7 +127,7 @@ test("un lector comenta y el KPI de pendientes sube en 1", async ({ page, browse
   const ctx = await browser.newContext();
   const reader = await ctx.newPage();
   await reader.goto(`/cuenta/login?volver=${encodeURIComponent(`/blog/${SLUG}`)}`);
-  await reader.waitForLoadState("networkidle");
+  await waitForCaptcha(reader);
   await reader.getByLabel("Email").fill(lector.email);
   await reader.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
   await reader.getByRole("button", { name: "Ingresar" }).click();

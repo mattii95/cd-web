@@ -32,9 +32,9 @@ export function AuthForm({
   const [token, setToken] = useState<string | null>(null);
   const turnstile = useRef<TurnstileHandle>(null);
 
-  // El token se gasta en cada envío: tras un error hay que pedir otro.
+  // El token se gasta en cada envío, salga bien o mal: hay que pedir otro.
   useEffect(() => {
-    if (state.status === "error") turnstile.current?.reset();
+    if (state.status !== "idle") turnstile.current?.reset();
   }, [state]);
 
   return (
