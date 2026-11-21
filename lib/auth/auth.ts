@@ -11,6 +11,7 @@ import {
   resetPasswordEmail,
   verificationEmail,
 } from "@/lib/mail/templates";
+import { getTrustedIpHeader } from "@/lib/security/env";
 import { getAuthEnv } from "./env";
 import { removeUnverifiedPassword } from "./link-guard";
 import { assertNotSuspended } from "./suspension";
@@ -18,6 +19,7 @@ import { getSocialProvidersConfig } from "./providers";
 
 function createAuth() {
   const env = getAuthEnv();
+  const trustedIpHeader = getTrustedIpHeader();
   return betterAuth({
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
@@ -94,7 +96,11 @@ function createAuth() {
       },
     },
     // Por defecto Better Auth solo marca Secure si BETTER_AUTH_URL es https; en producción siempre.
-    advanced: { useSecureCookies: process.env.NODE_ENV === "production" },
+    advanced: {
+      useSecureCookies: process.env.NODE_ENV === "production",
+      // Misma regla que getClientIp: solo el header de confianza.
+      ...(trustedIpHeader && { ipAddress: { ipAddressHeaders: [trustedIpHeader] } }),
+    },
     plugins: [nextCookies()],
   });
 }

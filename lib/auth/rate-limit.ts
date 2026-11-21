@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { getDb } from "@/db/client";
 import { rateLimit } from "@/db/schema";
+import { getClientIp } from "@/lib/security/client-ip";
 
 // Better Auth solo limita su handler HTTP: las Server Actions llaman a `auth.api` directo,
 // así que repiten las mismas reglas acá, en la misma tabla `rate_limit`.
@@ -37,10 +38,8 @@ export async function hit(key: string, max: number, windowSec: number): Promise<
 
 export async function isRateLimited(rule: RateLimitRule): Promise<boolean> {
   const h = await headers();
-  // shortcut: sin proxy que ponga la IP todos comparten el bucket "local"; configurar el header al elegir hosting.
-  const ip = h.get("x-forwarded-for")?.split(",")[0].trim() || h.get("x-real-ip") || "local";
   const { max, window } = RULES[rule];
-  return hit(`actions|${ip}|${rule}`, max, window);
+  return hit(`actions|${getClientIp(h)}|${rule}`, max, window);
 }
 
 // Por usuario, no por IP: sin proxy configurado todos comparten el bucket "local".
