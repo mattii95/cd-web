@@ -12,7 +12,7 @@ const plural = (n: number, one: string, many: string) => `${nf.format(n)} ${n ==
 // Sube = verde y baja = gris neutro (menos comentarios no es un error).
 function ChangeBadge({ change, periodo }: { change: Change; periodo: DashboardPeriod }) {
   const prev = `los ${periodo} días anteriores`;
-  const green = "text-green-700";
+  const green = "text-green-800"; // 6:1 o más sobre los cuatro tintes de las tarjetas
   const grey = "text-cms-muted";
   let text: string, name: string, tone: string;
   switch (change.kind) {

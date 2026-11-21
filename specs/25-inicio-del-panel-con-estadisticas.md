@@ -1,6 +1,6 @@
 # SPEC 25 — Inicio del panel con estadísticas
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 09, SPEC 14, SPEC 16, SPEC 21, SPEC 23, SPEC 24
 > **Fecha:** 2026-11-21
 > **Objetivo:** Que el Inicio de `/admin` muestre, para los últimos 7, 30 o 90 días, números clave, gráficos y listas sobre usuarios, comentarios, artículos y valoraciones.
@@ -242,57 +242,57 @@ Convenciones:
 
 **General**
 
-- [ ] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
-- [ ] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
-- [ ] `npm run test:run` pasa con Docker apagado.
-- [ ] `npm run test:db` pasa con Docker levantado.
-- [ ] `npm run test:e2e` pasa completo.
-- [ ] No hay migraciones nuevas: `npm run db:generate` no crea archivos.
-- [ ] `package.json` suma solo `recharts` con la versión exacta `3.10.1`.
+- [x] `npm run lint` y `npx tsc --noEmit` terminan sin errores.
+- [x] `npm run build` termina sin errores con Docker apagado, sin `DATABASE_URL` y sin `MEDIA_DIR`.
+- [x] `npm run test:run` pasa con Docker apagado.
+- [x] `npm run test:db` pasa con Docker levantado.
+- [x] `npm run test:e2e` pasa completo.
+- [x] No hay migraciones nuevas: `npm run db:generate` no crea archivos.
+- [x] `package.json` suma solo `recharts` con la versión exacta `3.10.1`.
 
 **Parámetros (`dashboard-params.test.ts`)**
 
-- [ ] `parseDashboardParams({})` devuelve `{ periodo: 30 }`; `"7"` y `"90"` se respetan; `"15"`, `"abc"` y `["7", "90"]` caen a 30.
-- [ ] `dashboardHref({ periodo: 30 })` devuelve `/admin`; `{ periodo: 7 }`, `/admin?periodo=7`.
-- [ ] `dashboardRange(7, new Date("2026-11-21T15:00:00Z"))` da `from` = `2026-11-15T03:00:00Z`, `prevFrom` = `2026-11-08T03:00:00Z` y `bucket: "day"`.
-- [ ] `dashboardRange(30, new Date("2026-11-21T01:00:00Z"))` (20/11 a las 22:00 en Buenos Aires) toma el 20/11 como último día.
-- [ ] `bucketKeys` devuelve 7 claves con 7, 30 con 30, y con 90 una clave por lunes, la primera ≤ `from`.
-- [ ] `bucketLabel("2026-11-21", "day")` es "21 nov"; `bucketLabel("2026-11-17", "week")` es "Sem. 17 nov".
-- [ ] `percentChange(12, 10)` es `{ kind: "up", pct: 20 }`; `(5, 10)` es `{ kind: "down", pct: 50 }`; `(3, 3)` y `(0, 0)` son `same`; `(4, 0)` es `new`.
+- [x] `parseDashboardParams({})` devuelve `{ periodo: 30 }`; `"7"` y `"90"` se respetan; `"15"`, `"abc"` y `["7", "90"]` caen a 30.
+- [x] `dashboardHref({ periodo: 30 })` devuelve `/admin`; `{ periodo: 7 }`, `/admin?periodo=7`.
+- [x] `dashboardRange(7, new Date("2026-11-21T15:00:00Z"))` da `from` = `2026-11-15T03:00:00Z`, `prevFrom` = `2026-11-08T03:00:00Z` y `bucket: "day"`.
+- [x] `dashboardRange(30, new Date("2026-11-21T01:00:00Z"))` (20/11 a las 22:00 en Buenos Aires) toma el 20/11 como último día.
+- [x] `bucketKeys` devuelve 7 claves con 7, 30 con 30, y con 90 una clave por lunes, la primera ≤ `from`.
+- [x] `bucketLabel("2026-11-21", "day")` es "21 nov"; `bucketLabel("2026-11-17", "week")` es "Sem. 17 nov".
+- [x] `percentChange(12, 10)` es `{ kind: "up", pct: 20 }`; `(5, 10)` es `{ kind: "down", pct: 50 }`; `(3, 3)` y `(0, 0)` son `same`; `(4, 0)` es `new`.
 
 **Consultas (`admin-dashboard.test.ts`)**
 
-- [ ] `getDashboardKpis` cuenta altas, comentarios y valoraciones dentro de `[from, to]` en `current` y dentro de `[prevFrom, from)` en `previous`; un dato justo en `from` cuenta en el actual y uno 1 ms antes, en el anterior.
-- [ ] `posts.publishedInPeriod` usa `published_at`; `posts.published` y `posts.drafts` cuentan todo, sin período.
-- [ ] `comments.pending` cuenta todos los `pendiente`, de cualquier fecha.
-- [ ] `ratings.average` es el promedio del período actual, y `null` sin valoraciones.
-- [ ] `getActivitySeries` devuelve un punto por cada `bucketKeys(range)`, con 0 en los vacíos, y suma comentarios de los tres estados.
-- [ ] Un comentario creado `2026-11-21T02:00:00Z` cae en el día `2026-11-20` (hora de Buenos Aires).
-- [ ] Con 90 días, dos comentarios del lunes y del domingo de la misma semana caen en el mismo punto.
-- [ ] `getCommentStatusBreakdown` devuelve las tres claves, con 0 en las que no hay, y solo cuenta el período.
-- [ ] `getRatingDistribution` devuelve siempre 5 filas de 5 a 1.
-- [ ] `getPublishedByCategory` devuelve todas las categorías por `position`, con 0 en las vacías, y no cuenta borradores.
-- [ ] `getTopPosts` ordena por comentarios aprobados + valoraciones del período, desempata por promedio y título, excluye borradores, comentarios no aprobados y artículos con suma 0, y devuelve como máximo 5.
-- [ ] `getOldestPendingComments` devuelve los 5 pendientes más viejos y recorta el texto a 120 caracteres con "…".
-- [ ] `getNewestUsers` devuelve los 5 usuarios más nuevos.
+- [x] `getDashboardKpis` cuenta altas, comentarios y valoraciones dentro de `[from, to]` en `current` y dentro de `[prevFrom, from)` en `previous`; un dato justo en `from` cuenta en el actual y uno 1 ms antes, en el anterior.
+- [x] `posts.publishedInPeriod` usa `published_at`; `posts.published` y `posts.drafts` cuentan todo, sin período.
+- [x] `comments.pending` cuenta todos los `pendiente`, de cualquier fecha.
+- [x] `ratings.average` es el promedio del período actual, y `null` sin valoraciones.
+- [x] `getActivitySeries` devuelve un punto por cada `bucketKeys(range)`, con 0 en los vacíos, y suma comentarios de los tres estados.
+- [x] Un comentario creado `2026-11-21T02:00:00Z` cae en el día `2026-11-20` (hora de Buenos Aires).
+- [x] Con 90 días, dos comentarios del lunes y del domingo de la misma semana caen en el mismo punto.
+- [x] `getCommentStatusBreakdown` devuelve las tres claves, con 0 en las que no hay, y solo cuenta el período.
+- [x] `getRatingDistribution` devuelve siempre 5 filas de 5 a 1.
+- [x] `getPublishedByCategory` devuelve todas las categorías por `position`, con 0 en las vacías, y no cuenta borradores.
+- [x] `getTopPosts` ordena por comentarios aprobados + valoraciones del período, desempata por promedio y título, excluye borradores, comentarios no aprobados y artículos con suma 0, y devuelve como máximo 5.
+- [x] `getOldestPendingComments` devuelve los 5 pendientes más viejos y recorta el texto a 120 caracteres con "…".
+- [x] `getNewestUsers` devuelve los 5 usuarios más nuevos.
 
 **Componentes (`client`)**
 
-- [ ] `PeriodTabs` con `periodo: 30` marca "30 días" con `aria-current="page"`; "7 días" enlaza a `/admin?periodo=7` y "30 días" a `/admin`.
-- [ ] `KpiCards` muestra "↑ 20 %" con el nombre accesible "20 % más que los 30 días anteriores", "Nuevo" con anterior 0, y "—" de promedio sin valoraciones.
-- [ ] `KpiCards` muestra "{N} pendientes" con enlace a `/admin/comments`.
-- [ ] Cada gráfico renderiza un `figure` con su `figcaption` y una tabla con los mismos valores que recibió.
-- [ ] Cada gráfico sin datos muestra su texto de estado vacío y no renderiza la tabla.
+- [x] `PeriodTabs` con `periodo: 30` marca "30 días" con `aria-current="page"`; "7 días" enlaza a `/admin?periodo=7` y "30 días" a `/admin`.
+- [x] `KpiCards` muestra "↑ 20 %" con el nombre accesible "20 % más que los 30 días anteriores", "Nuevo" con anterior 0, y "—" de promedio sin valoraciones.
+- [x] `KpiCards` muestra "{N} pendientes" con enlace a `/admin/comments`.
+- [x] Cada gráfico renderiza un `figure` con su `figcaption` y una tabla con los mismos valores que recibió.
+- [x] Cada gráfico sin datos muestra su texto de estado vacío y no renderiza la tabla.
 
 **Inicio (E2E, `inicio.spec.ts`)**
 
-- [ ] Como admin, `/admin` muestra "Hola, {nombre}", el selector con "30 días" activo, las 4 tarjetas de KPI, los 4 gráficos por su título y las 3 listas; ya no están las tarjetas de accesos.
-- [ ] Elegir "7 días" deja la URL en `/admin?periodo=7` con "7 días" activo; recargar lo mantiene. `/admin?periodo=15` muestra "30 días" activo.
-- [ ] Un lector comenta un artículo; al volver a `/admin`, el KPI de pendientes sube en 1.
-- [ ] "Ver todos los pendientes" lleva a `/admin/comments`; una fila de "Últimos registrados" lleva a `/admin/users?q={email}`; un título de "Top artículos" lleva a su editor.
-- [ ] Sin sesión, `/admin` redirige a `/cuenta/login`; con un lector, da 404.
-- [ ] A 390 px no hay scroll horizontal y las secciones quedan en una columna.
-- [ ] El selector, los KPIs, las leyendas y las listas cumplen 4.5:1 de contraste y sus controles miden 44 px o más (revisado con `/frontend-design`).
+- [x] Como admin, `/admin` muestra "Hola, {nombre}", el selector con "30 días" activo, las 4 tarjetas de KPI, los 4 gráficos por su título y las 3 listas; ya no están las tarjetas de accesos.
+- [x] Elegir "7 días" deja la URL en `/admin?periodo=7` con "7 días" activo; recargar lo mantiene. `/admin?periodo=15` muestra "30 días" activo.
+- [x] Un lector comenta un artículo; al volver a `/admin`, el KPI de pendientes sube en 1.
+- [x] "Ver todos los pendientes" lleva a `/admin/comments`; una fila de "Últimos registrados" lleva a `/admin/users?q={email}`; un título de "Top artículos" lleva a su editor.
+- [x] Sin sesión, `/admin` redirige a `/cuenta/login`; con un lector, da 404.
+- [x] A 390 px no hay scroll horizontal y las secciones quedan en una columna.
+- [x] El selector, los KPIs, las leyendas y las listas cumplen 4.5:1 de contraste y sus controles miden 44 px o más (revisado con `/frontend-design`).
 
 ## Decisiones
 
