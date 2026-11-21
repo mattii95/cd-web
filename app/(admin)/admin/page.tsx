@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AdminPageHeader } from "@/components/admin/page-header";
-import { parseDashboardParams } from "@/lib/admin/dashboard-params";
+import { getDashboardKpis } from "@/db/admin-dashboard";
+import { dashboardRange, parseDashboardParams } from "@/lib/admin/dashboard-params";
 import { requireAdmin } from "@/lib/auth/dal";
+import { KpiCards } from "./_inicio/kpi-cards";
 import { PeriodTabs } from "./_inicio/period-tabs";
-import { SectionCard, SectionEmpty } from "./_inicio/section-card";
+import { SectionCard, SectionEmpty, SectionError } from "./_inicio/section-card";
 import { ChartSkeleton, KpiCardsSkeleton, ListSkeleton } from "./_inicio/skeletons";
 
 export const metadata: Metadata = { title: "Inicio" };
@@ -23,6 +25,23 @@ async function Greeting() {
 async function Period({ searchParams }: Search) {
   await requireAdmin();
   return <PeriodTabs query={parseDashboardParams(await searchParams)} />;
+}
+
+async function Kpis({ searchParams }: Search) {
+  await requireAdmin();
+  const { periodo } = parseDashboardParams(await searchParams);
+  let kpis;
+  try {
+    kpis = await getDashboardKpis(dashboardRange(periodo));
+  } catch (error) {
+    console.error("Inicio: no se pudieron cargar los indicadores", error);
+    return (
+      <SectionCard title="Indicadores">
+        <SectionError className="h-24" />
+      </SectionCard>
+    );
+  }
+  return <KpiCards kpis={kpis} periodo={periodo} />;
 }
 
 // Provisoria: cada sección real (KPIs, gráficos, listas) reemplaza a esta en los pasos 4 a 6.
@@ -54,7 +73,7 @@ export default function AdminHomePage({ searchParams }: PageProps<"/admin">) {
       </div>
 
       <Suspense fallback={<KpiCardsSkeleton />}>
-        <Pending title="Indicadores" scope="period" searchParams={searchParams} />
+        <Kpis searchParams={searchParams} />
       </Suspense>
 
       <Suspense fallback={<ChartSkeleton title="Actividad" />}>
