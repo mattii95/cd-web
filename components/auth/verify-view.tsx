@@ -21,6 +21,7 @@ function ResendForm({ title, subtitle }: { title: string; subtitle: string }) {
       title={title}
       subtitle={subtitle}
       submitLabel="Reenviar link"
+      captcha
       footer={loginLink}
     >
       <label className={labelClass}>

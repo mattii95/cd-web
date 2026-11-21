@@ -18,6 +18,7 @@ export function RegisterForm({ social }: { social?: ReactNode }) {
       subtitle="Completá tus datos para empezar a participar."
       submitLabel="Crear cuenta"
       social={social}
+      captcha
       footer={
         <>
           ¿Ya tenés cuenta?{" "}

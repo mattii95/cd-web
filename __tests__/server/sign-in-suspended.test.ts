@@ -14,6 +14,7 @@ vi.mock("@/lib/auth/auth", () => ({
   }),
 }));
 vi.mock("@/lib/auth/rate-limit", () => ({ isRateLimited: async () => false }));
+vi.mock("@/lib/security/turnstile", () => ({ verifyTurnstile: async () => true }));
 
 import { signInAction } from "@/actions/cuenta";
 import { SUSPENDED_MESSAGE } from "@/lib/auth/messages";
