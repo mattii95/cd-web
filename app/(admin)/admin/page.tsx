@@ -5,8 +5,11 @@ import {
   getActivitySeries,
   getCommentStatusBreakdown,
   getDashboardKpis,
+  getNewestUsers,
+  getOldestPendingComments,
   getPublishedByCategory,
   getRatingDistribution,
+  getTopPosts,
 } from "@/db/admin-dashboard";
 import { dashboardRange, parseDashboardParams } from "@/lib/admin/dashboard-params";
 import { requireAdmin } from "@/lib/auth/dal";
@@ -15,9 +18,12 @@ import { CategoryChart } from "./_inicio/charts/category-chart";
 import { CommentStatusChart } from "./_inicio/charts/comment-status-chart";
 import { RatingChart } from "./_inicio/charts/rating-chart";
 import { KpiCards } from "./_inicio/kpi-cards";
+import { NewestUsers } from "./_inicio/newest-users";
+import { OldestPending } from "./_inicio/oldest-pending";
 import { PeriodTabs } from "./_inicio/period-tabs";
-import { CHART_BODY, SectionCard, SectionEmpty, SectionError } from "./_inicio/section-card";
+import { CHART_BODY, SectionCard, SectionError } from "./_inicio/section-card";
 import { ChartSkeleton, KpiCardsSkeleton, ListSkeleton } from "./_inicio/skeletons";
+import { TopPosts } from "./_inicio/top-posts";
 
 export const metadata: Metadata = { title: "Inicio" };
 
@@ -108,19 +114,35 @@ async function Categories() {
   return <CategoryChart data={data} scope="En total" />;
 }
 
-// Provisoria: cada sección real (KPIs, gráficos, listas) reemplaza a esta en los pasos 4 a 6.
-async function Pending({
-  title,
-  scope,
-  searchParams,
-}: Search & { title: string; scope: "period" | string; className?: string }) {
-  await requireAdmin();
-  const { periodo } = parseDashboardParams(await searchParams);
+function ListError({ title, scope }: { title: string; scope: string }) {
   return (
-    <SectionCard title={title} scope={scope === "period" ? periodScope(periodo) : scope}>
-      <SectionEmpty text="Próximamente." className="h-40" />
+    <SectionCard title={title} scope={scope}>
+      <SectionError className="h-40" />
     </SectionCard>
   );
+}
+
+async function Top({ searchParams }: Search) {
+  await requireAdmin();
+  const { periodo } = parseDashboardParams(await searchParams);
+  const items = await safe("el top de artículos", () => getTopPosts(dashboardRange(periodo)));
+  const scope = periodScope(periodo);
+  if (!items) return <ListError title="Top artículos" scope={scope} />;
+  return <TopPosts items={items} scope={scope} />;
+}
+
+async function OldestPendingSection() {
+  await requireAdmin();
+  const items = await safe("los comentarios pendientes", getOldestPendingComments);
+  if (!items) return <ListError title="Pendientes más viejos" scope="Ahora" />;
+  return <OldestPending items={items} />;
+}
+
+async function NewestUsersSection() {
+  await requireAdmin();
+  const items = await safe("los últimos usuarios", getNewestUsers);
+  if (!items) return <ListError title="Últimos registrados" scope="Ahora" />;
+  return <NewestUsers items={items} />;
 }
 
 export default function AdminHomePage({ searchParams }: PageProps<"/admin">) {
@@ -158,16 +180,16 @@ export default function AdminHomePage({ searchParams }: PageProps<"/admin">) {
           <Categories />
         </Suspense>
         <Suspense fallback={<ListSkeleton title="Top artículos" />}>
-          <Pending title="Top artículos" scope="period" searchParams={searchParams} />
+          <Top searchParams={searchParams} />
         </Suspense>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Suspense fallback={<ListSkeleton title="Pendientes más viejos" />}>
-          <Pending title="Pendientes más viejos" scope="Ahora" searchParams={searchParams} />
+          <OldestPendingSection />
         </Suspense>
         <Suspense fallback={<ListSkeleton title="Últimos registrados" />}>
-          <Pending title="Últimos registrados" scope="Ahora" searchParams={searchParams} />
+          <NewestUsersSection />
         </Suspense>
       </div>
     </>
