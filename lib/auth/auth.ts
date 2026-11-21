@@ -88,13 +88,17 @@ function createAuth() {
       enabled: true,
       storage: "database",
       customRules: {
-        "/sign-in/email": { max: 5, window: 60 },
-        "/sign-up/email": { max: 3, window: 60 },
-        "/request-password-reset": { max: 3, window: 60 },
-        "/send-verification-email": { max: 3, window: 60 },
         "/sign-in/social": { max: 10, window: 60 },
       },
     },
+    // Un bot saltearía el captcha de los formularios llamando a la API HTTP. Solo cierra el router
+    // HTTP: las Server Actions siguen entrando por `auth.api`.
+    disabledPaths: [
+      "/sign-in/email",
+      "/sign-up/email",
+      "/request-password-reset",
+      "/send-verification-email",
+    ],
     // Por defecto Better Auth solo marca Secure si BETTER_AUTH_URL es https; en producción siempre.
     advanced: {
       useSecureCookies: process.env.NODE_ENV === "production",
