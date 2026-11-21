@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
+import { securityHeaders } from "./lib/security/headers";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  poweredByHeader: false,
   experimental: {
     agentFeedback: false,
     serverActions: {
@@ -17,6 +18,14 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: securityHeaders(process.env.NODE_ENV === "production"),
+      },
+    ];
   },
   async redirects() {
     return [
