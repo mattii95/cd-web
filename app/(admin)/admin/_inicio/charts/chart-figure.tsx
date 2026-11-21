@@ -48,26 +48,29 @@ export function ChartFigure({
           <div aria-hidden="true" className={`${CHART_BODY} w-full min-w-0`}>
             {children}
           </div>
-          <table className="sr-only">
-            <thead>
-              <tr>
-                {table.columns.map((c) => (
-                  <th key={c} scope="col">
-                    {c}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {table.rows.map((row) => (
-                <tr key={String(row[0])}>
-                  {row.map((cell, i) => (
-                    <td key={i}>{cell}</td>
+          {/* sr-only va en el div: una <table> ignora el ancho de 1 px y desborda la página. */}
+          <div className="sr-only">
+            <table>
+              <thead>
+                <tr>
+                  {table.columns.map((c) => (
+                    <th key={c} scope="col">
+                      {c}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {table.rows.map((row) => (
+                  <tr key={String(row[0])}>
+                    {row.map((cell, i) => (
+                      <td key={i}>{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
     </figure>
