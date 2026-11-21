@@ -18,7 +18,7 @@ export function TopPosts({ items, scope }: { items: TopPost[]; scope: string }) 
         <table className="w-full border-collapse text-left text-[15px] text-cms-text">
           <thead className="sr-only md:not-sr-only">
             <tr className="border-b border-cms-line-soft text-sm text-cms-muted">
-              <th scope="col" className="px-0 py-2 font-semibold md:pr-3">Artículo</th>
+              <th scope="col" className="w-1/2 px-0 py-2 font-semibold md:pr-3">Artículo</th>
               <th scope="col" className="px-3 py-2 text-right font-semibold">Comentarios</th>
               <th scope="col" className="px-3 py-2 text-right font-semibold">Valoraciones</th>
               <th scope="col" className="px-3 py-2 text-right font-semibold">Promedio</th>

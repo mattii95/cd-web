@@ -36,6 +36,7 @@ export function ActivityChart({
     <ChartFigure
       title="Actividad"
       scope={scope}
+      accent={SERIES.blue}
       empty={data.every((p) => p.users + p.comments + p.ratings === 0)}
       emptyText="No hubo actividad en este período."
       table={{

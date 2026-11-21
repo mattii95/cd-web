@@ -1,4 +1,4 @@
-import { CARD, CHART_BODY, SectionCard } from "./section-card";
+import { CARD, CHART_BODY, SectionCard, accentStyle } from "./section-card";
 
 const BAR = "animate-pulse rounded bg-cms-head motion-reduce:animate-none";
 
@@ -10,7 +10,11 @@ export function KpiCardsSkeleton() {
       className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
     >
       {[0, 1, 2, 3].map((i) => (
-        <div key={i} className={`${CARD} flex min-h-40 flex-col gap-3 p-5 sm:p-6`}>
+        <div
+          key={i}
+          style={accentStyle(`var(--cms-series-${[1, 2, 4, 3][i]})`)}
+          className={`${CARD} flex min-h-40 flex-col gap-3 p-5 sm:p-6`}
+        >
           <div className={`${BAR} h-4 w-24`} />
           <div className={`${BAR} h-10 w-32`} />
           <div className={`${BAR} h-4 w-40`} />

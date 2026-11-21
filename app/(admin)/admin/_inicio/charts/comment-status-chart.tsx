@@ -18,6 +18,7 @@ export function CommentStatusChart({ data, scope }: { data: Counts; scope: strin
     <ChartFigure
       title="Comentarios por estado"
       scope={scope}
+      accent={SERIES.teal}
       empty={total === 0}
       emptyText="No hubo comentarios en este período."
       table={{ columns: ["Estado", "Comentarios"], rows: slices.map((s) => [s.name, s.value]) }}

@@ -11,6 +11,7 @@ export function RatingChart({ data, scope }: { data: Row[]; scope: string }) {
     <ChartFigure
       title="Distribución de estrellas"
       scope={scope}
+      accent={SERIES.amber}
       empty={data.every((r) => r.count === 0)}
       emptyText="No hubo valoraciones en este período."
       table={{ columns: ["Estrellas", "Valoraciones"], rows: rows.map((r) => [r.label, r.count]) }}
@@ -20,7 +21,7 @@ export function RatingChart({ data, scope }: { data: Row[]; scope: string }) {
           <XAxis type="number" hide allowDecimals={false} />
           <YAxis type="category" dataKey="label" tick={AXIS_TICK} tickLine={false} axisLine={false} width={40} />
           <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "var(--color-cms-head)" }} formatter={(v) => [v, "Valoraciones"]} />
-          <Bar dataKey="count" fill={SERIES.blue} radius={[0, 6, 6, 0]} barSize={24} isAnimationActive={false}>
+          <Bar dataKey="count" fill={SERIES.amber} radius={[0, 6, 6, 0]} barSize={24} isAnimationActive={false}>
             <LabelList dataKey="count" position="right" style={{ fill: "var(--color-cms-ink)", fontSize: 13, fontWeight: 600 }} />
           </Bar>
         </BarChart>
