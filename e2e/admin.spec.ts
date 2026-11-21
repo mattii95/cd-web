@@ -59,21 +59,6 @@ test("barra lateral: orden, ítem activo y sin ítems futuros", async ({ page })
   await expect(page.getByRole("button", { name: "Abrir menú" })).toBeHidden();
 });
 
-test("Inicio: saludo y cuatro accesos directos", async ({ page }) => {
-  await entrarComoAdmin(page);
-  await page.goto("/admin");
-  await expect(page.getByText("Hola, Ana")).toBeVisible();
-  const main = page.getByRole("main");
-  for (const [titulo, href] of [
-    ["Artículos", "/admin/articles"],
-    ["Medios", "/admin/media"],
-    ["Comentarios", "/admin/comments"],
-    ["Usuarios", "/admin/users"],
-  ]) {
-    await expect(main.getByRole("link", { name: new RegExp(`^${titulo}`) })).toHaveAttribute("href", href);
-  }
-});
-
 test("las rutas viejas en español responden 404 a un admin", async ({ page, consoleErrors }) => {
   await entrarComoAdmin(page);
   for (const ruta of ["/admin/articulos", "/admin/medios", "/admin/usuarios"]) {

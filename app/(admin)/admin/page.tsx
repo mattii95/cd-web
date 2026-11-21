@@ -1,18 +1,33 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import { AdminPageHeader } from "@/components/admin/page-header";
-import { Article, Chat, Photos, Users } from "@/components/icons";
+import {
+  getActivitySeries,
+  getCommentStatusBreakdown,
+  getDashboardKpis,
+  getNewestUsers,
+  getOldestPendingComments,
+  getPublishedByCategory,
+  getRatingDistribution,
+  getTopPosts,
+} from "@/db/admin-dashboard";
+import { dashboardRange, parseDashboardParams } from "@/lib/admin/dashboard-params";
 import { requireAdmin } from "@/lib/auth/dal";
+import { ActivityChart } from "./_inicio/charts/activity-chart";
+import { CategoryChart } from "./_inicio/charts/category-chart";
+import { CommentStatusChart } from "./_inicio/charts/comment-status-chart";
+import { RatingChart } from "./_inicio/charts/rating-chart";
+import { KpiCards } from "./_inicio/kpi-cards";
+import { NewestUsers } from "./_inicio/newest-users";
+import { OldestPending } from "./_inicio/oldest-pending";
+import { PeriodTabs } from "./_inicio/period-tabs";
+import { CHART_BODY, SectionCard, SectionError } from "./_inicio/section-card";
+import { ChartSkeleton, KpiCardsSkeleton, ListSkeleton } from "./_inicio/skeletons";
+import { TopPosts } from "./_inicio/top-posts";
 
 export const metadata: Metadata = { title: "Inicio" };
 
-const shortcuts = [
-  { href: "/admin/articles", title: "Artículos", text: "Creá, editá y publicá las notas del blog.", icon: Article },
-  { href: "/admin/media", title: "Medios", text: "Subí y organizá las imágenes del blog.", icon: Photos },
-  { href: "/admin/comments", title: "Comentarios", text: "Aprobá u ocultá lo que comentan los lectores.", icon: Chat },
-  { href: "/admin/users", title: "Usuarios", text: "Mirá quién se registró y con qué rol.", icon: Users },
-] as const;
+type Search = Pick<PageProps<"/admin">, "searchParams">;
 
 async function Greeting() {
   const { name } = await requireAdmin();
@@ -23,30 +38,159 @@ async function Greeting() {
   );
 }
 
-export default function AdminHomePage() {
+async function Period({ searchParams }: Search) {
+  await requireAdmin();
+  return <PeriodTabs query={parseDashboardParams(await searchParams)} />;
+}
+
+// Un fallo en la consulta de una sección no tumba la página: se registra y la sección muestra el error.
+async function safe<T>(what: string, run: () => Promise<T>): Promise<T | null> {
+  try {
+    return await run();
+  } catch (error) {
+    console.error(`Inicio: no se pudo cargar ${what}`, error);
+    return null;
+  }
+}
+
+const periodScope = (periodo: number) => `Últimos ${periodo} días`;
+
+function ChartError({ title, scope }: { title: string; scope: string }) {
+  return (
+    <SectionCard title={title} scope={scope}>
+      <SectionError className={CHART_BODY} />
+    </SectionCard>
+  );
+}
+
+async function Kpis({ searchParams }: Search) {
+  await requireAdmin();
+  const { periodo } = parseDashboardParams(await searchParams);
+  const kpis = await safe("los indicadores", () => getDashboardKpis(dashboardRange(periodo)));
+  if (!kpis) {
+    return (
+      <SectionCard title="Indicadores">
+        <SectionError className="h-24" />
+      </SectionCard>
+    );
+  }
+  return <KpiCards kpis={kpis} periodo={periodo} />;
+}
+
+async function Activity({ searchParams }: Search) {
+  await requireAdmin();
+  const { periodo } = parseDashboardParams(await searchParams);
+  const range = dashboardRange(periodo);
+  const data = await safe("la actividad", () => getActivitySeries(range));
+  const scope = periodScope(periodo);
+  if (!data) return <ChartError title="Actividad" scope={scope} />;
+  return <ActivityChart data={data} bucket={range.bucket} scope={scope} />;
+}
+
+async function CommentStatus({ searchParams }: Search) {
+  await requireAdmin();
+  const { periodo } = parseDashboardParams(await searchParams);
+  const data = await safe("los comentarios por estado", () =>
+    getCommentStatusBreakdown(dashboardRange(periodo)),
+  );
+  const scope = periodScope(periodo);
+  if (!data) return <ChartError title="Comentarios por estado" scope={scope} />;
+  return <CommentStatusChart data={data} scope={scope} />;
+}
+
+async function Ratings({ searchParams }: Search) {
+  await requireAdmin();
+  const { periodo } = parseDashboardParams(await searchParams);
+  const data = await safe("las estrellas", () => getRatingDistribution(dashboardRange(periodo)));
+  const scope = periodScope(periodo);
+  if (!data) return <ChartError title="Distribución de estrellas" scope={scope} />;
+  return <RatingChart data={data} scope={scope} />;
+}
+
+async function Categories() {
+  await requireAdmin();
+  const data = await safe("los artículos por categoría", getPublishedByCategory);
+  if (!data) return <ChartError title="Artículos por categoría" scope="En total" />;
+  return <CategoryChart data={data} scope="En total" />;
+}
+
+function ListError({ title, scope }: { title: string; scope: string }) {
+  return (
+    <SectionCard title={title} scope={scope}>
+      <SectionError className="h-40" />
+    </SectionCard>
+  );
+}
+
+async function Top({ searchParams }: Search) {
+  await requireAdmin();
+  const { periodo } = parseDashboardParams(await searchParams);
+  const items = await safe("el top de artículos", () => getTopPosts(dashboardRange(periodo)));
+  const scope = periodScope(periodo);
+  if (!items) return <ListError title="Top artículos" scope={scope} />;
+  return <TopPosts items={items} scope={scope} />;
+}
+
+async function OldestPendingSection() {
+  await requireAdmin();
+  const items = await safe("los comentarios pendientes", getOldestPendingComments);
+  if (!items) return <ListError title="Pendientes más viejos" scope="Ahora" />;
+  return <OldestPending items={items} />;
+}
+
+async function NewestUsersSection() {
+  await requireAdmin();
+  const items = await safe("los últimos usuarios", getNewestUsers);
+  if (!items) return <ListError title="Últimos registrados" scope="Ahora" />;
+  return <NewestUsers items={items} />;
+}
+
+export default function AdminHomePage({ searchParams }: PageProps<"/admin">) {
   return (
     <>
-      <AdminPageHeader
-        title="Inicio"
-        description="Gestioná el contenido y los usuarios del sitio."
-      />
-      <Suspense fallback={<div className="h-8" />}>
-        <Greeting />
+      <AdminPageHeader title="Inicio" description="Cómo vienen el blog y la comunidad." />
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <Suspense fallback={<div className="h-8" />}>
+          <Greeting />
+        </Suspense>
+        <Suspense fallback={<div className="h-13" />}>
+          <Period searchParams={searchParams} />
+        </Suspense>
+      </div>
+
+      <Suspense fallback={<KpiCardsSkeleton />}>
+        <Kpis searchParams={searchParams} />
       </Suspense>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {shortcuts.map(({ href, title, text, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="group flex flex-col gap-3 rounded-2xl border border-cms-line bg-cms-panel p-6 no-underline shadow-[0_8px_24px_rgba(11,16,32,0.08)] transition-colors hover:border-accent"
-          >
-            <span className="flex size-11 items-center justify-center rounded-xl bg-cms-chip text-accent">
-              <Icon className="size-[22px]" />
-            </span>
-            <span className="font-display text-xl font-semibold text-cms-ink">{title}</span>
-            <span className="text-[15px] text-cms-text">{text}</span>
-          </Link>
-        ))}
+
+      <Suspense fallback={<ChartSkeleton title="Actividad" />}>
+        <Activity searchParams={searchParams} />
+      </Suspense>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Suspense fallback={<ChartSkeleton title="Comentarios por estado" />}>
+          <CommentStatus searchParams={searchParams} />
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton title="Distribución de estrellas" />}>
+          <Ratings searchParams={searchParams} />
+        </Suspense>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Suspense fallback={<ChartSkeleton title="Artículos por categoría" />}>
+          <Categories />
+        </Suspense>
+        <Suspense fallback={<ListSkeleton title="Top artículos" />}>
+          <Top searchParams={searchParams} />
+        </Suspense>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Suspense fallback={<ListSkeleton title="Pendientes más viejos" />}>
+          <OldestPendingSection />
+        </Suspense>
+        <Suspense fallback={<ListSkeleton title="Últimos registrados" />}>
+          <NewestUsersSection />
+        </Suspense>
       </div>
     </>
   );

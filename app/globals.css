@@ -3,6 +3,14 @@
 :root {
   --background: #050b1c;
   --foreground: #ffffff;
+
+  /* Series de los gráficos del panel: 3:1 o más contra --color-cms-panel (blanco). */
+  --cms-series-1: #1d4ed8;
+  --cms-series-2: #0f766e;
+  --cms-series-3: #b45309;
+  --cms-series-4: #6d28d9;
+  --cms-series-5: #be185d;
+  --cms-series-neutral: #55607a;
 }
 
 @theme inline {
