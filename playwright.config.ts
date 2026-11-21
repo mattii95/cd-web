@@ -37,6 +37,9 @@ export default defineConfig({
     // El servidor usa la base de test (DATABASE_URL de .env.test.local) y Mailpit.
     env: {
       BETTER_AUTH_URL: "http://localhost:3100",
+      // Claves de prueba de Cloudflare (siempre pasan). El build incrusta la site key.
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+      TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
       SMTP_HOST: process.env.SMTP_HOST ?? "localhost",
       SMTP_PORT: process.env.SMTP_PORT ?? "1025",
       MAIL_FROM: process.env.MAIL_FROM ?? "Courroux Digital <no-reply@localhost>",

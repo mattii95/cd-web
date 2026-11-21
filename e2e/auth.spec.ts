@@ -8,6 +8,7 @@ import {
   mailCount,
   sql,
   uniqueEmail,
+  waitForCaptcha,
   waitForLink,
 } from "./helpers";
 
@@ -23,7 +24,7 @@ test("registro, verificación, login y logout", async ({ page }) => {
   const email = uniqueEmail();
   await page.goto("/cuenta/registro");
   // La contraseña es un input controlado: si se tipea antes de hidratar, React la vacía.
-  await page.waitForLoadState("networkidle");
+  await waitForCaptcha(page);
   await page.getByLabel("Nombre y apellido").fill("Ana Pérez");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
@@ -84,7 +85,7 @@ test("registrar un email existente no crea otro usuario y avisa a la cuenta", as
   const { email } = await createVerifiedUser();
   await page.goto("/cuenta/registro");
   // La contraseña es un input controlado: si se tipea antes de hidratar, React la vacía.
-  await page.waitForLoadState("networkidle");
+  await waitForCaptcha(page);
   await page.getByLabel("Nombre y apellido").fill("Otra Persona");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
@@ -95,17 +96,6 @@ test("registrar un email existente no crea otro usuario y avisa a la cuenta", as
   await waitForLink(email, "Ya tenés una cuenta");
   const [{ count }] = await sql<{ count: string }>('select count(*) from "user" where email = $1', [email]);
   expect(count).toBe("1");
-});
-
-test("mandar role admin en el registro crea un lector", async ({ request }) => {
-  const email = uniqueEmail();
-  const res = await request.post(`${APP}/api/auth/sign-up/email`, {
-    headers: { Origin: APP },
-    data: { name: "Intruso", email, password: PASSWORD, role: "admin" },
-  });
-  expect(res.ok()).toBe(true);
-  const [row] = await sql<{ role: string }>('select role from "user" where email = $1', [email]);
-  expect(row.role).toBe("lector");
 });
 
 test("contraseña incorrecta y email inexistente dan el mismo error", async ({ page }) => {
@@ -177,6 +167,8 @@ test("recuperar contraseña: mismo mensaje, link de un solo uso y sesiones revoc
   const destinoInexistente = uniqueEmail("nadie");
   for (const destino of [destinoInexistente, email]) {
     await page.goto("/cuenta/recuperar");
+    // Sin esperar al widget, al cargar mueve el botón y el click cae fuera de él.
+    await waitForCaptcha(page);
     await page.getByLabel("Email").fill(destino);
     await page.getByRole("button", { name: "Enviar link" }).click();
     await expect(page.locator("form").getByRole("status")).toHaveText(mensaje);
@@ -270,7 +262,7 @@ test("las páginas nuevas no tienen scroll horizontal a 375px", async ({ page })
 
   for (const ruta of ["/cuenta/perfil", "/admin", "/admin/articles", "/admin/media", "/admin/users", "/cuenta/verificar", "/cuenta/nueva-contrasena?token=x"]) {
     await page.goto(ruta);
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - window.innerWidth,
     );

@@ -1,6 +1,8 @@
 import { expect, type Page } from "@playwright/test";
+import { execFile } from "node:child_process";
 import { copyFile, mkdir, rm } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 import { Client } from "pg";
 
 try {
@@ -8,6 +10,8 @@ try {
 } catch {
   // En CI las variables vienen del entorno.
 }
+
+const execFileAsync = promisify(execFile);
 
 const MAILPIT = "http://localhost:8025";
 export const APP = "http://localhost:3100";
@@ -26,22 +30,40 @@ export async function sql<T extends object = object>(text: string, params: unkno
   }
 }
 
+// En las páginas con Turnstile "networkidle" no llega nunca: el widget sigue en contacto con
+// Cloudflare. Que el widget haya entregado el token prueba que la página hidrató.
+export async function waitForCaptcha(page: Page) {
+  await expect(page.locator('input[name="cf-turnstile-response"]')).not.toHaveValue("", {
+    timeout: 15_000,
+  });
+}
+
 export const clearRateLimit = () => sql("delete from rate_limit");
 
 // Crea un usuario ya verificado, sin pasar por el email.
 export async function createVerifiedUser(email = uniqueEmail(), name = "Ana Pérez") {
-  const res = await fetch(`${APP}/api/auth/sign-up/email`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Origin: APP },
-    body: JSON.stringify({ name, email, password: PASSWORD }),
-  });
-  expect(res.ok).toBe(true);
+  // Los endpoints HTTP de registro están cerrados: se crea por auth.api con un script.
+  await execFileAsync(
+    "npx",
+    ["tsx", "--conditions=react-server", "scripts/create-user.ts", email, name, PASSWORD],
+    {
+      env: {
+        ...process.env,
+        BETTER_AUTH_URL: APP,
+        SMTP_HOST: process.env.SMTP_HOST ?? "localhost",
+        SMTP_PORT: process.env.SMTP_PORT ?? "1025",
+        MAIL_FROM: process.env.MAIL_FROM ?? "Courroux Digital <no-reply@localhost>",
+      },
+    },
+  );
   await sql("update \"user\" set email_verified = true where email = $1", [email]);
   return { email, name };
 }
 
 export async function login(page: Page, email: string, password = PASSWORD, volver?: string) {
   await page.goto(volver ? `/cuenta/login?volver=${encodeURIComponent(volver)}` : "/cuenta/login");
+  // Sin esperar al widget, al cargar mueve el botón y el click puede caer fuera de él.
+  await waitForCaptcha(page);
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Contraseña", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Ingresar" }).click();

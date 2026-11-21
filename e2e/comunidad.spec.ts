@@ -7,6 +7,7 @@ import {
   createVerifiedUser,
   sql,
   uniqueEmail,
+  waitForCaptcha,
 } from "./helpers";
 
 // Los límites de comentarios y de intentos son compartidos: en serie, solo en desktop
@@ -47,7 +48,7 @@ test.afterEach(async ({ consoleErrors }) => {
 // el submit nativo pierde `volver` y termina en /cuenta/perfil.
 async function ingresar(page: Page, email: string, volver: string) {
   await page.goto(`/cuenta/login?volver=${encodeURIComponent(volver)}`);
-  await page.waitForLoadState("networkidle");
+  await waitForCaptcha(page);
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Ingresar" }).click();
@@ -242,6 +243,8 @@ test("el autor del post responde, edita y borra la respuesta", async ({
 test("Mis comentarios pagina de a 20 y borrar uno publicado lo saca del artículo", async ({
   page,
 }) => {
+  // El login ahora espera al widget de Turnstile y "networkidle" en el perfil tarda ~18 s.
+  test.setTimeout(60_000);
   const email = await entrar(page, "/cuenta/perfil", "Carla Comunidad");
   const slug = `${PREFIX}perfil`;
   const [{ id }] = await sql<{ id: string }>(

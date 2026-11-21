@@ -10,6 +10,7 @@ export function RecoverForm() {
       title="Recuperá tu contraseña"
       subtitle="Te enviamos un link para crear una nueva."
       submitLabel="Enviar link"
+      captcha
       footer={
         <>
           ¿Te acordaste?{" "}

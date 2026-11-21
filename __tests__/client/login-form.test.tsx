@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginForm } from "@/components/auth/login-form";
 import { LoginContext } from "@/components/auth/login-context";
 import { SUSPENDED_MESSAGE } from "@/lib/auth/messages";
@@ -12,6 +12,18 @@ let search = "volver=/admin";
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(search),
 }));
+
+// Turnstile resuelve al instante: el botón ya nace habilitado.
+beforeAll(() => {
+  window.turnstile = {
+    render: (_el, options) => {
+      (options.callback as (t: string) => void)("tok");
+      return "w";
+    },
+    reset: vi.fn(),
+    remove: vi.fn(),
+  };
+});
 
 async function fillAndSubmit() {
   const user = userEvent.setup();

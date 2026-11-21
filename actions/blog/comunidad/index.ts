@@ -14,7 +14,11 @@ import {
 } from "@/db/blog-community";
 import type { UserComment } from "@/db/blog-community";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth/dal";
-import { isUserRateLimited } from "@/lib/auth/rate-limit";
+import {
+  isRateLimitedFailOpen,
+  isUserRateLimited,
+  type RateLimitRule,
+} from "@/lib/auth/rate-limit";
 import type { BlogRating } from "@/lib/blog-posts";
 
 type Fail = { status: "error"; message: string };
@@ -26,6 +30,17 @@ const idSchema = z.uuid();
 const ratingSchema = z.number().int().min(1).max(5);
 const textSchema = z.string().trim().min(2).max(2000);
 const TEXT_ERROR = "El texto tiene que tener entre 2 y 2000 caracteres.";
+
+const LIMITE = "Demasiadas acciones seguidas. Probá de nuevo en un minuto.";
+
+// Si la base falla al contar, se deja pasar: el límite no puede tumbar la acción.
+async function throttled(rule: RateLimitRule, userId: string): Promise<boolean> {
+  try {
+    return await isUserRateLimited(rule, userId);
+  } catch {
+    return false;
+  }
+}
 
 // Sesión y red de seguridad comunes: las acciones nunca lanzan.
 async function run<T>(
@@ -50,6 +65,7 @@ export async function rateAction(
     const id = idSchema.safeParse(postId);
     const r = ratingSchema.safeParse(rating);
     if (!id.success || !r.success) return fail(message);
+    if (await throttled("rate", user.id)) return fail(LIMITE);
     if (!(await upsertRating(id.data, user.id, r.data as BlogRating))) {
       return fail(message);
     }
@@ -86,6 +102,7 @@ export async function deleteCommentAction(
   return run(message, async (user) => {
     const id = idSchema.safeParse(commentId);
     if (!id.success) return fail(message);
+    if (await throttled("delete-content", user.id)) return fail(LIMITE);
     const deleted = await deleteOwnComment(id.data, user.id);
     if (!deleted) return fail(message);
     updateTag(commentsTag(deleted.postId));
@@ -101,6 +118,7 @@ export async function toggleVoteAction(
   return run(message, async (user) => {
     const id = idSchema.safeParse(commentId);
     if (!id.success) return fail(message);
+    if (await throttled("vote", user.id)) return fail(LIMITE);
     const res = await toggleVote(id.data, user.id);
     return res ? { status: "success", ...res } : fail(message);
   });
@@ -118,6 +136,7 @@ export async function saveReplyAction(
     const t = textSchema.safeParse(text);
     if (!id.success) return fail(message);
     if (!t.success) return fail(TEXT_ERROR);
+    if (await throttled("reply", user.id)) return fail(LIMITE);
     const saved = await saveReply(id.data, user.id, t.data);
     if (!saved) return fail(message);
     updateTag(commentsTag(saved.postId));
@@ -135,6 +154,7 @@ export async function deleteReplyAction(
   return run(message, async (user) => {
     const id = idSchema.safeParse(commentId);
     if (!id.success) return fail(message);
+    if (await throttled("delete-content", user.id)) return fail(LIMITE);
     const deleted = await deleteReply(id.data, user.id);
     if (!deleted) return fail(message);
     updateTag(commentsTag(deleted.postId));
@@ -152,6 +172,8 @@ export async function loadMoreUserCommentsAction(
   return run(message, async (user) => {
     const c = z.string().min(1).max(200).safeParse(cursor);
     if (!c.success) return fail(message);
+    // Por IP y con el mismo contador que las otras dos acciones de "cargar más".
+    if (await isRateLimitedFailOpen("load-more")) return fail(LIMITE);
     // Un cursor inválido (InvalidCursorError) cae en el catch de run.
     const { items, nextCursor } = await getUserComments(user.id, {
       cursor: c.data,

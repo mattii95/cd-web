@@ -14,6 +14,7 @@ export function LoginForm({ social }: { social?: ReactNode }) {
       subtitle="Bienvenido de nuevo. Ingresá con tu cuenta para participar."
       submitLabel="Ingresar"
       social={social}
+      captcha
       footer={
         <>
           ¿No tenés cuenta?{" "}

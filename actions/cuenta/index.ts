@@ -10,6 +10,8 @@ import { SUSPENDED_MESSAGE } from "@/lib/auth/messages";
 import { SUSPENDED_CODE } from "@/lib/auth/suspension";
 import { getEnabledProviders } from "@/lib/auth/providers";
 import { isRateLimited, type RateLimitRule } from "@/lib/auth/rate-limit";
+import { getClientIp } from "@/lib/security/client-ip";
+import { verifyTurnstile } from "@/lib/security/turnstile";
 
 export type FormState =
   | { status: "idle" }
@@ -23,6 +25,7 @@ const MSG = {
   sinVerificar: "Tenés que verificar tu email. Te mandamos un link nuevo.",
   datos: "Revisá los datos e intentá de nuevo.",
   limite: "Demasiados intentos. Probá de nuevo en un minuto.",
+  captcha: "No pudimos verificar que no sos un bot. Probá de nuevo.",
   token: "El link venció o no es válido. Pedí uno nuevo.",
   inesperado: "No pudimos completar la operación. Intentá de nuevo en unos minutos.",
   enviado: "Si el email tiene una cuenta, te enviamos un link.",
@@ -61,8 +64,14 @@ async function limited(rule: RateLimitRule): Promise<boolean> {
   }
 }
 
+// Va después del límite: quien ya se pasó no gasta llamadas a Cloudflare.
+async function captchaFailed(data: FormData): Promise<boolean> {
+  return !(await verifyTurnstile(field(data, "cf-turnstile-response"), getClientIp(await headers())));
+}
+
 export async function signInAction(_: FormState, data: FormData): Promise<FormState> {
   if (await limited("sign-in")) return error(MSG.limite);
+  if (await captchaFailed(data)) return error(MSG.captcha);
   const parsed = z
     .object({ email, password: z.string().min(1) })
     .safeParse({ email: field(data, "email"), password: field(data, "password") });
@@ -85,6 +94,7 @@ export async function signInAction(_: FormState, data: FormData): Promise<FormSt
 
 export async function signUpAction(_: FormState, data: FormData): Promise<FormState> {
   if (await limited("sign-up")) return error(MSG.limite);
+  if (await captchaFailed(data)) return error(MSG.captcha);
   const parsed = z
     .object({ name: z.string().trim().min(1).max(100), email, password })
     .safeParse({
@@ -112,6 +122,7 @@ async function sendLink(
   call: (email: string, headers: Headers) => Promise<unknown>,
 ): Promise<FormState> {
   if (await limited(rule)) return error(MSG.limite);
+  if (await captchaFailed(data)) return error(MSG.captcha);
   const parsed = email.safeParse(field(data, "email"));
   if (!parsed.success) return error(MSG.datos);
   try {

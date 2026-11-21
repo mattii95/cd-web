@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures";
-import { APP, clearRateLimit } from "./helpers";
+import { APP, clearRateLimit, waitForCaptcha } from "./helpers";
 
 // Los límites de intentos son por IP y se comparten: serie, solo desktop (ver playwright.config.ts).
 test.describe.configure({ mode: "serial" });
@@ -27,7 +27,7 @@ for (const ruta of ["/cuenta/login", "/cuenta/registro"]) {
 
       await page.goto(ruta);
       // La Server Action necesita la página hidratada.
-      await page.waitForLoadState("networkidle");
+      await waitForCaptcha(page);
       await page.getByRole("button", { name: label }).click();
       await expect.poll(() => authorizeUrl?.href).toBeTruthy();
 
